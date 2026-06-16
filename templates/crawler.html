@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% block title %}数据搜集中心{% endblock %}
+{% block extra_css %}
+<style>
+.dc-header { text-align:center; padding:30px 20px 10px; }
+.dc-header h1 { font-size:2em; background:linear-gradient(135deg,#00f5ff,#39ff14); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.dc-header p { color:rgba(255,255,255,0.5); margin-top:8px; }
+.dc-container { max-width:1200px; margin:0 auto; padding:20px 30px 60px; }
+
+.dc-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:24px; }
+.dc-stat { background:rgba(255,255,255,0.04); border-radius:10px; padding:16px; text-align:center; border:1px solid rgba(255,255,255,0.06); }
+.dc-stat-val { font-size:1.5em; font-weight:700; color:#00f5ff; }
+.dc-stat-label { font-size:0.75em; color:rgba(255,255,255,0.4); margin-top:4px; }
+
+.dc-sources { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; margin-bottom:24px; }
+.dc-source-card {
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px; padding:18px; transition:all 0.2s;
+}
+.dc-source-card:hover { border-color:rgba(0,245,255,0.3); }
+.dc-source-name { color:#fff; font-weight:600; font-size:1em; margin-bottom:4px; }
+.dc-source-url { color:rgba(255,255,255,0.3); font-size:0.8em; margin-bottom:8px; word-break:break-all; }
+.dc-source-meta { display:flex; gap:12px; color:rgba(255,255,255,0.5); font-size:0.78em; }
+.dc-source-status { display:flex; align-items:center; gap:4px; }
+.dc-status-dot { width:8px; height:8px; border-radius:50%; }
+.dc-status-dot.active { background:#39ff14; box-shadow:0 0 6px #39ff14; }
+.dc-status-dot.inactive { background:#666; }
+.dc-status-dot.error { background:#f44336; }
+
+.dc-queue { background:rgba(255,255,255,0.03); border-radius:12px; padding:20px; margin-bottom:20px; }
+.dc-queue h3 { color:#00f5ff; margin-bottom:12px; font-size:1em; }
+.dc-queue table { width:100%; border-collapse:collapse; }
+.dc-queue th { padding:8px 12px; text-align:left; color:rgba(255,255,255,0.5); font-size:0.8em; border-bottom:1px solid rgba(255,255,255,0.08); }
+.dc-queue td { padding:8px 12px; font-size:0.85em; color:rgba(255,255,255,0.7); border-bottom:1px solid rgba(255,255,255,0.04); }
+.dc-queue tr:hover { background:rgba(255,255,255,0.02); }
+
+.dc-logs { background:rgba(255,255,255,0.03); border-radius:12px; padding:20px; }
+.dc-log-item { display:flex; gap:12px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:0.85em; }
+.dc-log-time { color:rgba(255,255,255,0.3); min-width:140px; }
+.dc-log-source { color:#00f5ff; min-width:120px; }
+.dc-log-msg { color:rgba(255,255,255,0.6); flex:1; }
+
+.dc-actions { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+
+/* Status badges */
+.badge { padding:2px 8px; border-radius:10px; font-size:0.72em; font-weight:600; }
+.badge-queued { background:rgba(255,107,0,0.15); color:#ff6b00; }
+.badge-completed { background:rgba(57,255,20,0.15); color:#39ff14; }
+.badge-failed { background:rgba(244,67,54,0.15); color:#f44336; }
+.badge-no_pdf { background:rgba(100,100,100,0.15); color:#888; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dc-header">
+    <h1>🕷️ 数据搜集中心</h1>
+    <p>全网论文自动搜集 · 定时下载 · 智能分类 · 本地知识库</p>
+</div>
+
+<div class="dc-container">
+    <!-- Stats -->
+    <div class="dc-stats" id="dcStats">
+        <div class="dc-stat"><div class="dc-stat-val" id="sSources">--</div><div class="dc-stat-label">活跃源</div></div>
+        <div class="dc-stat"><div class="dc-stat-val" id="sPending">--</div><div class="dc-stat-label">待下载</div></div>
+        <div class="dc-stat"><div class="dc-stat-val" id="sDownloaded">--</div><div class="dc-stat-label">已下载</div></div>
+        <div class="dc-stat"><div class="dc-stat-val" id="sTotalPapers">--</div><div class="dc-stat-label">总论文</div></div>
+        <div class="dc-stat"><div class="dc-stat-val" id="sSize">--</div><div class="dc-stat-label">存储 (MB)</div></div>
+    </div>
+    
+    <!-- Actions -->
+    <div class="dc-actions">
+        <button class="glow-btn" onclick="startCrawl()">🕷️ 开始搜集</button>
+        <button class="glow-btn" onclick="processDownloads()">⬇️ 处理下载</button>
+        <button class="glow-btn magenta" onclick="autoClassify()">🏷️ 智能分类</button>
+        <button class="glow-btn green" onclick="loadStats()">🔄 刷新状态</button>
+    </div>
+    
+    <!-- Tab Nav -->
+    <div class="tab-nav" style="margin-bottom:20px;">
+        <button class="tab-btn active" onclick="dcTab('sources')">📡 数据源</button>
+        <button class="tab-btn" onclick="dcTab('queue')">📋 下载队列</button>
+        <button class="tab-btn" onclick="dcTab('logs')">📜 运行日志</button>
+    </div>
+    
+    <!-- Sources Tab -->
+    <div id="dc-tab-sources" class="tab-panel active">
+        <div class="dc-sources" id="dcSources"></div>
+    </div>
+    
+    <!-- Queue Tab -->
+    <div id="dc-tab-queue" class="tab-panel" style="display:none;">
+        <div class="dc-queue">
+            <h3>📋 下载队列</h3>
+            <table>
+                <thead><tr><th>来源</th><th>标题</th><th>年份</th><th>状态</th><th>优先级</th><th>操作</th></tr></thead>
+                <tbody id="dcQueueBody"></tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Logs Tab -->
+    <div id="dc-tab-logs" class="tab-panel" style="display:none;">
+        <div class="dc-logs" id="dcLogs"></div>
+    </div>
+</div>
+
+<script>
+function dcTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelectorAll('.tab-panel').forEach(function(p){ p.style.display='none'; });
+    event.target.classList.add('active');
+    document.getElementById('dc-tab-'+tab).style.display='block';
+    if(tab==='queue') loadQueue();
+    if(tab==='logs') loadLogs();
+}
+
+function loadStats() {
+    fetch('/api/crawler/stats', {credentials:'include'})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        document.getElementById('sSources').textContent = d.sources;
+        document.getElementById('sPending').textContent = d.queue_pending;
+        document.getElementById('sDownloaded').textContent = d.downloaded_papers;
+        document.getElementById('sTotalPapers').textContent = d.total_papers;
+        document.getElementById('sSize').textContent = d.total_size_mb.toFixed(1);
+    });
+}
+
+function loadSources() {
+    fetch('/api/crawler/sources', {credentials:'include'})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+        var html = '';
+        data.forEach(function(s) {
+            var statusClass = s.is_active ? 'active' : 'inactive';
+            var statusText = s.last_status || 'idle';
+            html += '<div class="dc-source-card">' +
+                '<div class="dc-source-name">' + s.name_zh + '</div>' +
+                '<div class="dc-source-url">' + s.base_url + '</div>' +
+                '<div class="dc-source-meta">' +
+                    '<span class="dc-source-status"><span class="dc-status-dot ' + statusClass + '"></span>' + (s.is_active ? '活跃' : '停用') + '</span>' +
+                    '<span>📄 ' + (s.papers_found||0) + ' 发现</span>' +
+                    '<span>✨ ' + (s.papers_new||0) + ' 新增</span>' +
+                '</div></div>';
+        });
+        document.getElementById('dcSources').innerHTML = html;
+    });
+}
+
+function loadQueue() {
+    fetch('/api/crawler/queue?limit=30', {credentials:'include'})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+        var html = '';
+        data.forEach(function(q) {
+            var badge = 'badge-' + (q.status||'queued');
+            html += '<tr><td>' + q.source + '</td><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (q.title||'') + '</td><td>' + (q.year||'') + '</td><td><span class="badge ' + badge + '">' + q.status + '</span></td><td>' + q.priority + '</td><td><button style="padding:2px 8px;font-size:0.75em;" onclick="deleteQueue(' + q.id + ')">删除</button></td></tr>';
+        });
+        document.getElementById('dcQueueBody').innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,0.3);">队列为空</td></tr>';
+    });
+}
+
+function loadLogs() {
+    fetch('/api/crawler/logs?limit=20', {credentials:'include'})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+        var html = '';
+        data.forEach(function(l) {
+            html += '<div class="dc-log-item"><span class="dc-log-time">' + l.created_at + '</span><span class="dc-log-source">' + (l.source_name||'') + '</span><span class="dc-log-msg">' + l.status + ' - 发现 ' + (l.papers_found||0) + ' 篇</span></div>';
+        });
+        document.getElementById('dcLogs').innerHTML = html || '<p style="color:rgba(255,255,255,0.3);">暂无日志</p>';
+    });
+}
+
+function startCrawl() {
+    showToast('开始搜集论文...', 'info');
+    fetch('/api/crawler/crawl', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        credentials: 'include', body: JSON.stringify({})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if(d.success) {
+            var msg = d.results.map(function(r){ return r.source + ': ' + r.found + '篇' + (r.new ? '(+' + r.new + '新)' : ''); }).join(', ');
+            showToast('搜集完成: ' + msg, 'success');
+        } else {
+            showToast('搜集失败: ' + (d.error||''), 'error');
+        }
+        loadStats(); loadSources(); loadQueue();
+    });
+}
+
+function processDownloads() {
+    showToast('处理下载队列...', 'info');
+    fetch('/api/crawler/download', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        credentials: 'include', body: JSON.stringify({max: 5})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        showToast('下载完成: ' + d.downloaded + ' 篇', 'success');
+        loadStats(); loadQueue();
+    });
+}
+
+function autoClassify() {
+    showToast('正在智能分类...', 'info');
+    fetch('/api/crawler/classify', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        credentials: 'include', body: JSON.stringify({})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        showToast('分类完成: ' + d.classified + ' 篇已分类', 'success');
+    });
+}
+
+function deleteQueue(id) {
+    fetch('/api/crawler/queue/' + id, {method: 'DELETE', credentials:'include'})
+    .then(function(){ loadQueue(); });
+}
+
+// Auto refresh
+loadStats(); loadSources();
+setInterval(loadStats, 30000);
+</script>
+{% endblock %}

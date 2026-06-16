@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% block title %}知识库{% endblock %}
+{% block extra_css %}
+<style>
+.kb-header { text-align:center; padding:30px 20px 10px; }
+.kb-header h1 { font-size:2em; background:linear-gradient(135deg,#667eea,#764ba2); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.kb-header p { color:rgba(255,255,255,0.5); margin-top:8px; }
+.kb-container { max-width:1200px; margin:0 auto; padding:20px 30px 60px; }
+.kb-search-bar { display:flex; gap:10px; margin-bottom:24px; }
+.kb-search-input { flex:1; padding:14px 20px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:12px; color:#fff; font-size:1em; outline:none; }
+.kb-search-input:focus { border-color:#667eea; }
+.kb-search-btn { padding:14px 28px; background:linear-gradient(135deg,#667eea,#764ba2); border:none; border-radius:12px; color:#fff; font-size:0.95em; cursor:pointer; }
+.kb-layout { display:grid; grid-template-columns:260px 1fr 320px; gap:20px; }
+.kb-sidebar { background:rgba(255,255,255,0.03); border-radius:16px; padding:16px; border:1px solid rgba(255,255,255,0.06); height:fit-content; }
+.kb-sidebar h4 { color:#667eea; font-size:0.9em; margin-bottom:12px; padding:0 8px; }
+.kb-cat-item { display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:10px; cursor:pointer; transition:all 0.2s; color:rgba(255,255,255,0.6); font-size:0.88em; }
+.kb-cat-item:hover,.kb-cat-item.active { background:rgba(102,126,234,0.1); color:#fff; }
+.kb-cat-icon { font-size:1.1em; }
+.kb-cat-count { margin-left:auto; font-size:0.75em; color:rgba(255,255,255,0.3); }
+.kb-main { min-height:500px; }
+.kb-card { background:rgba(255,255,255,0.04); border-radius:14px; padding:20px; margin-bottom:12px; border:1px solid rgba(255,255,255,0.06); transition:all 0.2s; }
+.kb-card:hover { border-color:rgba(102,126,234,0.3); }
+.kb-card-title { color:#fff; font-weight:600; font-size:1em; margin-bottom:6px; }
+.kb-card-meta { display:flex; gap:12px; color:rgba(255,255,255,0.35); font-size:0.78em; margin-bottom:8px; }
+.kb-card-summary { color:rgba(255,255,255,0.55); font-size:0.88em; line-height:1.6; }
+.kb-card-tags { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+.kb-tag { padding:2px 10px; border-radius:8px; background:rgba(102,126,234,0.12); color:#667eea; font-size:0.75em; }
+.kb-right { background:rgba(255,255,255,0.03); border-radius:16px; padding:16px; border:1px solid rgba(255,255,255,0.06); height:fit-content; }
+.kb-right h4 { color:#667eea; font-size:0.9em; margin-bottom:12px; }
+.kb-chat { display:flex; flex-direction:column; height:400px; }
+.kb-chat-messages { flex:1; overflow-y:auto; padding:8px; }
+.kb-msg { margin-bottom:10px; }
+.kb-msg-user { text-align:right; }
+.kb-msg-user .kb-msg-bubble { display:inline-block; padding:8px 14px; background:linear-gradient(135deg,#667eea,#764ba2); border-radius:12px 12px 2px 12px; color:#fff; font-size:0.88em; max-width:85%; }
+.kb-msg-ai .kb-msg-bubble { display:inline-block; padding:8px 14px; background:rgba(255,255,255,0.08); border-radius:12px 12px 12px 2px; color:rgba(255,255,255,0.8); font-size:0.88em; max-width:85%; }
+.kb-chat-input { display:flex; gap:8px; margin-top:10px; }
+.kb-chat-input input { flex:1; padding:10px 14px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:10px; color:#fff; font-size:0.88em; outline:none; }
+.kb-chat-input button { padding:10px 16px; background:linear-gradient(135deg,#667eea,#764ba2); border:none; border-radius:10px; color:#fff; cursor:pointer; }
+.kb-daily-item { padding:10px; background:rgba(255,255,255,0.02); border-radius:8px; margin-bottom:8px; }
+.kb-daily-item .title { color:rgba(255,255,255,0.7); font-size:0.85em; font-weight:600; }
+.kb-daily-item .date { color:rgba(255,255,255,0.3); font-size:0.72em; margin-top:2px; }
+.kb-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+.kb-stat { text-align:center; padding:10px; background:rgba(255,255,255,0.03); border-radius:10px; }
+.kb-stat-val { font-size:1.2em; font-weight:700; color:#667eea; }
+.kb-stat-label { font-size:0.7em; color:rgba(255,255,255,0.35); }
+@media(max-width:900px) { .kb-layout { grid-template-columns:1fr; } .kb-sidebar,.kb-right { display:none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="kb-header">
+    <h1>🧠 大模型知识库</h1>
+    <p>AI驱动的知识管理 · 每日自动更新 · 智能问答</p>
+</div>
+
+<div class="kb-container">
+    <!-- Search Bar -->
+    <div class="kb-search-bar">
+        <input type="text" class="kb-search-input" id="kbSearchInput" placeholder="搜索知识库... 输入关键词或问题" onkeydown="if(event.key==='Enter')searchKnowledge()">
+        <button class="kb-search-btn" onclick="searchKnowledge()">🔍 搜索</button>
+        <button class="kb-search-btn" onclick="generateDaily()" style="background:linear-gradient(135deg,#38ef7d,#11998e);">📰 生成今日知识</button>
+    </div>
+
+    <div class="kb-layout">
+        <!-- Left: Categories -->
+        <div class="kb-sidebar">
+            <h4>📂 知识分类</h4>
+            <div id="kbCategories">
+                <div class="kb-cat-item active" onclick="filterCategory(null,this)"><span class="kb-cat-icon">📚</span> 全部</div>
+            </div>
+            <div style="margin-top:16px;">
+                <h4>📊 统计</h4>
+                <div class="kb-stats">
+                    <div class="kb-stat"><div class="kb-stat-val" id="kbTotalItems">0</div><div class="kb-stat-label">知识条目</div></div>
+                    <div class="kb-stat"><div class="kb-stat-val" id="kbTotalDaily">0</div><div class="kb-stat-label">每日更新</div></div>
+                    <div class="kb-stat"><div class="kb-stat-val" id="kbTotalCats">8</div><div class="kb-stat-label">分类数</div></div>
+                    <div class="kb-stat"><div class="kb-stat-val" id="kbChatCount">0</div><div class="kb-stat-label">对话次数</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main: Knowledge List -->
+        <div class="kb-main">
+            <div id="kbResults">
+                <div style="text-align:center;padding:60px 20px;color:rgba(255,255,255,0.3);">
+                    <div style="font-size:3em;margin-bottom:16px;">🧠</div>
+                    <p>输入关键词搜索知识库，或点击"生成今日知识"获取最新内容</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Chat + Daily -->
+        <div class="kb-right">
+            <h4>💬 AI 问答</h4>
+            <div class="kb-chat">
+                <div class="kb-chat-messages" id="kbChatMessages">
+                    <div class="kb-msg kb-msg-ai"><div class="kb-msg-bubble">你好！我是知识库助手。你可以问我任何问题，我会基于知识库内容为你解答。</div></div>
+                </div>
+                <div class="kb-chat-input">
+                    <input type="text" id="kbChatInput" placeholder="输入问题..." onkeydown="if(event.key==='Enter')sendChat()">
+                    <button onclick="sendChat()">发送</button>
+                </div>
+            </div>
+            <div style="margin-top:16px;">
+                <h4>📰 今日热点</h4>
+                <div id="kbDailyList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+var currentCategory = null;
+
+// Load categories
+fetch('/api/knowledge/categories',{credentials:'include'}).then(function(r){return r.json()}).then(function(data){
+    var html = '<div class="kb-cat-item active" onclick="filterCategory(null,this)"><span class="kb-cat-icon">📚</span> 全部</div>';
+    data.forEach(function(c){
+        html += '<div class="kb-cat-item" onclick="filterCategory('+c.id+',this)"><span class="kb-cat-icon">'+c.icon+'</span> '+c.name_zh+'<span class="kb-cat-count">0</span></div>';
+    });
+    document.getElementById('kbCategories').innerHTML = html;
+    document.getElementById('kbTotalCats').textContent = data.length;
+});
+
+// Load daily updates
+fetch('/api/knowledge/daily',{credentials:'include'}).then(function(r){return r.json()}).then(function(data){
+    document.getElementById('kbTotalDaily').textContent = data.count || 0;
+    var html = '';
+    (data.items||[]).slice(0,5).forEach(function(d){
+        html += '<div class="kb-daily-item"><div class="title">'+d.title+'</div><div class="date">'+d.date+'</div></div>';
+    });
+    if(!html) html = '<p style="color:rgba(255,255,255,0.3);font-size:0.85em;">暂无今日更新</p>';
+    document.getElementById('kbDailyList').innerHTML = html;
+});
+
+function searchKnowledge() {
+    var q = document.getElementById('kbSearchInput').value.trim();
+    if(!q) return;
+    var url = '/api/knowledge/search?q='+encodeURIComponent(q);
+    if(currentCategory) url += '&category_id='+currentCategory;
+    fetch(url,{credentials:'include'}).then(function(r){return r.json()}).then(function(data){
+        var html = '<p style="color:rgba(255,255,255,0.4);font-size:0.85em;margin-bottom:12px;">搜索 "'+q+'" 找到 '+data.count+' 条结果</p>';
+        if(data.count === 0) {
+            html += '<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.3);">未找到相关内容</div>';
+        }
+        (data.results||[]).forEach(function(r){
+            html += '<div class="kb-card"><div class="kb-card-title">'+r.title+'</div><div class="kb-card-meta"><span>'+(r.category_name||'')+'</span><span>'+r.created_at+'</span></div><div class="kb-card-summary">'+(r.summary||r.content.substring(0,150))+'</div></div>';
+        });
+        document.getElementById('kbResults').innerHTML = html;
+    });
+}
+
+function filterCategory(id, el) {
+    currentCategory = id;
+    document.querySelectorAll('.kb-cat-item').forEach(function(c){c.classList.remove('active');});
+    el.classList.add('active');
+    if(id) {
+        fetch('/api/knowledge/items?category_id='+id,{credentials:'include'}).then(function(r){return r.json()}).then(function(data){
+            var html = '';
+            data.forEach(function(r){
+                html += '<div class="kb-card"><div class="kb-card-title">'+r.title+'</div><div class="kb-card-meta"><span>'+(r.category_name||'')+'</span><span>'+r.created_at+'</span></div><div class="kb-card-summary">'+(r.summary||r.content.substring(0,150))+'</div></div>';
+            });
+            if(!html) html = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.3);">该分类暂无内容</div>';
+            document.getElementById('kbResults').innerHTML = html;
+        });
+    }
+}
+
+function sendChat() {
+    var input = document.getElementById('kbChatInput');
+    var msg = input.value.trim();
+    if(!msg) return;
+    input.value = '';
+    var msgs = document.getElementById('kbChatMessages');
+    msgs.innerHTML += '<div class="kb-msg kb-msg-user"><div class="kb-msg-bubble">'+msg+'</div></div>';
+    msgs.innerHTML += '<div class="kb-msg kb-msg-ai"><div class="kb-msg-bubble">思考中...</div></div>';
+    msgs.scrollTop = msgs.scrollHeight;
+    
+    fetch('/api/knowledge/chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({message:msg})})
+    .then(function(r){return r.json()}).then(function(data){
+        var bubbles = msgs.querySelectorAll('.kb-msg-bubble');
+        bubbles[bubbles.length-1].textContent = data.answer;
+        msgs.scrollTop = msgs.scrollHeight;
+        document.getElementById('kbChatCount').textContent = (parseInt(document.getElementById('kbChatCount').textContent)||0)+1;
+    }).catch(function(){
+        var bubbles = msgs.querySelectorAll('.kb-msg-bubble');
+        bubbles[bubbles.length-1].textContent = '抱歉，服务暂时不可用。';
+    });
+}
+
+function generateDaily() {
+    showToast('正在生成今日知识...','info');
+    fetch('/api/knowledge/daily/generate',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({})})
+    .then(function(r){return r.json()}).then(function(data){
+        showToast('已生成 '+data.generated+' 条知识','success');
+        // Reload daily list
+        fetch('/api/knowledge/daily',{credentials:'include'}).then(function(r){return r.json()}).then(function(d){
+            document.getElementById('kbTotalDaily').textContent = d.count || 0;
+            var html = '';
+            (d.items||[]).slice(0,5).forEach(function(item){
+                html += '<div class="kb-daily-item"><div class="title">'+item.title+'</div><div class="date">'+item.date+'</div></div>';
+            });
+            document.getElementById('kbDailyList').innerHTML = html || '<p style="color:rgba(255,255,255,0.3);font-size:0.85em;">暂无今日更新</p>';
+        });
+    }).catch(function(){showToast('生成失败','error');});
+}
+
+function showToast(msg,type) {
+    var c = document.getElementById('toastContainer') || document.body;
+    var t = document.createElement('div');
+    t.style.cssText = 'position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:10px;color:#fff;font-size:0.88em;z-index:9999;animation:fadeIn 0.3s;';
+    t.style.background = type==='success'?'rgba(57,255,20,0.2)':type==='error'?'rgba(244,67,54,0.2)':'rgba(102,126,234,0.2)';
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(function(){t.remove();},3000);
+}
+</script>
+{% endblock %}

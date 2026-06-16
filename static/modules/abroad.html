@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✈️ 出国规划</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@keyframes bgMove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+body{
+  min-height:100vh;
+  background:linear-gradient(135deg,#0a1020 0%,#152040 25%,#1a3050 50%,#152040 75%,#0a1020 100%);
+  background-size:400% 400%;animation:bgMove 20s ease infinite;
+  font-family:'Segoe UI','Microsoft YaHei',sans-serif;color:#fff;overflow-x:hidden;
+}
+#app{position:relative;z-index:1}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:16px 40px;background:rgba(0,0,0,.3);backdrop-filter:blur(10px);position:fixed;top:0;left:0;right:0;z-index:100}
+.nav .logo{font-size:22px;cursor:pointer;background:linear-gradient(135deg,#4facfe,#82e0ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700}
+.back-btn{padding:8px 20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;color:#fff;font-size:14px;cursor:pointer;transition:all .3s}
+.back-btn:hover{background:rgba(79,172,254,.3)}
+
+.main{padding:90px 40px 40px;max-width:1200px;margin:0 auto}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:24px}
+.menu-item{padding:14px;border-radius:12px;cursor:pointer;text-align:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);transition:all .3s;font-size:14px}
+.menu-item:hover{background:rgba(79,172,254,.15)}
+.menu-item.active{background:linear-gradient(135deg,rgba(79,172,254,.3),rgba(130,224,255,.2));border-color:#4facfe;font-weight:600}
+
+.section{background:rgba(255,255,255,.05);backdrop-filter:blur(15px);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:28px;margin-bottom:20px;animation:fadeInUp .4s ease}
+.section-title{font-size:22px;margin-bottom:18px;display:flex;align-items:center;gap:10px}
+
+.info-card{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:22px;margin-bottom:14px;
+  transition:all .3s;animation:fadeInUp .3s ease backwards;
+}
+.info-card:hover{background:rgba(79,172,254,.08);transform:translateY(-3px)}
+.info-type{display:inline-block;padding:3px 12px;border-radius:8px;font-size:12px;font-weight:600;margin-bottom:10px}
+.info-type.school{background:rgba(79,172,254,.2);color:#4facfe}
+.info-type.language{background:rgba(46,213,115,.2);color:#2ed573}
+.info-type.visa{background:rgba(255,165,2,.2);color:#ffa502}
+.info-type.life{background:rgba(255,107,107,.2);color:#ff6b6b}
+.info-title{font-size:18px;font-weight:600;margin-bottom:10px;color:#82e0ff}
+.info-content{color:rgba(255,255,255,.7);font-size:14px;line-height:1.8;white-space:pre-wrap}
+.info-country{display:inline-block;padding:2px 10px;background:rgba(255,255,255,.08);border-radius:10px;font-size:12px;color:rgba(255,255,255,.5);margin-top:8px}
+
+/* Timeline */
+.timeline-card{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:20px;margin-bottom:12px;
+  animation:fadeInUp .3s ease backwards;
+}
+.timeline-card h4{color:#4facfe;margin-bottom:8px;font-size:16px}
+.timeline-card p{color:rgba(255,255,255,.6);font-size:14px;line-height:1.7}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="nav">
+    <div class="logo" @click="goHome">✈️ 出国规划</div>
+    <button class="back-btn" @click="goHome">← 返回主页</button>
+  </div>
+
+  <div class="main">
+    <div class="menu-grid">
+      <div class="menu-item" :class="{active:sub==='all'}" @click="sub='all'">🌍 全部内容</div>
+      <div class="menu-item" :class="{active:sub==='school'}" @click="sub='school'">🏫 留学申请</div>
+      <div class="menu-item" :class="{active:sub==='language'}" @click="sub='language'">📝 语言考试</div>
+      <div class="menu-item" :class="{active:sub==='visa'}" @click="sub='visa'">📋 签证指南</div>
+      <div class="menu-item" :class="{active:sub==='life'}" @click="sub='life'">🏠 海外生活</div>
+      <div class="menu-item" :class="{active:sub==='usa'}" @click="sub='usa'">🇺🇸 美国</div>
+      <div class="menu-item" :class="{active:sub==='uk'}" @click="sub='uk'">🇬🇧 英国</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">✈️ {{ subTitle }}</div>
+      <div v-for="(item,i) in displayItems" :key="i" class="info-card" :style="'animation-delay:'+(i*0.05)+'s'">
+        <span class="info-type" :class="item.resource_type">{{ typeName(item.resource_type) }}</span>
+        <div class="info-title">{{ item.title }}</div>
+        <div class="info-content">{{ item.content }}</div>
+        <span class="info-country" v-if="item.country">📍 {{ item.country }}</span>
+      </div>
+      <div v-if="!displayItems.length" style="text-align:center;padding:40px;color:rgba(255,255,255,.3)">暂无相关内容</div>
+    </div>
+
+    <!-- Application timeline -->
+    <div class="section" v-if="sub==='all'||sub==='school'">
+      <div class="section-title">📅 申请时间线</div>
+      <div class="timeline-card"><h4>📌 提前18个月</h4><p>确定目标国家和专业方向，开始准备语言考试(GRE/TOEFL/IELTS)</p></div>
+      <div class="timeline-card"><h4>📌 提前12个月</h4><p>考出理想成绩，开始选校，联系推荐人，准备文书初稿</p></div>
+      <div class="timeline-card"><h4>📌 提前9个月</h4><p>完成个人陈述(PS/SOP)，准备简历，收集成绩单等申请材料</p></div>
+      <div class="timeline-card"><h4>📌 提前6个月</h4><p>提交申请(大多数学校12月-2月截止)，寄送成绩单和推荐信</p></div>
+      <div class="timeline-card"><h4>📌 提前3个月</h4><p>等待录取结果(2-4月)，接受offer，申请I-20/CAS</p></div>
+      <div class="timeline-card"><h4>📌 提前1个月</h4><p>申请签证，购买机票，安排住宿，准备行前物品</p></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const {createApp}=Vue;
+createApp({
+  data(){
+    return{
+      sub:'all',
+      items:[],
+    }
+  },
+  computed:{
+    subTitle(){
+      return{all:'全部内容',school:'留学申请',language:'语言考试',visa:'签证指南',life:'海外生活',usa:'美国留学',uk:'英国留学'}[this.sub]||'内容';
+    },
+    displayItems(){
+      if(this.sub==='all') return this.items;
+      if(this.sub==='usa') return this.items.filter(i=>i.country==='USA');
+      if(this.sub==='uk') return this.items.filter(i=>i.country==='UK');
+      return this.items.filter(i=>i.resource_type===this.sub);
+    }
+  },
+  methods:{
+    goHome(){window.location.href='/main'},
+    typeName(t){return{school:'学校',language:'语言',visa:'签证',life:'生活'}[t]||t},
+    async loadData(){
+      const r=await fetch('/api/abroad',{headers:{'Authorization':'Bearer '+token}});
+      if(r.ok) this.items=await r.json();
+    },
+  },
+  mounted(){this.loadData()}
+}).mount('#app');
+
+const token=localStorage.getItem('token')||'';
+if(!token) window.location.href='/';
+</script>
+</body>
+</html>

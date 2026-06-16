@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% block title %}美妆指南{% endblock %}
+{% block content %}
+<style>
+.mk-header { text-align: center; padding: 30px 20px 10px; }
+.mk-header h1 { font-size: 2.2em; background: linear-gradient(135deg, #ee9ca7, #ffdde1, #ee9ca7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.mk-header p { color: rgba(255,255,255,0.5); margin-top: 8px; }
+.stats-row { display: flex; justify-content: center; gap: 20px; padding: 15px 20px; margin: 0 30px 20px; background: rgba(238,156,167,0.08); border-radius: 12px; }
+.stat-item { text-align: center; }
+.stat-num { font-size: 1.5em; font-weight: 700; color: #ee9ca7; }
+.stat-label { font-size: 0.8em; color: rgba(255,255,255,0.4); }
+.tab-nav { display: flex; justify-content: center; gap: 10px; margin: 15px 0; flex-wrap: wrap; }
+.tab-btn { padding: 10px 24px; border-radius: 20px; border: 1px solid rgba(238,156,167,0.3); background: rgba(238,156,167,0.1); color: #ee9ca7; cursor: pointer; font-size: 0.95em; transition: all 0.3s; }
+.tab-btn:hover, .tab-btn.active { background: linear-gradient(135deg, #ee9ca7, #ffdde1); color: #fff; border-color: transparent; }
+.tab-content { display: none; padding: 10px 30px 60px; }
+.tab-content.active { display: block; }
+.filters { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
+.filters a { padding: 8px 20px; border-radius: 20px; text-decoration: none; background: rgba(238,156,167,0.1); color: #ee9ca7; border: 1px solid rgba(238,156,167,0.2); transition: all 0.3s; font-size: 0.9em; }
+.filters a:hover, .filters a.active { background: linear-gradient(135deg, #ee9ca7, #ffdde1); color: #fff; }
+.tip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px; }
+.tip-card { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 25px; border: 1px solid rgba(238,156,167,0.1); transition: all 0.3s; position: relative; overflow: hidden; }
+.tip-card:hover { border-color: rgba(238,156,167,0.3); transform: translateY(-3px); box-shadow: 0 8px 25px rgba(238,156,167,0.15); }
+.tip-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg, #ee9ca7, #ffdde1); }
+.tip-card .t-cat { display: inline-block; padding: 3px 12px; border-radius: 8px; background: rgba(238,156,167,0.2); color: #ee9ca7; font-size: 0.8em; margin-bottom: 12px; }
+.tip-card h3 { color: #fff; margin-bottom: 12px; font-size: 1.15em; }
+.tip-card .t-content { color: rgba(255,255,255,0.6); font-size: 0.9em; line-height: 1.8; white-space: pre-line; }
+.tip-card .t-diff { display: inline-block; margin-top: 12px; padding: 2px 10px; border-radius: 6px; font-size: 0.75em; }
+.diff-Beginner { background: rgba(76,175,80,0.15); color: #4caf50; }
+.diff-Intermediate { background: rgba(255,152,0,0.15); color: #ff9800; }
+.diff-Advanced { background: rgba(244,67,54,0.15); color: #f44336; }
+/* Skin Quiz */
+.quiz-container { max-width: 700px; margin: 0 auto; }
+.quiz-q { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 25px; margin-bottom: 20px; border: 1px solid rgba(238,156,167,0.1); }
+.quiz-q h4 { color: #ee9ca7; margin-bottom: 15px; }
+.quiz-q label { display: block; padding: 12px 16px; margin-bottom: 8px; background: rgba(255,255,255,0.03); border-radius: 10px; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+.quiz-q label:hover { background: rgba(238,156,167,0.1); border-color: rgba(238,156,167,0.2); }
+.quiz-q input { margin-right: 10px; }
+.quiz-result { display: none; background: rgba(238,156,167,0.1); border-radius: 16px; padding: 30px; text-align: center; border: 1px solid rgba(238,156,167,0.2); }
+/* Routine Planner */
+.routine-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; }
+.routine-day { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; text-align: center; border: 1px solid rgba(238,156,167,0.1); }
+.routine-day h5 { color: #ee9ca7; margin-bottom: 8px; font-size: 0.85em; }
+.routine-day select { width: 100%; padding: 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.8em; }
+/* Color Wheel */
+.color-wheel { display: flex; justify-content: center; margin: 20px 0; }
+.color-section { display: inline-grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.color-swatch { width: 60px; height: 60px; border-radius: 50%; cursor: pointer; transition: all 0.3s; border: 3px solid transparent; }
+.color-swatch:hover { transform: scale(1.15); border-color: #fff; }
+</style>
+
+<div class="mk-header">
+    <h1>💄 美妆指南</h1>
+    <p>从新手到大神，掌握化妆的每一个细节</p>
+</div>
+
+<div class="stats-row">
+    <div class="stat-item"><div class="stat-num">{{ tips|length }}</div><div class="stat-label">教程</div></div>
+    <div class="stat-item"><div class="stat-num">{{ categories|length }}</div><div class="stat-label">分类</div></div>
+    <div class="stat-item"><div class="stat-num">7</div><div class="stat-label">难度等级</div></div>
+</div>
+
+<div class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('tutorials',this)">📚 教程大全</button>
+    <button class="tab-btn" onclick="showTab('quiz',this)">🔍 肤质测试</button>
+    <button class="tab-btn" onclick="showTab('routine',this)">📅 日程规划</button>
+    <button class="tab-btn" onclick="showTab('color',this)">🎨 色彩分析</button>
+</div>
+
+<div id="tutorials" class="tab-content active">
+    <div class="filters">
+        <a href="/makeup" class="{{ 'active' if not filter_category else '' }}">全部</a>
+        {% for c in categories %}
+        <a href="/makeup?category={{ c.category }}" class="{{ 'active' if filter_category == c.category else '' }}">{{ c.category }}</a>
+        {% endfor %}
+    </div>
+    <div class="tip-grid">
+        {% for tip in tips %}
+        <div class="tip-card">
+            <span class="t-cat">{{ tip.category }}</span>
+            <span class="t-diff diff-{{ tip.difficulty }}" style="float:right;">{{ tip.difficulty }}</span>
+            <h3>{{ tip.title }}</h3>
+            <div class="t-content">{{ tip.content }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% if not tips %}<p style="text-align:center;color:rgba(255,255,255,0.3);padding:40px;">暂无教程</p>{% endif %}
+</div>
+
+<div id="quiz" class="tab-content">
+    <div class="quiz-container">
+        <h3 style="color:#ee9ca7;text-align:center;margin-bottom:20px;">🔍 肤质测试 - 找到适合你的妆容</h3>
+        <div class="quiz-q">
+            <h4>1. 你的皮肤类型是？</h4>
+            <label><input type="radio" name="q1" value="oily"> 油性皮肤 - 容易出油，毛孔粗大</label>
+            <label><input type="radio" name="q1" value="dry"> 干性皮肤 - 容易起皮，紧绷感</label>
+            <label><input type="radio" name="q1" value="combo"> 混合性 - T区油，两颊干</label>
+            <label><input type="radio" name="q1" value="normal"> 中性皮肤 - 水油平衡</label>
+        </div>
+        <div class="quiz-q">
+            <h4>2. 你的肤色基调是？</h4>
+            <label><input type="radio" name="q2" value="warm"> 暖色调 - 手腕血管偏绿</label>
+            <label><input type="radio" name="q2" value="cool"> 冷色调 - 手腕血管偏紫/蓝</label>
+            <label><input type="radio" name="q2" value="neutral"> 中性调 - 血管颜色混合</label>
+        </div>
+        <div class="quiz-q">
+            <h4>3. 你喜欢的妆容风格？</h4>
+            <label><input type="radio" name="q3" value="natural"> 自然清新</label>
+            <label><input type="radio" name="q3" value="elegant"> 优雅知性</label>
+            <label><input type="radio" name="q3" value="bold"> 大胆个性</label>
+            <label><input type="radio" name="q3" value="romantic"> 浪漫甜美</label>
+        </div>
+        <div class="quiz-q">
+            <h4>4. 你的眼型是？</h4>
+            <label><input type="radio" name="q4" value="single"> 单眼皮</label>
+            <label><input type="radio" name="q4" value="double"> 双眼皮</label>
+            <label><input type="radio" name="q4" value="hooded"> 内双/肿泡眼</label>
+        </div>
+        <div class="quiz-q">
+            <h4>5. 你的日常化妆时间？</h4>
+            <label><input type="radio" name="q5" value="quick"> 5分钟以内</label>
+            <label><input type="radio" name="q5" value="medium"> 15-30分钟</label>
+            <label><input type="radio" name="q5" value="long"> 30分钟以上</label>
+        </div>
+        <div style="text-align:center;margin:20px 0;">
+            <button onclick="calcSkinType()" style="padding:12px 36px;background:linear-gradient(135deg,#ee9ca7,#ffdde1);border:none;border-radius:25px;color:#fff;font-size:1em;cursor:pointer;">查看结果 ✨</button>
+        </div>
+        <div class="quiz-result" id="quizResult"></div>
+    </div>
+</div>
+
+<div id="routine" class="tab-content">
+    <h3 style="color:#ee9ca7;text-align:center;margin-bottom:20px;">📅 一周妆容规划</h3>
+    <div class="routine-grid">
+        {% for day in ['周一','周二','周三','周四','周五','周六','周日'] %}
+        <div class="routine-day">
+            <h5>{{ day }}</h5>
+            <select>
+                <option value="">选择妆容...</option>
+                <option value="natural">🌿 自然通勤</option>
+                <option value="elegant">💼 知性职场</option>
+                <option value="date">💕 约会甜美</option>
+                <option value="party">🎉 派对烟熏</option>
+                <option value="sport">🏃 运动清爽</option>
+                <option value="none">😴 素颜休息</option>
+            </select>
+        </div>
+        {% endfor %}
+    </div>
+    <div style="margin-top:20px;padding:20px;background:rgba(255,255,255,0.03);border-radius:12px;">
+        <h4 style="color:#ee9ca7;margin-bottom:10px;">💡 妆容小贴士</h4>
+        <ul style="color:rgba(255,255,255,0.5);font-size:0.88em;line-height:2;">
+            <li>工作日建议选择自然通勤妆，节省时间</li>
+            <li>周末可以尝试新风格，练习化妆技巧</li>
+            <li>约会前2小时开始化妆，避免匆忙</li>
+            <li>运动时建议只涂防晒，避免堵塞毛孔</li>
+        </ul>
+    </div>
+</div>
+
+<div id="color" class="tab-content">
+    <h3 style="color:#ee9ca7;text-align:center;margin-bottom:20px;">🎨 色彩分析工具</h3>
+    <p style="text-align:center;color:rgba(255,255,255,0.5);margin-bottom:20px;">点击色块查看适合的妆容色彩</p>
+    <div class="color-wheel">
+        <div class="color-section">
+            {% for color, name in [('#e74c3c','正红'),('#e67e22','橙红'),('#f1c40f','金黄'),('#27ae60','森林绿'),('#3498db','天空蓝'),('#9b59b6','紫罗兰'),('#1abc9c','薄荷绿'),('#e91e63','玫红'),('#ff5722','珊瑚'),('#795548','棕色'),('#607d8b','灰蓝'),('#ffc0cb','粉色')] %}
+            <div class="color-swatch" style="background:{{ color }};" onclick="showColorInfo('{{ name }}','{{ color }}')" title="{{ name }}"></div>
+            {% endfor %}
+        </div>
+    </div>
+    <div id="colorInfo" style="display:none;margin-top:20px;padding:20px;background:rgba(255,255,255,0.05);border-radius:12px;">
+        <h4 style="color:#ee9ca7" id="colorName"></h4>
+        <p style="color:rgba(255,255,255,0.6);font-size:0.88em;line-height:1.8;" id="colorDesc"></p>
+    </div>
+</div>
+
+<script>
+function showTab(id, el) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    var target = document.getElementById(id);
+    if (target) target.classList.add('active');
+    if (el) el.classList.add('active');
+    else if (event && event.target) event.target.classList.add('active');
+}
+function calcSkinType() {
+    const q1=document.querySelector('input[name="q1"]:checked');
+    const q2=document.querySelector('input[name="q2"]:checked');
+    const q3=document.querySelector('input[name="q3"]:checked');
+    if(!q1||!q2||!q3){alert('请回答所有问题');return;}
+    let skin='',palette='',style='';
+    if(q1.value==='oily'){skin='油性皮肤：建议使用控油妆前乳，选择哑光粉底，定妆粉重点涂抹T区。';palette='适合使用哑光质地的彩妆，避免过于闪亮的产品。';}
+    else if(q1.value==='dry'){skin='干性皮肤：妆前做好保湿，选择滋润型粉底，避免过度定妆。';palette='可以使用带有光泽感的彩妆，增添肌肤光泽。';}
+    else{skin='混合/中性皮肤：T区控油，两颊保湿，选择适合混合皮的粉底。';palette='彩妆选择范围广泛，可以根据场合灵活搭配。';}
+    if(q3.value==='natural')style='推荐日常妆容：清透底妆+自然眉形+淡粉唇色，适合通勤和日常约会。';
+    else if(q3.value==='elegant')style='推荐知性妆容：精致底妆+修容+豆沙色唇妆，适合职场和重要场合。';
+    else if(q3.value==='bold')style='推荐个性妆容：截断式眼妆+修容+红唇，适合派对和出片。';
+    else style='推荐浪漫妆容：粉嫩腮红+玫瑰色眼影+水润唇妆，适合约会和聚会。';
+    document.getElementById('quizResult').innerHTML='<h3 style="color:#ee9ca7;margin-bottom:15px;">💄 你的专属美妆方案</h3><p style="color:rgba(255,255,255,0.7);line-height:2;">'+skin+'</p><p style="color:rgba(255,255,255,0.7);line-height:2;margin-top:10px;">'+palette+'</p><p style="color:rgba(255,255,255,0.7);line-height:2;margin-top:10px;">'+style+'</p>';
+    document.getElementById('quizResult').style.display='block';
+}
+const colorData = {
+    '正红': { desc: '正红色适合所有肤色，尤其是暖色调肌肤。推荐用于正式场合、约会。搭配裸色眼妆和精致底妆，气场全开。' },
+    '橙红': { desc: '橙红色非常显白，适合暖色调肌肤。日常薄涂活泼，厚涂有气质。搭配棕色系眼妆，温暖自然。' },
+    '金黄': { desc: '金黄色适合暖色调肌肤，可以用作眼影高光。夏季使用特别应景，搭配橘色腮红，活力满满。' },
+    '森林绿': { desc: '森林绿是低调奢华的颜色，适合冷色调肌肤。可以用作眼影，搭配金色提亮，神秘优雅。' },
+    '天空蓝': { desc: '天空蓝清新自然，适合冷色调肌肤。适合春夏使用，搭配粉色腮红，清透感满分。' },
+    '紫罗兰': { desc: '紫罗兰色高贵神秘，适合所有肤色。薄涂温柔，厚涂霸气。搭配银色眼影，仙气十足。' },
+    '薄荷绿': { desc: '薄荷绿清新减龄，适合春夏季节。适合冷色调肌肤，搭配珊瑚色唇妆，元气满满。' },
+    '玫红': { desc: '玫粉色甜美可爱，适合约会和重要场合。暖色调肌肤使用特别显白，搭配粉色系腮红。' },
+    '珊瑚': { desc: '珊瑚色是今年的流行色，适合所有肤色。薄涂日常，厚涂有气质。搭配金色眼影，优雅大方。' },
+    '棕色': { desc: '棕色系是秋冬必备，适合所有肤色。可以用于眼影、眉妆、修容，打造立体妆容。' },
+    '灰蓝': { desc: '灰蓝色低调高级，适合冷色调肌肤。可以用于眼影，搭配银色提亮，冷艳气质。' },
+    '粉色': { desc: '粉色系是甜美妆容必备，适合所有肤色。薄涂自然，浓涂甜美。搭配同色系腮红和眼影。' },
+};
+function showColorInfo(name, color) {
+    const info = colorData[name] || { desc: '' };
+    document.getElementById('colorName').textContent = name;
+    document.getElementById('colorDesc').textContent = info.desc;
+    document.getElementById('colorInfo').style.display = 'block';
+}
+</script>
+{% endblock %}

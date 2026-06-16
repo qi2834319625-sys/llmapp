@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal - 主页</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@keyframes bgMove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes glow{0%,100%{box-shadow:0 0 15px rgba(102,126,234,.3)}50%{box-shadow:0 0 30px rgba(102,126,234,.6)}}
+@keyframes musicBar{0%,100%{height:4px}50%{height:20px}}
+
+body{
+  min-height:100vh;
+  background:linear-gradient(135deg,#0c0c1d 0%,#1a1a3e 20%,#2d1b4e 40%,#1e3a5f 60%,#1a1a3e 80%,#0c0c1d 100%);
+  background-size:400% 400%;
+  animation:bgMove 20s ease infinite;
+  font-family:'Segoe UI','Microsoft YaHei',sans-serif;
+  color:#fff;overflow-x:hidden;
+}
+
+#app{min-height:100vh;position:relative;z-index:1}
+
+/* Header */
+.header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:20px 40px;position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(0,0,0,.3);backdrop-filter:blur(10px);
+}
+.logo{font-size:28px;font-weight:700;background:linear-gradient(135deg,#667eea,#764ba2,#f093fb);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.user-info{display:flex;align-items:center;gap:16px}
+.user-info span{color:rgba(255,255,255,.7)}
+
+/* Music Player */
+.music-btn{
+  width:40px;height:40px;border-radius:50%;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+  color:#fff;font-size:18px;cursor:pointer;transition:all .3s;
+  display:flex;align-items:center;justify-content:center;
+}
+.music-btn:hover{background:rgba(255,255,255,.2);transform:scale(1.1)}
+.music-btn.playing{animation:glow 2s ease infinite}
+
+.logout-btn{
+  padding:8px 20px;background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.2);border-radius:20px;
+  color:#fff;font-size:14px;cursor:pointer;transition:all .3s;
+}
+.logout-btn:hover{background:rgba(255,100,100,.3);border-color:rgba(255,100,100,.5)}
+
+/* Main Content */
+.main-content{padding:120px 40px 60px;max-width:1400px;margin:0 auto}
+.welcome{text-align:center;margin-bottom:60px;animation:fadeInUp .8s ease}
+.welcome h1{font-size:48px;margin-bottom:12px;font-weight:800;
+  background:linear-gradient(135deg,#667eea,#f093fb,#4facfe,#43e97b);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.welcome p{font-size:18px;color:rgba(255,255,255,.6)}
+
+/* Module Grid */
+.modules-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:24px;
+}
+
+.module-card{
+  padding:32px 28px;border-radius:20px;
+  background:rgba(255,255,255,.05);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.1);
+  cursor:pointer;transition:all .4s cubic-bezier(.4,0,.2,1);
+  animation:fadeInUp .6s ease backwards;
+  position:relative;overflow:hidden;
+}
+.module-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;bottom:0;
+  background:linear-gradient(135deg,transparent,rgba(255,255,255,.03));
+  opacity:0;transition:opacity .4s;
+}
+.module-card:hover::before{opacity:1}
+.module-card:hover{
+  transform:translateY(-8px) scale(1.02);
+  box-shadow:0 20px 40px rgba(0,0,0,.3);
+}
+
+.module-icon{
+  font-size:48px;margin-bottom:16px;
+  display:block;animation:float 3s ease infinite;
+}
+.module-card h3{font-size:20px;font-weight:600;margin-bottom:8px}
+.module-card p{font-size:14px;color:rgba(255,255,255,.5);line-height:1.6}
+.module-tag{
+  display:inline-block;padding:4px 12px;border-radius:20px;
+  font-size:12px;margin-top:12px;
+  background:rgba(255,255,255,.1);
+}
+
+/* Background Music Visualizer */
+.bars{display:flex;gap:3px;align-items:flex-end;height:24px}
+.bar{width:4px;background:linear-gradient(to top,#667eea,#f093fb);border-radius:2px;animation:musicBar ease infinite}
+.bar:nth-child(1){animation-duration:.6s}
+.bar:nth-child(2){animation-duration:.8s}
+.bar:nth-child(3){animation-duration:.5s}
+.bar:nth-child(4){animation-duration:.7s}
+.bar:nth-child(5){animation-duration:.9s}
+.bar.paused{animation-play-state:running}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="logo">✨ Portal</div>
+    <div class="user-info">
+      <button class="music-btn" :class="{playing:isPlaying}" @click="toggleMusic" title="背景音乐">
+        <span v-if="isPlaying"><span class="bars"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></span></span>
+        <span v-else>🔇</span>
+      </button>
+      <span>👤 {{ username }}</span>
+      <button class="logout-btn" @click="logout">退出</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="welcome">
+      <h1>欢迎来到 Portal</h1>
+      <p>选择一个模块，开启你的探索之旅</p>
+    </div>
+
+    <div class="modules-grid">
+      <div class="module-card"
+           v-for="(m,i) in modules" :key="m.id"
+           :style="'animation-delay:'+(i*0.08)+'s;background:linear-gradient(135deg,'+m.bg1+','+m.bg2+')'"
+           @click="openModule(m.path)">
+        <span class="module-icon">{{ m.icon }}</span>
+        <h3>{{ m.title }}</h3>
+        <p>{{ m.desc }}</p>
+        <span class="module-tag">{{ m.tag }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Background Music -->
+  <audio id="bgm" loop preload="auto">
+    <source src="https://cdn.pixabay.com/audio/2022/10/05/audio_4dedf5bf94.mp3" type="audio/mpeg">
+  </audio>
+</div>
+
+<script>
+const {createApp}=Vue;
+createApp({
+  data(){
+    return{
+      username:localStorage.getItem('username')||'User',
+      isPlaying:false,
+      modules:[
+        {id:1,icon:'💕',title:'情侣空间',desc:'记录你们的美好时光，上传照片视频，书写浪漫故事',tag:'恋爱',path:'/couple',bg1:'rgba(255,107,157,.15)',bg2:'rgba(255,182,193,.08)'},
+        {id:2,icon:'💼',title:'秋招备战系统',desc:'LeetCode Hot100精选题解，GitHub技术仓库，YouTube学习视频',tag:'求职',path:'/recruitment',bg1:'rgba(79,172,254,.15)',bg2:'rgba(0,242,254,.08)'},
+        {id:3,icon:'🔐',title:'密码学论文系统',desc:'收集20年密码学论文，AI智能总结，研究进展时间线',tag:'学术',path:'/crypto',bg1:'rgba(67,233,123,.15)',bg2:'rgba(56,249,215,.08)'},
+        {id:4,icon:'🧠',title:'GNN结构化匹配',desc:'图神经网络资源，实体连接匹配系统，知识图谱对齐',tag:'AI',path:'/gnn',bg1:'rgba(102,126,234,.15)',bg2:'rgba(118,75,162,.08)'},
+        {id:5,icon:'📈',title:'投资理财',desc:'股票基金分析，投资策略，风险评估，财经资讯聚合',tag:'理财',path:'/investment',bg1:'rgba(255,154,158,.15)',bg2:'rgba(250,208,196,.08)'},
+        {id:6,icon:'💄',title:'美妆系统',desc:'化妆教程，产品推荐，妆容灵感，肤质测试',tag:'美妆',path:'/makeup',bg1:'rgba(255,117,151,.15)',bg2:'rgba(255,183,178,.08)'},
+        {id:7,icon:'👗',title:'服装搭配',desc:'穿搭灵感，四季衣橱，色彩搭配，场合着装指南',tag:'时尚',path:'/fashion',bg1:'rgba(162,182,223,.15)',bg2:'rgba(196,197,214,.08)'},
+        {id:8,icon:'🍳',title:'美食厨房',desc:'海量菜谱，视频教程，营养分析，每日推荐菜单',tag:'美食',path:'/cooking',bg1:'rgba(255,206,84,.15)',bg2:'rgba(255,238,173,.08)'},
+        {id:9,icon:'✈️',title:'出国规划',desc:'留学申请，语言考试，签证指南，海外生活贴士',tag:'出国',path:'/abroad',bg1:'rgba(79,172,254,.15)',bg2:'rgba(130,224,255,.08)'},
+        {id:10,icon:'📚',title:'考公备考',desc:'行测申论题库，历年真题，备考计划，时政热点',tag:'考试',path:'/civil',bg1:'rgba(178,191,224,.15)',bg2:'rgba(143,156,191,.08)'},
+      ]
+    }
+  },
+  methods:{
+    openModule(path){window.location.href=path},
+    toggleMusic(){
+      const audio=document.getElementById('bgm');
+      if(this.isPlaying){audio.pause()}
+      else{audio.play().catch(()=>{})}
+      this.isPlaying=!this.isPlaying;
+    },
+    logout(){
+      localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      window.location.href='/';
+    }
+  },
+  mounted(){
+    // Auto-play attempt (browser may block)
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

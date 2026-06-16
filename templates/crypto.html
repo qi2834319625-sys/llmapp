@@ -1,0 +1,1088 @@
+{% extends "base.html" %}
+{% block title %}密码学论文系统{% endblock %}
+{% block content %}
+<style>
+.crypto-header { text-align: center; padding: 30px 20px 10px; }
+.crypto-header h1 {
+    font-size: 2.2em;
+    background: linear-gradient(135deg, #11998e, #38ef7d);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.crypto-header p { color: rgba(255,255,255,0.5); margin-top: 8px; }
+.stats-bar {
+    display: flex; justify-content: center; gap: 30px;
+    padding: 15px 20px; margin: 0 30px 20px;
+    background: rgba(17,153,142,0.08); border-radius: 12px;
+}
+.stats-bar .stat { text-align: center; }
+.stats-bar .stat-num { font-size: 1.5em; font-weight: 700; color: #38ef7d; }
+.stats-bar .stat-label { font-size: 0.8em; color: rgba(255,255,255,0.4); }
+.tab-nav {
+    display: flex; justify-content: center; gap: 10px; margin: 15px 0; flex-wrap: wrap;
+}
+.tab-btn {
+    padding: 10px 24px; border-radius: 20px; border: 1px solid rgba(17,153,142,0.3);
+    background: rgba(17,153,142,0.1); color: #11998e; cursor: pointer;
+    font-size: 0.95em; transition: all 0.3s;
+}
+.tab-btn:hover, .tab-btn.active {
+    background: linear-gradient(135deg, #11998e, #38ef7d);
+    color: #fff; border-color: transparent;
+}
+.tab-content { display: none; padding: 20px 30px 60px; }
+.tab-content.active { display: block; }
+.filters {
+    display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;
+    align-items: center; padding: 20px; background: rgba(255,255,255,0.03);
+    border-radius: 12px;
+}
+.filters select, .filters input {
+    padding: 10px 16px; background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 10px;
+    color: #fff; outline: none; font-size: 0.9em;
+}
+.filters button {
+    padding: 10px 24px; background: linear-gradient(135deg, #11998e, #38ef7d);
+    border: none; border-radius: 10px; color: #fff; cursor: pointer;
+}
+.paper-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 18px; }
+.paper-card {
+    background: rgba(255,255,255,0.05); border-radius: 14px; padding: 22px;
+    border: 1px solid rgba(17,153,142,0.1); transition: all 0.3s;
+    position: relative;
+}
+.paper-card:hover { border-color: rgba(17,153,142,0.3); transform: translateY(-2px); }
+.paper-card .p-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.paper-card h3 { color: #fff; font-size: 1.05em; flex: 1; margin-right: 10px; }
+.paper-card .p-year {
+    background: rgba(56,239,125,0.15); color: #38ef7d;
+    padding: 3px 10px; border-radius: 8px; font-size: 0.85em; white-space: nowrap;
+}
+.paper-card .p-authors { color: rgba(255,255,255,0.4); font-size: 0.8em; margin-bottom: 8px; }
+.paper-card .p-summary { color: rgba(255,255,255,0.6); font-size: 0.88em; line-height: 1.7; margin-bottom: 10px; }
+.paper-card .p-keywords { display: flex; flex-wrap: wrap; gap: 6px; }
+.paper-card .p-keywords span {
+    background: rgba(17,153,142,0.15); color: #11998e;
+    padding: 2px 10px; border-radius: 8px; font-size: 0.75em;
+}
+.paper-card .p-venue { color: rgba(255,255,255,0.3); font-size: 0.8em; margin-top: 8px; }
+.paper-card .p-link { color: #38ef7d; text-decoration: none; font-size: 0.85em; }
+.paper-card .p-actions {
+    display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center;
+}
+.paper-card .p-actions button {
+    padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(17,153,142,0.3);
+    background: rgba(17,153,142,0.1); color: #11998e; cursor: pointer;
+    font-size: 0.78em; transition: all 0.2s;
+}
+.paper-card .p-actions button:hover { background: rgba(17,153,142,0.25); }
+.paper-card .p-actions button.active-toggle {
+    background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff; border-color: transparent;
+}
+.paper-card .p-compare-cb {
+    position: absolute; top: 12px; right: 12px; width: 18px; height: 18px;
+    accent-color: #11998e; cursor: pointer;
+}
+/* Reading status badges */
+.status-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 6px;
+    font-size: 0.72em; font-weight: 600; margin-left: 6px;
+}
+.status-unread { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
+.status-reading { background: rgba(255,193,7,0.2); color: #ffc107; }
+.status-done { background: rgba(56,239,125,0.2); color: #38ef7d; }
+/* Status filter */
+.status-filter { display: flex; gap: 6px; align-items: center; }
+.status-filter label {
+    padding: 6px 14px; border-radius: 8px; cursor: pointer;
+    font-size: 0.82em; border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.6);
+    transition: all 0.2s;
+}
+.status-filter label.active {
+    background: linear-gradient(135deg, #11998e, #38ef7d);
+    color: #fff; border-color: transparent;
+}
+.status-filter input { display: none; }
+/* Timeline */
+.timeline { position: relative; max-width: 1000px; margin: 0 auto; }
+.timeline::before {
+    content: ''; position: absolute; left: 50%; top: 0; bottom: 0;
+    width: 2px; background: linear-gradient(to bottom, #11998e, #38ef7d);
+    transform: translateX(-50%);
+}
+.timeline-item {
+    position: relative; width: 50%; padding: 15px 30px;
+    box-sizing: border-box;
+}
+.timeline-item:nth-child(odd) { left: 0; text-align: right; }
+.timeline-item:nth-child(even) { left: 50%; }
+.timeline-item .dot {
+    position: absolute; width: 14px; height: 14px; border-radius: 50%;
+    background: #11998e; top: 24px;
+}
+.timeline-item:nth-child(odd) .dot { right: -7px; }
+.timeline-item:nth-child(even) .dot { left: -7px; }
+.timeline-card {
+    background: rgba(255,255,255,0.05); border-radius: 12px; padding: 18px;
+    border: 1px solid rgba(17,153,142,0.15); transition: all 0.3s;
+}
+.timeline-card:hover { border-color: rgba(17,153,142,0.4); background: rgba(255,255,255,0.08); }
+.timeline-card .year { color: #38ef7d; font-size: 1.1em; font-weight: 700; }
+.timeline-card h3 { color: #fff; margin: 8px 0; font-size: 1em; }
+.timeline-card .authors { color: rgba(255,255,255,0.4); font-size: 0.8em; }
+.timeline-card .venue { color: rgba(56,239,125,0.6); font-size: 0.8em; margin-top: 5px; }
+/* Stats */
+.stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px; margin-bottom: 30px;
+}
+.stat-card {
+    background: rgba(255,255,255,0.05); border-radius: 14px; padding: 25px;
+    text-align: center; border: 1px solid rgba(17,153,142,0.1);
+}
+.stat-card .stat-num { font-size: 2.5em; font-weight: 700; color: #38ef7d; }
+.stat-card .stat-label { color: rgba(255,255,255,0.5); margin-top: 5px; }
+/* Chart bars */
+.chart-bar {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+}
+.chart-bar .label { width: 120px; font-size: 0.82em; color: rgba(255,255,255,0.6); text-align: right; }
+.chart-bar .bar {
+    height: 20px; border-radius: 4px;
+    background: linear-gradient(90deg, #11998e, #38ef7d);
+    transition: width 0.5s ease;
+}
+.chart-bar .count { font-size: 0.8em; color: #38ef7d; }
+/* Tag cloud */
+.tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 20px; }
+.tag-cloud .tag {
+    padding: 4px 14px; border-radius: 20px; cursor: pointer;
+    transition: all 0.2s; border: 1px solid transparent;
+}
+.tag-cloud .tag:hover {
+    border-color: #11998e; transform: scale(1.1);
+}
+/* Citation graph */
+#citationGraph { width: 100%; overflow: hidden; position: relative; }
+#citationGraph svg { display: block; margin: 0 auto; cursor: grab; }
+#citationGraph svg:active { cursor: grabbing; }
+.graph-node-d3 { transition: opacity 0.2s; }
+.graph-node-d3:hover { stroke: #fff; stroke-width: 2px; }
+.graph-link-d3 { transition: opacity 0.2s; }
+.graph-label { font-size: 9px; fill: rgba(255,255,255,0.65); pointer-events: none; }
+.d3-controls { display: flex; gap: 10px; justify-content: center; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+.d3-controls button { padding: 6px 16px; border-radius: 8px; border: 1px solid rgba(17,153,142,0.3); background: rgba(17,153,142,0.1); color: #11998e; cursor: pointer; font-size: 0.82em; }
+.d3-controls button:hover { background: rgba(17,153,142,0.25); }
+.d3-controls button.active-d3-btn { background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff; border-color: transparent; }
+.d3-controls select { padding: 6px 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.82em; }
+.d3-legend { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 8px; }
+.d3-legend-item { display: flex; align-items: center; gap: 4px; font-size: 0.75em; color: rgba(255,255,255,0.55); }
+.d3-legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+/* Modal */
+.modal-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+    background: #1a1a2e; border-radius: 16px; padding: 30px; max-width: 90vw;
+    max-height: 85vh; overflow: auto; border: 1px solid rgba(17,153,142,0.3);
+    width: 1000px;
+}
+.modal h2 { color: #fff; margin-bottom: 20px; }
+.modal .close-btn {
+    float: right; background: none; border: none; color: rgba(255,255,255,0.5);
+    font-size: 1.5em; cursor: pointer;
+}
+.compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+.compare-card {
+    background: rgba(255,255,255,0.05); border-radius: 12px; padding: 18px;
+    border: 1px solid rgba(17,153,142,0.15);
+}
+.compare-card h4 { color: #38ef7d; margin-bottom: 10px; }
+.compare-card .field { margin-bottom: 8px; }
+.compare-card .field-label { color: rgba(255,255,255,0.4); font-size: 0.75em; }
+.compare-card .field-value { color: rgba(255,255,255,0.85); font-size: 0.88em; }
+/* Notes */
+.notes-panel { max-width: 800px; margin: 0 auto; }
+.notes-panel textarea {
+    width: 100%; min-height: 120px; background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(17,153,142,0.2); border-radius: 10px;
+    color: #fff; padding: 12px; font-size: 0.9em; resize: vertical;
+    outline: none;
+}
+.notes-panel textarea:focus { border-color: #11998e; }
+.notes-panel .save-btn {
+    margin-top: 8px; padding: 8px 20px; border-radius: 8px;
+    background: linear-gradient(135deg, #11998e, #38ef7d);
+    border: none; color: #fff; cursor: pointer; font-size: 0.85em;
+}
+.notes-panel .note-saved { color: #38ef7d; font-size: 0.8em; margin-left: 10px; }
+
+/* === Enhanced Notes System === */
+.notes-search-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+.notes-search-bar input { flex: 1; min-width: 200px; padding: 10px 16px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: #fff; font-size: 0.9em; outline: none; }
+.notes-search-bar input:focus { border-color: #11998e; }
+.notes-search-bar select { padding: 10px 16px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: #fff; font-size: 0.9em; }
+.notes-filter-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 15px; }
+.notes-filter-tags span { padding: 4px 12px; border-radius: 12px; background: rgba(17,153,142,0.15); color: #11998e; font-size: 0.78em; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; }
+.notes-filter-tags span:hover { border-color: #11998e; }
+.notes-filter-tags span.active { background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff; border-color: transparent; }
+.note-card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 0; margin-bottom: 15px; border: 1px solid rgba(17,153,142,0.15); overflow: hidden; transition: all 0.3s; }
+.note-card:hover { border-color: rgba(17,153,142,0.35); }
+.note-card-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: rgba(17,153,142,0.06); }
+.note-card-header h4 { color: #38ef7d; font-size: 0.95em; margin: 0; }
+.note-card-header .note-meta { color: rgba(255,255,255,0.3); font-size: 0.75em; }
+.note-card-body { padding: 14px 18px; }
+.note-card-body .note-content { color: rgba(255,255,255,0.65); font-size: 0.85em; white-space: pre-wrap; line-height: 1.7; }
+.note-card-body .note-content mark { background: rgba(56,239,125,0.25); color: #38ef7d; padding: 1px 3px; border-radius: 3px; }
+.note-card-tags { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 18px; border-top: 1px solid rgba(255,255,255,0.04); }
+.note-card-tag { padding: 2px 8px; border-radius: 6px; background: rgba(56,239,125,0.12); color: #38ef7d; font-size: 0.72em; }
+.note-card-actions { display: flex; gap: 8px; padding: 8px 18px 14px; }
+.note-card-actions button { padding: 5px 14px; border-radius: 8px; border: 1px solid rgba(17,153,142,0.3); background: rgba(17,153,142,0.1); color: #11998e; cursor: pointer; font-size: 0.78em; }
+.note-card-actions button:hover { background: rgba(17,153,142,0.25); }
+.notes-export-bar { display: flex; gap: 10px; margin-bottom: 20px; justify-content: flex-end; flex-wrap: wrap; }
+.notes-export-bar button { padding: 8px 18px; border-radius: 8px; border: 1px solid rgba(17,153,142,0.3); background: rgba(17,153,142,0.12); color: #11998e; cursor: pointer; font-size: 0.82em; }
+.notes-export-bar button:hover { background: rgba(17,153,142,0.28); }
+.notes-count { color: rgba(255,255,255,0.4); font-size: 0.82em; }
+
+/* === Advanced Search & Filtering === */
+.advanced-search-toggle { color: #11998e; cursor: pointer; font-size: 0.82em; margin-left: 10px; }
+.advanced-search-toggle:hover { text-decoration: underline; }
+.advanced-filters { display: none; background: rgba(255,255,255,0.02); border-radius: 10px; padding: 16px; margin-top: 12px; border: 1px solid rgba(17,153,142,0.1); }
+.advanced-filters.visible { display: block; }
+.advanced-filters .filter-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+.advanced-filters label { color: rgba(255,255,255,0.5); font-size: 0.8em; min-width: 60px; }
+.advanced-filters input, .advanced-filters select { padding: 8px 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.85em; outline: none; }
+.advanced-filters input:focus { border-color: #11998e; }
+.multi-keyword-select { display: flex; flex-wrap: wrap; gap: 6px; max-width: 400px; }
+.multi-keyword-select span { padding: 3px 10px; border-radius: 10px; background: rgba(17,153,142,0.12); color: #11998e; font-size: 0.75em; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; }
+.multi-keyword-select span:hover { border-color: rgba(17,153,142,0.3); }
+.multi-keyword-select span.selected { background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff; }
+.sort-bar { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.sort-bar span { color: rgba(255,255,255,0.4); font-size: 0.8em; }
+.sort-bar button { padding: 5px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.6); cursor: pointer; font-size: 0.78em; }
+.sort-bar button:hover { border-color: #11998e; color: #11998e; }
+.sort-bar button.active-sort { background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff; border-color: transparent; }
+.highlight { background: rgba(56,239,125,0.25); color: #38ef7d; padding: 1px 3px; border-radius: 3px; }
+.search-stats { color: rgba(255,255,255,0.4); font-size: 0.82em; margin-bottom: 10px; }
+.search-stats strong { color: #38ef7d; }
+/* Export buttons */
+.export-bar {
+    display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
+}
+.export-bar button {
+    padding: 8px 18px; border-radius: 8px; border: 1px solid rgba(17,153,142,0.3);
+    background: rgba(17,153,142,0.15); color: #11998e; cursor: pointer;
+    font-size: 0.85em; transition: all 0.2s;
+}
+.export-bar button:hover { background: rgba(17,153,142,0.3); }
+/* Author list */
+.author-list { list-style: none; padding: 0; }
+.author-list li {
+    display: flex; justify-content: space-between; padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.author-list li .name { color: rgba(255,255,255,0.7); }
+.author-list li .count { color: #38ef7d; }
+/* Graph tooltip */
+.graph-tooltip {
+    position: absolute; background: rgba(0,0,0,0.85); color: #fff;
+    padding: 6px 10px; border-radius: 6px; font-size: 0.78em;
+    pointer-events: none; z-index: 100; max-width: 250px;
+}
+</style>
+
+<div class="crypto-header">
+    <h1>📜 密码学论文系统</h1>
+    <p>浙江理工大学通信学硕 · 密码学研究进展 · 80+论文汇总</p>
+</div>
+
+<div class="stats-bar">
+    <div class="stat"><div class="stat-num" id="paperCount">80+</div><div class="stat-label">论文总数</div></div>
+    <div class="stat"><div class="stat-num" id="readCount">-</div><div class="stat-label">已读完</div></div>
+    <div class="stat"><div class="stat-num" id="readingCount">-</div><div class="stat-label">阅读中</div></div>
+    <div class="stat"><div class="stat-num" id="noteCount">-</div><div class="stat-label">有笔记</div></div>
+    <div class="stat"><div class="stat-num">1949</div><div class="stat-label">起始年份</div></div>
+</div>
+
+<div class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('papers',this)">📄 论文列表</button>
+    <button class="tab-btn" onclick="showTab('timeline',this)">📅 研究时间线</button>
+    <button class="tab-btn" onclick="showTab('stats',this)">📊 统计概览</button>
+    <button class="tab-btn" onclick="showTab('tags',this)">🏷️ 标签云</button>
+    <button class="tab-btn" onclick="showTab('graph',this)">🔗 引用图</button>
+    <button class="tab-btn" onclick="showTab('d3graph',this)">🌐 D3引用图谱</button>
+    <button class="tab-btn" onclick="showTab('notes',this)">📝 我的笔记</button>
+</div>
+
+<!-- ==================== PAPERS TAB ==================== -->
+<div id="papers" class="tab-content active">
+    <form class="filters" method="GET" action="/crypto" id="filterForm">
+        <select name="category">
+            <option value="">所有分类</option>
+            {% for c in categories %}
+            <option value="{{ c.category }}" {% if filter_category == c.category %}selected{% endif %}>{{ c.category }}</option>
+            {% endfor %}
+        </select>
+        <input type="number" name="year_from" placeholder="起始年份" value="{{ year_from or min_year }}" style="width:100px;">
+        <input type="number" name="year_to" placeholder="截止年份" value="{{ year_to or max_year }}" style="width:100px;">
+        <input type="text" name="search" placeholder="搜索论文..." value="{{ search }}" id="searchInput">
+        <button type="submit">🔍 搜索</button>
+        <a href="/crypto" style="color:rgba(255,255,255,0.5);text-decoration:none;margin-left:10px;">重置</a>
+        <span class="advanced-search-toggle" onclick="toggleAdvancedFilters()">⚙️ 高级搜索</span>
+    </form>
+
+    <!-- Advanced Filters Panel -->
+    <div class="advanced-filters" id="advancedFilters">
+        <div class="filter-row">
+            <label>作者</label>
+            <input type="text" id="advAuthor" placeholder="输入作者名..." style="width:200px;">
+        </div>
+        <div class="filter-row">
+            <label>关键词</label>
+            <div class="multi-keyword-select" id="advKeywords"></div>
+        </div>
+        <div class="filter-row">
+            <label>期刊</label>
+            <input type="text" id="advVenue" placeholder="输入期刊/会议名..." style="width:250px;">
+        </div>
+        <div class="filter-row">
+            <label>摘要</label>
+            <input type="text" id="advSummary" placeholder="搜索摘要内容..." style="width:300px;">
+        </div>
+        <div class="sort-bar">
+            <label style="color:rgba(255,255,255,0.5);font-size:0.8em;min-width:60px;">排序</label>
+            <button onclick="sortPapers('year_desc',this)" class="active-sort" id="sort_year_desc">年份↓</button>
+            <button onclick="sortPapers('year_asc',this)" id="sort_year_asc">年份↑</button>
+            <button onclick="sortPapers('title_asc',this)" id="sort_title_asc">标题 A-Z</button>
+            <button onclick="sortPapers('author_asc',this)" id="sort_author_asc">作者 A-Z</button>
+            <button onclick="sortPapers('relevance',this)" id="sort_relevance">相关度</button>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:10px;justify-content:flex-end;">
+            <button onclick="applyAdvancedFilters()" style="padding:8px 20px;border-radius:8px;background:linear-gradient(135deg,#11998e,#38ef7d);border:none;color:#fff;cursor:pointer;font-size:0.85em;">应用筛选</button>
+            <button onclick="resetAdvancedFilters()" style="padding:8px 20px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);cursor:pointer;font-size:0.85em;">重置</button>
+        </div>
+    </div>
+
+    <!-- Search stats -->
+    <div class="search-stats" id="searchStats"></div>
+
+    <!-- Client-side status filter -->
+    <div class="status-filter" style="margin-bottom:15px;">
+        <label class="active" onclick="filterStatus('all',this)">全部</label>
+        <label onclick="filterStatus('unread',this)">📖 未读</label>
+        <label onclick="filterStatus('reading',this)">📘 阅读中</label>
+        <label onclick="filterStatus('done',this)">✅ 已读完</label>
+    </div>
+
+    <!-- Compare & Export bar -->
+    <div class="export-bar">
+        <span style="color:rgba(255,255,255,0.5);font-size:0.85em;">已选 <strong id="selectedCount" style="color:#38ef7d;">0</strong> 篇</span>
+        <button onclick="openCompare()" id="compareBtn" disabled>📊 对比选中</button>
+        <button onclick="clearSelection()">清除选择</button>
+        <span style="margin-left:auto;"></span>
+        <button onclick="exportCitations('bibtex')">📄 BibTeX</button>
+        <button onclick="exportCitations('apa')">📄 APA</button>
+        <button onclick="exportCitations('mla')">📄 MLA</button>
+    </div>
+
+    <div class="paper-grid" id="paperGrid">
+        {% for paper in papers %}
+        <div class="paper-card" data-id="{{ loop.index0 }}" data-year="{{ paper.year }}" data-category="{{ paper.category }}">
+            <input type="checkbox" class="p-compare-cb" onchange="toggleSelect({{ loop.index0 }}, this)">
+            <div class="p-header">
+                <h3>{{ paper.title }}</h3>
+                <span class="p-year">{{ paper.year }}</span>
+            </div>
+            <div class="p-authors">👥 {{ paper.authors }}</div>
+            <div class="p-summary">{{ paper.summary }}</div>
+            <div class="p-keywords">
+                {% for kw in paper.keywords.split(',')[:5] %}
+                <span>{{ kw.strip() }}</span>
+                {% endfor %}
+            </div>
+            <div class="p-venue">📍 {{ paper.venue }} · {{ paper.category }}</div>
+            {% if paper.pdf_url %}
+            <a class="p-link" href="{{ paper.pdf_url }}" target="_blank">🔗 查看原文 →</a>
+            {% endif %}
+            <div class="p-actions">
+                <button onclick="setStatus({{ loop.index0 }}, 'unread', this)" id="status-unread-{{ loop.index0 }}" class="status-btn">📖 未读</button>
+                <button onclick="setStatus({{ loop.index0 }}, 'reading', this)" id="status-reading-{{ loop.index0 }}" class="status-btn">📘 阅读中</button>
+                <button onclick="setStatus({{ loop.index0 }}, 'done', this)" id="status-done-{{ loop.index0 }}" class="status-btn">✅ 读完</button>
+                <button onclick="openNoteEditor({{ loop.index0 }}, '{{ paper.title }}')">📝 笔记</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ==================== TIMELINE TAB ==================== -->
+<div id="timeline" class="tab-content">
+    <h2 style="text-align:center;margin-bottom:30px;">密码学研究进展时间线</h2>
+    <div class="timeline">
+        {% for paper in papers|sort(attribute='year') %}
+        <div class="timeline-item">
+            <div class="dot"></div>
+            <div class="timeline-card">
+                <div class="year">{{ paper.year }}</div>
+                <h3>{{ paper.title }}</h3>
+                <div class="authors">{{ paper.authors }}</div>
+                <div class="venue">{{ paper.venue }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ==================== STATS TAB ==================== -->
+<div id="stats" class="tab-content">
+    <h2 style="text-align:center;margin-bottom:30px;">📊 论文统计概览</h2>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-num" id="statTotal">{{ papers|length }}</div>
+            <div class="stat-label">论文总数</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" id="statCats">{{ categories|length }}</div>
+            <div class="stat-label">研究方向</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" id="statSpan">{{ max_year - min_year }}</div>
+            <div class="stat-label">年跨度</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" id="statDone">0</div>
+            <div class="stat-label">已读完</div>
+        </div>
+    </div>
+
+    <h3 style="margin:30px 0 15px;">📈 每年论文数</h3>
+    <div id="yearChart" style="margin-bottom:30px;"></div>
+
+    <h3 style="margin:30px 0 15px;">🏆 高产作者 Top 10</h3>
+    <ul class="author-list" id="authorList"></ul>
+
+    <h3 style="margin:30px 0 15px;">📂 研究方向分布</h3>
+    {% for cat in categories %}
+    <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+            <span>{{ cat.category }}</span>
+            <span style="color:#38ef7d;">{{ papers|selectattr('category', 'equalto', cat.category)|list|length }} 篇</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border-radius:8px;height:8px;overflow:hidden;">
+            <div style="background:linear-gradient(90deg,#11998e,#38ef7d);height:100%;border-radius:8px;
+                width:{{ (papers|selectattr('category', 'equalto', cat.category)|list|length / papers|length * 100) if papers|length > 0 else 0 }}%;">
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- ==================== TAGS TAB ==================== -->
+<div id="tags" class="tab-content">
+    <h2 style="text-align:center;margin-bottom:30px;">🏷️ 关键词标签云</h2>
+    <div class="tag-cloud" id="tagCloud"></div>
+    <div id="tagResults" style="padding: 20px 0;"></div>
+</div>
+
+<!-- ==================== D3 CITATION GRAPH TAB ==================== -->
+<div id="d3graph" class="tab-content">
+    <h2 style="text-align:center;margin-bottom:10px;">🌐 D3.js 论文引用图谱</h2>
+    <p style="text-align:center;color:rgba(255,255,255,0.4);font-size:0.85em;margin-bottom:15px;">
+        交互式力导向图 · 拖拽节点调整布局 · 滚轮缩放 · 点击查看详情
+    </p>
+    <div class="d3-controls">
+        <button onclick="d3SetLayout('force')" id="d3layout-force" class="active-d3-btn">力导向</button>
+        <button onclick="d3SetLayout('circular')" id="d3layout-circular">环形</button>
+        <button onclick="d3SetLayout('category')" id="d3layout-category">按分类</button>
+        <button onclick="d3SetLayout('timeline')" id="d3layout-timeline">时间轴</button>
+        <span style="color:rgba(255,255,255,0.3);font-size:0.78em;">|</span>
+        <label style="color:rgba(255,255,255,0.5);font-size:0.8em;">连接强度</label>
+        <input type="range" id="d3Threshold" min="1" max="5" value="2" onchange="d3UpdateThreshold(this.value)" style="width:80px;accent-color:#11998e;">
+        <span id="d3ThresholdLabel" style="color:#38ef7d;font-size:0.8em;">2</span>
+        <span style="color:rgba(255,255,255,0.3);font-size:0.78em;">|</span>
+        <button onclick="d3ResetZoom()">重置视图</button>
+        <button onclick="d3ToggleLabels()">切换标签</button>
+    </div>
+    <div id="d3CitationGraph"></div>
+    <div class="d3-legend" id="d3Legend"></div>
+    <!-- D3 Node Detail Panel -->
+    <div id="d3NodeDetail" style="display:none;margin-top:15px;background:rgba(255,255,255,0.04);border-radius:12px;padding:20px;border:1px solid rgba(17,153,142,0.2);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <h3 id="d3DetailTitle" style="color:#fff;font-size:1.05em;margin:0;"></h3>
+            <button onclick="d3CloseDetail()" style="background:none;border:none;color:rgba(255,255,255,0.5);font-size:1.3em;cursor:pointer;">&times;</button>
+        </div>
+        <div id="d3DetailContent" style="color:rgba(255,255,255,0.6);font-size:0.85em;line-height:1.7;"></div>
+        <div id="d3DetailConnections" style="margin-top:12px;"></div>
+    </div>
+</div>
+
+<!-- ==================== CITATION GRAPH TAB (legacy) ==================== -->
+<div id="graph" class="tab-content">
+    <h2 style="text-align:center;margin-bottom:10px;">🔗 论文引用关系图</h2>
+    <p style="text-align:center;color:rgba(255,255,255,0.4);font-size:0.85em;margin-bottom:20px;">
+        基于关键词相似度构建的论文关联图 · 节点大小表示连接数 · 点击节点查看详情
+    </p>
+    <div id="citationGraph"></div>
+</div>
+
+<!-- ==================== NOTES TAB ==================== -->
+<div id="notes" class="tab-content">
+    <h2 style="text-align:center;margin-bottom:30px;">📝 我的阅读笔记</h2>
+    <div id="notesList" style="max-width:800px;margin:0 auto;"></div>
+</div>
+
+<!-- ==================== COMPARE MODAL ==================== -->
+<div class="modal-overlay" id="compareModal">
+    <div class="modal">
+        <button class="close-btn" onclick="closeCompare()">&times;</button>
+        <h2>📊 论文对比</h2>
+        <div class="compare-grid" id="compareGrid"></div>
+    </div>
+</div>
+
+<!-- ==================== NOTE MODAL ==================== -->
+<div class="modal-overlay" id="noteModal">
+    <div class="modal" style="width:600px;">
+        <button class="close-btn" onclick="closeNoteModal()">&times;</button>
+        <h2 id="noteModalTitle">📝 笔记</h2>
+        <div class="notes-panel">
+            <textarea id="noteTextarea" placeholder="在此输入你的阅读笔记..."></textarea>
+            <div style="margin-top:8px;">
+                <button class="save-btn" onclick="saveNote()">💾 保存笔记</button>
+                <span class="note-saved" id="noteSaved" style="display:none;">✓ 已保存</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== EXPORT MODAL ==================== -->
+<div class="modal-overlay" id="exportModal">
+    <div class="modal" style="width:700px;">
+        <button class="close-btn" onclick="closeExportModal()">&times;</button>
+        <h2 id="exportModalTitle">📄 导出引用</h2>
+        <textarea id="exportContent" style="width:100%;min-height:300px;background:rgba(255,255,255,0.05);
+            border:1px solid rgba(17,153,142,0.2);border-radius:10px;color:#fff;padding:12px;
+            font-family:monospace;font-size:0.82em;resize:vertical;outline:none;"></textarea>
+        <div style="margin-top:10px;">
+            <button class="save-btn" onclick="copyExport()">📋 复制到剪贴板</button>
+            <span class="note-saved" id="copySaved" style="display:none;">✓ 已复制</span>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== DATA ====================
+var allPapers = [
+  {% for paper in papers %}
+  {
+    id: {{ loop.index0 }},
+    title: {{ paper.title|tojson }},
+    authors: {{ paper.authors|tojson }},
+    year: {{ paper.year }},
+    summary: {{ paper.summary|tojson }},
+    keywords: {{ paper.keywords|tojson }},
+    venue: {{ paper.venue|tojson }},
+    category: {{ paper.category|tojson }},
+    pdf_url: {{ (paper.pdf_url or '')|tojson }}
+  }{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+// ==================== TAB NAVIGATION ====================
+function showTab(id, el) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    var target = document.getElementById(id);
+    if (target) target.classList.add('active');
+    if (el) el.classList.add('active');
+
+    // Lazy-init tabs
+    if (id === 'stats') initStats();
+    if (id === 'tags') initTagCloud();
+    if (id === 'graph') initCitationGraph();
+    if (id === 'notes') renderNotesList();
+}
+
+// ==================== READING STATUS ====================
+function loadStatuses() {
+    try { return JSON.parse(localStorage.getItem('paperStatuses') || '{}'); } catch(e) { return {}; }
+}
+function saveStatuses(s) { localStorage.setItem('paperStatuses', JSON.stringify(s)); }
+
+function setStatus(id, status, btn) {
+    var statuses = loadStatuses();
+    statuses[id] = status;
+    saveStatuses(statuses);
+    updateStatusUI(id);
+    updateStatsBar();
+}
+
+function updateStatusUI(id) {
+    var statuses = loadStatuses();
+    var s = statuses[id] || 'unread';
+    ['unread','reading','done'].forEach(function(st) {
+        var b = document.getElementById('status-' + st + '-' + id);
+        if (b) b.classList.toggle('active-toggle', st === s);
+    });
+    // Update card data attribute for filtering
+    var card = document.querySelector('.paper-card[data-id="' + id + '"]');
+    if (card) card.setAttribute('data-status', s);
+}
+
+function initStatuses() {
+    allPapers.forEach(function(p) { updateStatusUI(p.id); });
+    updateStatsBar();
+}
+
+function updateStatsBar() {
+    var statuses = loadStatuses();
+    var done = 0, reading = 0;
+    for (var k in statuses) {
+        if (statuses[k] === 'done') done++;
+        if (statuses[k] === 'reading') reading++;
+    }
+    document.getElementById('readCount').textContent = done;
+    document.getElementById('readingCount').textContent = reading;
+    var statDone = document.getElementById('statDone');
+    if (statDone) statDone.textContent = done;
+
+    // Count notes
+    var notes = loadNotes();
+    var noteCount = Object.keys(notes).filter(function(k) { return notes[k].trim().length > 0; }).length;
+    document.getElementById('noteCount').textContent = noteCount;
+}
+
+// ==================== STATUS FILTER ====================
+var currentStatusFilter = 'all';
+function filterStatus(status, label) {
+    currentStatusFilter = status;
+    document.querySelectorAll('.status-filter label').forEach(function(l) { l.classList.remove('active'); });
+    label.classList.add('active');
+    applyStatusFilter();
+}
+
+function applyStatusFilter() {
+    var cards = document.querySelectorAll('.paper-card');
+    cards.forEach(function(card) {
+        var id = card.getAttribute('data-id');
+        var statuses = loadStatuses();
+        var s = statuses[id] || 'unread';
+        if (currentStatusFilter === 'all' || s === currentStatusFilter) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+// ==================== PAPER SELECTION & COMPARE ====================
+var selectedPapers = [];
+
+function toggleSelect(id, cb) {
+    var idx = selectedPapers.indexOf(id);
+    if (cb.checked && idx === -1) {
+        if (selectedPapers.length >= 3) {
+            cb.checked = false;
+            alert('最多选择3篇论文进行对比');
+            return;
+        }
+        selectedPapers.push(id);
+    } else if (!cb.checked && idx !== -1) {
+        selectedPapers.splice(idx, 1);
+    }
+    document.getElementById('selectedCount').textContent = selectedPapers.length;
+    document.getElementById('compareBtn').disabled = selectedPapers.length < 2;
+}
+
+function clearSelection() {
+    selectedPapers = [];
+    document.querySelectorAll('.p-compare-cb').forEach(function(cb) { cb.checked = false; });
+    document.getElementById('selectedCount').textContent = 0;
+    document.getElementById('compareBtn').disabled = true;
+}
+
+function openCompare() {
+    if (selectedPapers.length < 2) return;
+    var grid = document.getElementById('compareGrid');
+    grid.innerHTML = '';
+    selectedPapers.forEach(function(id) {
+        var p = allPapers[id];
+        if (!p) return;
+        var card = document.createElement('div');
+        card.className = 'compare-card';
+        card.innerHTML =
+            '<h4>' + escHtml(p.title) + '</h4>' +
+            '<div class="field"><div class="field-label">作者</div><div class="field-value">' + escHtml(p.authors) + '</div></div>' +
+            '<div class="field"><div class="field-label">年份</div><div class="field-value">' + p.year + '</div></div>' +
+            '<div class="field"><div class="field-label">分类</div><div class="field-value">' + escHtml(p.category) + '</div></div>' +
+            '<div class="field"><div class="field-label">期刊/会议</div><div class="field-value">' + escHtml(p.venue) + '</div></div>' +
+            '<div class="field"><div class="field-label">关键词</div><div class="field-value">' + escHtml(p.keywords) + '</div></div>' +
+            '<div class="field"><div class="field-label">摘要</div><div class="field-value">' + escHtml(p.summary) + '</div></div>';
+        grid.appendChild(card);
+    });
+    document.getElementById('compareModal').classList.add('active');
+}
+
+function closeCompare() {
+    document.getElementById('compareModal').classList.remove('active');
+}
+
+// ==================== NOTES ====================
+function loadNotes() {
+    try { return JSON.parse(localStorage.getItem('paperNotes') || '{}'); } catch(e) { return {}; }
+}
+function saveNotes(n) { localStorage.setItem('paperNotes', JSON.stringify(n)); }
+
+var currentNoteId = null;
+
+function openNoteEditor(id, title) {
+    currentNoteId = id;
+    document.getElementById('noteModalTitle').textContent = '📝 ' + title;
+    var notes = loadNotes();
+    document.getElementById('noteTextarea').value = notes[id] || '';
+    document.getElementById('noteSaved').style.display = 'none';
+    document.getElementById('noteModal').classList.add('active');
+}
+
+function closeNoteModal() {
+    document.getElementById('noteModal').classList.remove('active');
+    currentNoteId = null;
+}
+
+function saveNote() {
+    if (currentNoteId === null) return;
+    var notes = loadNotes();
+    notes[currentNoteId] = document.getElementById('noteTextarea').value;
+    saveNotes(notes);
+    document.getElementById('noteSaved').style.display = 'inline';
+    updateStatsBar();
+}
+
+function renderNotesList() {
+    var notes = loadNotes();
+    var container = document.getElementById('notesList');
+    var hasNotes = false;
+    var html = '';
+    allPapers.forEach(function(p) {
+        var note = notes[p.id] || '';
+        if (note.trim().length > 0) {
+            hasNotes = true;
+            html += '<div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:18px;margin-bottom:15px;border:1px solid rgba(17,153,142,0.15);">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+                '<h4 style="color:#38ef7d;font-size:0.95em;">' + escHtml(p.title) + ' <span style="color:rgba(255,255,255,0.3);font-size:0.8em;">(' + p.year + ')</span></h4>' +
+                '<button onclick="openNoteEditor(' + p.id + ',\'' + escJs(p.title) + '\')" style="padding:4px 12px;border-radius:6px;border:1px solid rgba(17,153,142,0.3);background:rgba(17,153,142,0.1);color:#11998e;cursor:pointer;font-size:0.78em;">编辑</button>' +
+                '</div>' +
+                '<div style="color:rgba(255,255,255,0.6);font-size:0.85em;white-space:pre-wrap;">' + escHtml(note) + '</div>' +
+                '</div>';
+        }
+    });
+    if (!hasNotes) {
+        html = '<p style="text-align:center;color:rgba(255,255,255,0.3);padding:40px;">还没有笔记。在论文列表中点击"📝 笔记"按钮添加。</p>';
+    }
+    container.innerHTML = html;
+}
+
+// ==================== TAG CLOUD ====================
+function initTagCloud() {
+    var kwCount = {};
+    allPapers.forEach(function(p) {
+        p.keywords.split(',').forEach(function(kw) {
+            var k = kw.trim();
+            if (k) kwCount[k] = (kwCount[k] || 0) + 1;
+        });
+    });
+    var tags = Object.keys(kwCount).map(function(k) { return { text: k, count: kwCount[k] }; });
+    tags.sort(function(a, b) { return b.count - a.count; });
+    var maxCount = tags.length > 0 ? tags[0].count : 1;
+    var minCount = tags.length > 0 ? tags[tags.length - 1].count : 1;
+
+    var container = document.getElementById('tagCloud');
+    container.innerHTML = '';
+    tags.forEach(function(tag) {
+        var size = 0.7 + (tag.count - minCount) / (maxCount - minCount || 1) * 1.1;
+        var opacity = 0.5 + (tag.count - minCount) / (maxCount - minCount || 1) * 0.5;
+        var span = document.createElement('span');
+        span.className = 'tag';
+        span.textContent = tag.text + ' (' + tag.count + ')';
+        span.style.fontSize = size + 'em';
+        span.style.opacity = opacity;
+        span.style.background = 'rgba(17,153,142,' + (0.1 + opacity * 0.2) + ')';
+        span.style.color = '#11998e';
+        span.onclick = function() { filterByTag(tag.text); };
+        container.appendChild(span);
+    });
+}
+
+function filterByTag(tag) {
+    showTab('papers', document.querySelectorAll('.tab-btn')[0]);
+    var cards = document.querySelectorAll('.paper-card');
+    var count = 0;
+    cards.forEach(function(card) {
+        var id = parseInt(card.getAttribute('data-id'));
+        var p = allPapers[id];
+        if (p && p.keywords.toLowerCase().indexOf(tag.toLowerCase()) !== -1) {
+            card.style.display = '';
+            count++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    document.getElementById('tagResults').innerHTML =
+        '<p style="text-align:center;color:rgba(255,255,255,0.5);">标签 "<strong style="color:#38ef7d;">' + escHtml(tag) + '</strong>" 匹配 ' + count + ' 篇论文 · ' +
+        '<a href="#" onclick="clearTagFilter();return false;" style="color:#11998e;">清除筛选</a></p>';
+}
+
+function clearTagFilter() {
+    document.querySelectorAll('.paper-card').forEach(function(c) { c.style.display = ''; });
+    document.getElementById('tagResults').innerHTML = '';
+}
+
+// ==================== CITATION GRAPH ====================
+function initCitationGraph() {
+    var container = document.getElementById('citationGraph');
+    container.innerHTML = '';
+
+    // Build similarity graph based on shared keywords
+    var n = Math.min(allPapers.length, 50); // Limit for performance
+    var nodes = [];
+    var links = [];
+
+    for (var i = 0; i < n; i++) {
+        nodes.push({ id: i, paper: allPapers[i], connections: 0 });
+    }
+
+    // Compute keyword overlap
+    for (var i = 0; i < n; i++) {
+        var kwI = allPapers[i].keywords.toLowerCase().split(',').map(function(s) { return s.trim(); });
+        for (var j = i + 1; j < n; j++) {
+            var kwJ = allPapers[j].keywords.toLowerCase().split(',').map(function(s) { return s.trim(); });
+            var overlap = 0;
+            kwI.forEach(function(k) { if (kwJ.indexOf(k) !== -1) overlap++; });
+            if (overlap >= 2) {
+                links.push({ source: i, target: j, weight: overlap });
+                nodes[i].connections++;
+                nodes[j].connections++;
+            }
+        }
+    }
+
+    var W = 800, H = 500;
+    // Simple force-like layout: random initial, then a few iterations
+    var positions = nodes.map(function(node) {
+        return { x: Math.random() * (W - 100) + 50, y: Math.random() * (H - 100) + 50 };
+    });
+
+    // Simple repulsion/attraction iterations
+    for (var iter = 0; iter < 50; iter++) {
+        var forces = nodes.map(function() { return { x: 0, y: 0 }; });
+        // Repulsion
+        for (var i = 0; i < n; i++) {
+            for (var j = i + 1; j < n; j++) {
+                var dx = positions[i].x - positions[j].x;
+                var dy = positions[i].y - positions[j].y;
+                var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                var f = 500 / (dist * dist);
+                forces[i].x += (dx / dist) * f;
+                forces[i].y += (dy / dist) * f;
+                forces[j].x -= (dx / dist) * f;
+                forces[j].y -= (dy / dist) * f;
+            }
+        }
+        // Attraction along links
+        links.forEach(function(link) {
+            var si = link.source, ti = link.target;
+            var dx = positions[ti].x - positions[si].x;
+            var dy = positions[ti].y - positions[si].y;
+            var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            var f = dist * 0.01 * link.weight;
+            forces[si].x += (dx / dist) * f;
+            forces[si].y += (dy / dist) * f;
+            forces[ti].x -= (dx / dist) * f;
+            forces[ti].y -= (dy / dist) * f;
+        });
+        // Center gravity
+        nodes.forEach(function(_, i) {
+            forces[i].x += (W / 2 - positions[i].x) * 0.01;
+            forces[i].y += (H / 2 - positions[i].y) * 0.01;
+            positions[i].x += forces[i].x * 0.5;
+            positions[i].y += forces[i].y * 0.5;
+            positions[i].x = Math.max(30, Math.min(W - 30, positions[i].x));
+            positions[i].y = Math.max(30, Math.min(H - 30, positions[i].y));
+        });
+    }
+
+    // Color by category
+    var cats = {};
+    var catIdx = 0;
+    var colors = ['#11998e','#38ef7d','#e94560','#f59e0b','#6366f1','#ec4899','#14b8a6','#f97316','#8b5cf6','#06b6d4','#84cc16','#e11d48'];
+    nodes.forEach(function(node) {
+        if (!(node.paper.category in cats)) {
+            cats[node.paper.category] = colors[catIdx % colors.length];
+            catIdx++;
+        }
+    });
+
+    var svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">';
+    // Links
+    links.forEach(function(link) {
+        var s = positions[link.source], t = positions[link.target];
+        var opacity = Math.min(0.6, 0.15 + link.weight * 0.1);
+        svg += '<line x1="' + s.x + '" y1="' + s.y + '" x2="' + t.x + '" y2="' + t.y +
+            '" stroke="rgba(17,153,142,' + opacity + '" stroke-width="' + Math.min(link.weight, 3) + '"/>';
+    });
+    // Nodes
+    nodes.forEach(function(node) {
+        var pos = positions[node.id];
+        var r = 4 + Math.min(node.connections * 1.5, 12);
+        var color = cats[node.paper.category] || '#11998e';
+        svg += '<circle cx="' + pos.x + '" cy="' + pos.y + '" r="' + r +
+            '" fill="' + color + '" opacity="0.85" stroke="rgba(255,255,255,0.2)" stroke-width="1"' +
+            ' style="cursor:pointer;" class="graph-node" data-id="' + node.id + '"/>';
+        if (node.connections >= 3) {
+            svg += '<text x="' + pos.x + '" y="' + (pos.y - r - 4) +
+                '" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="9">' +
+                escHtml(node.paper.title.substring(0, 30)) + '</text>';
+        }
+    });
+    svg += '</svg>';
+
+    // Legend
+    svg += '<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px;">';
+    for (var cat in cats) {
+        svg += '<span style="display:flex;align-items:center;gap:4px;font-size:0.78em;color:rgba(255,255,255,0.5);">' +
+            '<span style="width:10px;height:10px;border-radius:50%;background:' + cats[cat] + ';display:inline-block;"></span>' +
+            escHtml(cat) + '</span>';
+    }
+    svg += '</div>';
+
+    container.innerHTML = svg;
+
+    // Tooltip on hover
+    var tooltip = document.createElement('div');
+    tooltip.className = 'graph-tooltip';
+    tooltip.style.display = 'none';
+    container.style.position = 'relative';
+    container.appendChild(tooltip);
+
+    container.querySelectorAll('.graph-node').forEach(function(node) {
+        node.addEventListener('mouseenter', function(e) {
+            var id = parseInt(this.getAttribute('data-id'));
+            var p = allPapers[id];
+            tooltip.innerHTML = '<strong>' + escHtml(p.title) + '</strong><br>' + escHtml(p.authors) + ' (' + p.year + ')<br>' +
+                '分类: ' + escHtml(p.category) + '<br>关键词: ' + escHtml(p.keywords);
+            tooltip.style.display = 'block';
+        });
+        node.addEventListener('mousemove', function(e) {
+            var rect = container.getBoundingClientRect();
+            tooltip.style.left = (e.clientX - rect.left + 10) + 'px';
+            tooltip.style.top = (e.clientY - rect.top - 10) + 'px';
+        });
+        node.addEventListener('mouseleave', function() { tooltip.style.display = 'none'; });
+    });
+}
+
+// ==================== STATS TAB ====================
+var statsInitialized = false;
+function initStats() {
+    if (statsInitialized) return;
+    statsInitialized = true;
+
+    // Year chart
+    var yearCount = {};
+    allPapers.forEach(function(p) { yearCount[p.year] = (yearCount[p.year] || 0) + 1; });
+    var years = Object.keys(yearCount).sort();
+    var maxYearCount = Math.max.apply(null, Object.values(yearCount));
+    var chartHtml = '';
+    years.forEach(function(y) {
+        var w = (yearCount[y] / maxYearCount * 100).toFixed(1);
+        chartHtml += '<div class="chart-bar">' +
+            '<span class="label">' + y + '</span>' +
+            '<div class="bar" style="width:' + w + '%;"></div>' +
+            '<span class="count">' + yearCount[y] + '</span></div>';
+    });
+    document.getElementById('yearChart').innerHTML = chartHtml;
+
+    // Top authors
+    var authorCount = {};
+    allPapers.forEach(function(p) {
+        p.authors.split(',').forEach(function(a) {
+            var name = a.trim();
+            if (name) authorCount[name] = (authorCount[name] || 0) + 1;
+        });
+    });
+    var authors = Object.keys(authorCount).map(function(a) { return { name: a, count: authorCount[a] }; });
+    authors.sort(function(a, b) { return b.count - a.count; });
+    var listHtml = '';
+    authors.slice(0, 10).forEach(function(a) {
+        listHtml += '<li><span class="name">' + escHtml(a.name) + '</span><span class="count">' + a.count + ' 篇</span></li>';
+    });
+    document.getElementById('authorList').innerHTML = listHtml;
+}
+
+// ==================== EXPORT CITATIONS ====================
+function exportCitations(format) {
+    var papers = selectedPapers.length > 0 ? selectedPapers.map(function(id) { return allPapers[id]; }) : allPapers;
+    var output = '';
+
+    if (format === 'bibtex') {
+        papers.forEach(function(p, i) {
+            var key = p.authors.split(',')[0].trim().split(' ').pop().toLowerCase() + p.year + (i + 1);
+            output += '@article{' + key + ',\n';
+            output += '  title = {' + p.title + '},\n';
+            output += '  author = {' + p.authors + '},\n';
+            output += '  year = {' + p.year + '},\n';
+            output += '  journal = {' + p.venue + '},\n';
+            output += '  keywords = {' + p.keywords + '}\n';
+            output += '}\n\n';
+        });
+    } else if (format === 'apa') {
+        papers.forEach(function(p) {
+            output += p.authors + ' (' + p.year + '). ' + p.title + '. ' + p.venue + '.\n\n';
+        });
+    } else if (format === 'mla') {
+        papers.forEach(function(p) {
+            var firstAuthor = p.authors.split(',')[0].trim();
+            var parts = firstAuthor.split(' ');
+            var lastName = parts.length > 1 ? parts[parts.length - 1] : firstAuthor;
+            var firstNames = parts.length > 1 ? parts.slice(0, -1).join(' ') : '';
+            output += lastName + ', ' + firstNames + '. "' + p.title + '." ' + p.venue + ', ' + p.year + '.\n\n';
+        });
+    }
+
+    document.getElementById('exportModalTitle').textContent = '📄 导出 ' + format.toUpperCase() + ' 格式 (' + papers.length + ' 篇)';
+    document.getElementById('exportContent').value = output;
+    document.getElementById('copySaved').style.display = 'none';
+    document.getElementById('exportModal').classList.add('active');
+}
+
+function closeExportModal() {
+    document.getElementById('exportModal').classList.remove('active');
+}
+
+function copyExport() {
+    var ta = document.getElementById('exportContent');
+    ta.select();
+    document.execCommand('copy');
+    document.getElementById('copySaved').style.display = 'inline';
+}
+
+// ==================== UTILITIES ====================
+function escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escJs(s) {
+    if (!s) return '';
+    return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"');
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', function() {
+    initStatuses();
+    updateStatsBar();
+});
+</script>
+{% endblock %}

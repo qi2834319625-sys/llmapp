@@ -1,0 +1,2327 @@
+{% extends "base.html" %}
+{% block title %}投资管理系统{% endblock %}
+{% block content %}
+<style>
+:root {
+  --accent: #ffd200;
+  --accent2: #f7971e;
+  --bg-card: rgba(255,255,255,0.05);
+  --bg-card-hover: rgba(255,255,255,0.08);
+  --border: rgba(247,151,30,0.15);
+  --text: #ffffff;
+  --text-dim: rgba(255,255,255,0.5);
+  --text-mid: rgba(255,255,255,0.7);
+  --green: #4caf50;
+  --red: #f44336;
+  --orange: #ff9800;
+}
+
+/* ===== Header ===== */
+.inv-header {
+  text-align: center;
+  padding: 30px 20px 10px;
+}
+.inv-header h1 {
+  font-size: 2.2em;
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.inv-header p {
+  color: var(--text-dim);
+  margin-top: 8px;
+}
+
+/* ===== Content ===== */
+.content {
+  padding: 20px 30px 60px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ===== News Ticker ===== */
+.ticker-wrap {
+  overflow: hidden;
+  background: rgba(247,151,30,0.08);
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  height: 40px;
+  display: flex;
+  align-items: center;
+}
+.ticker {
+  display: inline-block;
+  white-space: nowrap;
+  animation: ticker-scroll 30s linear infinite;
+  padding-left: 100%;
+}
+.ticker-item {
+  display: inline-block;
+  padding: 0 40px;
+  color: var(--text-mid);
+  font-size: 0.85em;
+}
+.ticker-item .ticker-dot { color: var(--accent); margin: 0 8px; }
+.ticker-item .ticker-up { color: var(--green); font-weight: 600; }
+.ticker-item .ticker-dn { color: var(--red); font-weight: 600; }
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+.ticker-wrap:hover .ticker { animation-play-state: paused; }
+
+/* ===== Tab Navigation ===== */
+.tab-nav {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 25px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 12px;
+  padding: 4px;
+  flex-wrap: wrap;
+}
+.tab-btn {
+  flex: 1;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 500;
+  transition: all 0.3s;
+  text-align: center;
+  white-space: nowrap;
+}
+.tab-btn:hover {
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+}
+.tab-btn.active {
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  color: #1a1a2e;
+  font-weight: 700;
+}
+.tab-icon { margin-right: 4px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ===== Summary Cards ===== */
+.portfolio-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+  margin-bottom: 25px;
+}
+.summary-card {
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 22px;
+  text-align: center;
+  border: 1px solid var(--border);
+  transition: transform 0.2s;
+  backdrop-filter: blur(10px);
+}
+.summary-card:hover { transform: translateY(-2px); }
+.summary-card .num {
+  font-size: 1.8em;
+  font-weight: 700;
+  color: var(--accent);
+}
+.summary-card .label {
+  color: var(--text-dim);
+  margin-top: 5px;
+  font-size: 0.85em;
+}
+
+/* ===== Market Trends Grid ===== */
+.market-trends {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 25px;
+}
+.mw-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+.mw-symbol {
+  font-size: 0.8em;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.mw-name {
+  font-size: 0.75em;
+  color: var(--text-mid);
+  margin-bottom: 8px;
+}
+.mw-price {
+  font-size: 1.3em;
+  font-weight: 700;
+  color: var(--text);
+}
+.mw-change {
+  font-size: 0.85em;
+  font-weight: 600;
+  margin-top: 4px;
+}
+.mw-change.trend-up { color: var(--green); }
+.mw-change.trend-down { color: var(--red); }
+.mw-spark {
+  margin-top: 8px;
+}
+
+/* ===== Forms ===== */
+.inv-form {
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 25px;
+  margin-bottom: 25px;
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+.inv-form h3 {
+  color: var(--accent);
+  margin-bottom: 18px;
+  font-size: 1.1em;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label {
+  color: var(--text-mid);
+  font-size: 0.85em;
+  font-weight: 500;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.9em;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--accent);
+}
+.form-group select option { background: #1a1a2e; color: #fff; }
+.btn-submit {
+  padding: 12px 28px;
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  border: none;
+  border-radius: 10px;
+  color: #1a1a2e;
+  font-weight: 700;
+  font-size: 0.95em;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+
+/* ===== Table ===== */
+.inv-table-wrap {
+  background: var(--bg-card);
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+  margin-bottom: 25px;
+}
+.inv-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.inv-table th {
+  background: rgba(247,151,30,0.12);
+  color: var(--accent);
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 0.85em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.inv-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 0.88em;
+  color: var(--text-mid);
+  white-space: nowrap;
+}
+.inv-table tr:hover td { background: rgba(255,255,255,0.03); }
+.risk-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.8em;
+  font-weight: 600;
+}
+.risk-low { background: rgba(76,175,80,0.15); color: var(--green); }
+.risk-medium { background: rgba(255,152,0,0.15); color: var(--orange); }
+.risk-high { background: rgba(244,67,54,0.15); color: var(--red); }
+.return-pos { color: var(--green); font-weight: 600; }
+.return-neg { color: var(--red); font-weight: 600; }
+
+/* ===== Charts ===== */
+.chart-container {
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 25px;
+  margin-bottom: 25px;
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+.chart-title {
+  color: var(--accent);
+  font-size: 1.1em;
+  margin-bottom: 15px;
+}
+.chart-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+  margin-bottom: 25px;
+}
+.chart-row .chart-container { margin-bottom: 0; }
+canvas { max-width: 100%; }
+.bt-indicator-btn {
+  padding: 4px 14px;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.05);
+  color: var(--text-mid);
+  cursor: pointer;
+  font-size: 0.8em;
+  transition: all 0.2s;
+}
+.bt-indicator-btn:hover { background: rgba(255,255,255,0.1); }
+.bt-indicator-btn.active { background: var(--accent); color: #1a1a2e; border-color: var(--accent); font-weight: 600; }
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  justify-content: center;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8em;
+  color: var(--text-mid);
+}
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+/* ===== Metrics Grid ===== */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 25px;
+}
+.metric-card {
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+  text-align: center;
+}
+.m-label {
+  color: var(--text-dim);
+  font-size: 0.8em;
+  margin-bottom: 6px;
+}
+.m-value {
+  font-size: 1.6em;
+  font-weight: 700;
+}
+.m-sub {
+  color: var(--text-dim);
+  font-size: 0.75em;
+  margin-top: 4px;
+}
+.metric-good { color: var(--green); }
+.metric-warn { color: var(--orange); }
+.metric-bad { color: var(--red); }
+.metric-neutral { color: var(--accent); }
+
+/* ===== Correlation Matrix ===== */
+.corr-matrix { overflow-x: auto; }
+.corr-table { width: 100%; border-collapse: collapse; }
+.corr-table th {
+  background: rgba(247,151,30,0.15);
+  color: var(--accent);
+  padding: 10px 14px;
+  text-align: center;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+.corr-table td {
+  padding: 10px 14px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 0.85em;
+  color: var(--text-mid);
+}
+.corr-high-pos { color: #f44336; font-weight: 600; }
+.corr-mid-pos { color: #ff9800; font-weight: 600; }
+.corr-low { color: var(--green); }
+.corr-mid-neg { color: #4fc3f7; }
+.corr-high-neg { color: #2196f3; font-weight: 600; }
+
+/* ===== Goals ===== */
+.goal-card {
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 15px;
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+.goal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.goal-name {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 1em;
+}
+.goal-date {
+  color: var(--text-dim);
+  font-size: 0.8em;
+}
+.goal-amounts {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 0.85em;
+  color: var(--text-mid);
+}
+.progress-bar-bg {
+  width: 100%;
+  height: 10px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.5s ease;
+}
+.goal-pct {
+  text-align: right;
+  margin-top: 6px;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* ===== News ===== */
+.news-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 18px 22px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  backdrop-filter: blur(10px);
+  transition: transform 0.2s;
+}
+.news-card:hover { transform: translateX(4px); }
+.news-title {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+  font-size: 0.95em;
+}
+.news-meta {
+  display: flex;
+  gap: 15px;
+  font-size: 0.78em;
+  color: var(--text-dim);
+}
+.news-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.72em;
+  font-weight: 600;
+  background: rgba(247,151,30,0.15);
+  color: var(--accent);
+}
+
+/* ===== Market Tab ===== */
+.stock-search {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.stock-search input {
+  flex: 1;
+  min-width: 200px;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 0.95em;
+  outline: none;
+}
+.stock-search input:focus { border-color: var(--accent); }
+.quick-symbols {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.sym-btn {
+  padding: 8px 14px;
+  background: rgba(247,151,30,0.1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--accent);
+  font-size: 0.82em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sym-btn:hover {
+  background: rgba(247,151,30,0.25);
+}
+.stock-detail {
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 25px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+  display: none;
+}
+.stock-detail.visible { display: block; }
+.stock-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+.stock-detail-symbol {
+  font-size: 1.4em;
+  font-weight: 700;
+  color: var(--text);
+}
+.stock-detail-name {
+  color: var(--text-dim);
+  font-size: 0.85em;
+  margin-top: 2px;
+}
+.stock-detail-price {
+  font-size: 1.8em;
+  font-weight: 700;
+  color: var(--text);
+  text-align: right;
+}
+.stock-detail-change {
+  font-size: 1em;
+  font-weight: 600;
+  text-align: right;
+  margin-top: 4px;
+}
+.crypto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+.crypto-card {
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+.crypto-name {
+  font-size: 0.85em;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+.crypto-price {
+  font-size: 1.6em;
+  font-weight: 700;
+  color: var(--text);
+}
+.crypto-change {
+  font-size: 0.9em;
+  font-weight: 600;
+  margin-top: 4px;
+}
+.market-timestamp {
+  text-align: right;
+  color: var(--text-dim);
+  font-size: 0.78em;
+  margin-top: 10px;
+}
+
+/* ===== Backtest ===== */
+.bt-holdings-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 15px;
+}
+.bt-holdings-table th {
+  background: rgba(247,151,30,0.12);
+  color: var(--accent);
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 0.82em;
+}
+.bt-holdings-table td {
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 0.85em;
+  color: var(--text-mid);
+}
+.bt-holdings-table input {
+  width: 80px;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.85em;
+  text-align: center;
+}
+.bt-remove-btn {
+  background: rgba(244,67,54,0.15);
+  border: none;
+  color: var(--red);
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8em;
+}
+.bt-results {
+  display: none;
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 25px;
+  margin-top: 20px;
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+.bt-results.visible { display: block; }
+.bt-result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+.bt-result-card {
+  text-align: center;
+  padding: 15px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 10px;
+}
+.bt-result-label {
+  color: var(--text-dim);
+  font-size: 0.78em;
+  margin-bottom: 6px;
+}
+.bt-result-value {
+  font-size: 1.4em;
+  font-weight: 700;
+}
+
+/* ===== Risk Quiz Modal ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+.modal-overlay.visible {
+  display: flex;
+}
+.modal-box {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 520px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+}
+.modal-box h3 {
+  color: var(--accent);
+  margin-bottom: 20px;
+  font-size: 1.2em;
+}
+.quiz-q {
+  margin-bottom: 18px;
+}
+.quiz-q p {
+  color: var(--text);
+  font-size: 0.92em;
+  margin-bottom: 8px;
+}
+.quiz-opt {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 6px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: var(--text-mid);
+  font-size: 0.85em;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+}
+.quiz-opt:hover { background: rgba(247,151,30,0.1); }
+.quiz-opt.selected {
+  border-color: var(--accent);
+  background: rgba(247,151,30,0.15);
+  color: var(--accent);
+}
+.quiz-result {
+  text-align: center;
+  padding: 20px;
+}
+.quiz-badge {
+  display: inline-block;
+  padding: 8px 24px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 1.1em;
+  margin: 10px 0;
+}
+.quiz-badge.conservative { background: rgba(76,175,80,0.2); color: var(--green); }
+.quiz-badge.moderate { background: rgba(255,152,0,0.2); color: var(--orange); }
+.quiz-badge.aggressive { background: rgba(244,67,54,0.2); color: var(--red); }
+.modal-close {
+  margin-top: 15px;
+  padding: 10px 24px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .chart-row { grid-template-columns: 1fr; }
+  .tab-btn { font-size: 0.78em; padding: 10px 8px; }
+  .content { padding: 15px 15px 40px; }
+  .portfolio-summary { grid-template-columns: repeat(2, 1fr); }
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+
+<div class="inv-header">
+  <h1>💰 投资管理系统</h1>
+  <p>智能投资 · 数据驱动 · 风险控制</p>
+</div>
+
+<!-- News Ticker -->
+<div class="ticker-wrap">
+  <div class="ticker">
+    <span class="ticker-item">S&P 500 <span class="ticker-up">+1.24%</span><span class="ticker-dot">•</span></span>
+    <span class="ticker-item">NASDAQ <span class="ticker-up">+0.87%</span><span class="ticker-dot">•</span></span>
+    <span class="ticker-item">上证指数 <span class="ticker-dn">-0.32%</span><span class="ticker-dot">•</span></span>
+    <span class="ticker-item">恒生指数 <span class="ticker-up">+0.56%</span><span class="ticker-dot">•</span></span>
+    <span class="ticker-item">比特币 <span class="ticker-up">+3.45%</span><span class="ticker-dot">•</span></span>
+    <span class="ticker-item">黄金 <span class="ticker-dn">-0.18%</span><span class="ticker-dot">•</span></span>
+    <span class="ticker-item">布伦特原油 <span class="ticker-up">+1.02%</span><span class="ticker-dot">•</span></span>
+    <span class="ticker-item">美元/人民币 <span class="ticker-dn">-0.05%</span><span class="ticker-dot">•</span></span>
+    <span class="ticker-item">S&P 500 <span class="ticker-up">+1.24%</span><span class="ticker-dot">•</span></span>
+    <span class="ticker-item">NASDAQ <span class="ticker-up">+0.87%</span><span class="ticker-dot">•</span></span>
+    <span class="ticker-item">上证指数 <span class="ticker-dn">-0.32%</span><span class="ticker-dot">•</span></span>
+    <span class="ticker-item">比特币 <span class="ticker-up">+3.45%</span><span class="ticker-dot">•</span></span>
+  </div>
+</div>
+
+<div class="content">
+  <!-- Jinja2: compute totals -->
+  {% set total_amount = records | sum(attribute='amount') %}
+  {% set avg_return = (records | sum(attribute='return_rate') / records | length) if records | length > 0 else 0 %}
+  {% set est_value = records | sum(attribute='amount') + records | sum(attribute='amount') * (avg_return / 100) %}
+
+  <!-- Tab Navigation -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('tab-portfolio')"><span class="tab-icon">📊</span>投资组合</button>
+    <button class="tab-btn" onclick="switchTab('tab-analytics')"><span class="tab-icon">📈</span>数据分析</button>
+    <button class="tab-btn" onclick="switchTab('tab-goals')"><span class="tab-icon">🎯</span>投资目标</button>
+    <button class="tab-btn" onclick="switchTab('tab-news')"><span class="tab-icon">📰</span>市场资讯</button>
+    <button class="tab-btn" onclick="switchTab('tab-market')"><span class="tab-icon">💹</span>实时行情</button>
+    <button class="tab-btn" onclick="switchTab('tab-backtest')"><span class="tab-icon">🔬</span>量化回测</button>
+  </div>
+
+  <!-- ======================== TAB 1: 投资组合 ======================== -->
+  <div class="tab-panel active" id="tab-portfolio">
+    <!-- Summary Cards -->
+    <div class="portfolio-summary">
+      <div class="summary-card">
+        <div class="num">¥{{ "{:,.0f}".format(total_amount) }}</div>
+        <div class="label">总投资</div>
+      </div>
+      <div class="summary-card">
+        <div class="num">{{ records | length }}</div>
+        <div class="label">项目数</div>
+      </div>
+      <div class="summary-card">
+        <div class="num" style="color: {{ '#4caf50' if avg_return >= 0 else '#f44336' }}">
+          {{ '{:+.1f}%'.format(avg_return) }}
+        </div>
+        <div class="label">平均收益率</div>
+      </div>
+      <div class="summary-card">
+        <div class="num">¥{{ "{:,.0f}".format(est_value) }}</div>
+        <div class="label">预估总值</div>
+      </div>
+    </div>
+
+    <!-- Market Trends Grid -->
+    <div class="market-trends">
+      <div class="mw-card">
+        <div class="mw-symbol">SPY</div>
+        <div class="mw-name">S&P 500</div>
+        <div class="mw-price" id="mw-sp500-price">--</div>
+        <div class="mw-change" id="mw-sp500-change">--</div>
+        <canvas class="mw-spark" id="mw-sp500-spark" width="160" height="30"></canvas>
+      </div>
+      <div class="mw-card">
+        <div class="mw-symbol">QQQ</div>
+        <div class="mw-name">NASDAQ</div>
+        <div class="mw-price" id="mw-nasdaq-price">--</div>
+        <div class="mw-change" id="mw-nasdaq-change">--</div>
+        <canvas class="mw-spark" id="mw-nasdaq-spark" width="160" height="30"></canvas>
+      </div>
+      <div class="mw-card">
+        <div class="mw-symbol">000001</div>
+        <div class="mw-name">上证指数</div>
+        <div class="mw-price" id="mw-sh-price">--</div>
+        <div class="mw-change" id="mw-sh-change">--</div>
+        <canvas class="mw-spark" id="mw-sh-spark" width="160" height="30"></canvas>
+      </div>
+      <div class="mw-card">
+        <div class="mw-symbol">HSI</div>
+        <div class="mw-name">恒生指数</div>
+        <div class="mw-price" id="mw-hsi-price">--</div>
+        <div class="mw-change" id="mw-hsi-change">--</div>
+        <canvas class="mw-spark" id="mw-hsi-spark" width="160" height="30"></canvas>
+      </div>
+      <div class="mw-card">
+        <div class="mw-symbol">BTC</div>
+        <div class="mw-name">比特币</div>
+        <div class="mw-price" id="mw-btc-price">--</div>
+        <div class="mw-change" id="mw-btc-change">--</div>
+        <canvas class="mw-spark" id="mw-btc-spark" width="160" height="30"></canvas>
+      </div>
+      <div class="mw-card">
+        <div class="mw-symbol">XAU</div>
+        <div class="mw-name">黄金</div>
+        <div class="mw-price" id="mw-gold-price">--</div>
+        <div class="mw-change" id="mw-gold-change">--</div>
+        <canvas class="mw-spark" id="mw-gold-spark" width="160" height="30"></canvas>
+      </div>
+    </div>
+
+    <!-- Add Investment Form -->
+    <div class="inv-form">
+      <h3>➕ 添加投资项目</h3>
+      <form method="POST" action="/investment/add">
+        <div class="form-row">
+          <div class="form-group">
+            <label>项目名称</label>
+            <input type="text" name="name" required placeholder="例如：苹果公司股票">
+          </div>
+          <div class="form-group">
+            <label>资产类型</label>
+            <select name="asset_type" required>
+              <option value="Stock">股票</option>
+              <option value="Fund">基金</option>
+              <option value="Bond">债券</option>
+              <option value="ETF">ETF</option>
+              <option value="Cryptocurrency">加密货币</option>
+              <option value="Commodity">商品</option>
+              <option value="Real Estate">房地产</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>投资金额 (¥)</label>
+            <input type="number" name="amount" required min="0" step="0.01" placeholder="10000">
+          </div>
+          <div class="form-group">
+            <label>预期收益率 (%)</label>
+            <input type="number" name="return_rate" required step="0.01" placeholder="8.5">
+          </div>
+          <div class="form-group">
+            <label>风险等级</label>
+            <select name="risk_level" required>
+              <option value="low">低风险</option>
+              <option value="medium">中风险</option>
+              <option value="high">高风险</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>备注</label>
+            <textarea name="notes" rows="2" placeholder="可选备注信息..."></textarea>
+          </div>
+        </div>
+        <button type="submit" class="btn-submit">💾 保存投资</button>
+      </form>
+    </div>
+
+    <!-- Records Table -->
+    <div class="inv-table-wrap">
+      <table class="inv-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>项目名称</th>
+            <th>资产类型</th>
+            <th>投资金额</th>
+            <th>收益率</th>
+            <th>风险等级</th>
+            <th>备注</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ r.name }}</td>
+            <td>{{ r.asset_type }}</td>
+            <td>¥{{ "{:,.0f}".format(r.amount) }}</td>
+            <td class="{{ 'return-pos' if r.return_rate >= 0 else 'return-neg' }}">
+              {{ '{:+.1f}%'.format(r.return_rate) }}
+            </td>
+            <td>
+              <span class="risk-badge risk-{{ r.risk_level }}">
+                {{ {'low':'低风险','medium':'中风险','high':'高风险'}[r.risk_level] }}
+              </span>
+            </td>
+            <td>{{ r.notes }}</td>
+          </tr>
+          {% endfor %}
+          {% if records | length == 0 %}
+          <tr>
+            <td colspan="7" style="text-align:center; padding:30px; color:var(--text-dim);">
+              暂无投资记录，请添加投资项目
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ======================== TAB 2: 数据分析 ======================== -->
+  <div class="tab-panel" id="tab-analytics">
+    <!-- Performance Metrics -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="m-label">夏普比率</div>
+        <div class="m-value metric-good">1.42</div>
+        <div class="m-sub">风险调整后收益</div>
+      </div>
+      <div class="metric-card">
+        <div class="m-label">最大回撤</div>
+        <div class="m-value metric-warn">-12.3%</div>
+        <div class="m-sub">历史最大亏损</div>
+      </div>
+      <div class="metric-card">
+        <div class="m-label">年化收益率</div>
+        <div class="m-value metric-good">14.8%</div>
+        <div class="m-sub">近1年表现</div>
+      </div>
+      <div class="metric-card">
+        <div class="m-label">波动率</div>
+        <div class="m-value metric-neutral">18.2%</div>
+        <div class="m-sub">年化标准差</div>
+      </div>
+      <div class="metric-card">
+        <div class="m-label">Beta系数</div>
+        <div class="m-value metric-neutral">1.15</div>
+        <div class="m-sub">相对市场敏感度</div>
+      </div>
+      <div class="metric-card">
+        <div class="m-label">Alpha</div>
+        <div class="m-value metric-good">+3.2%</div>
+        <div class="m-sub">超额收益</div>
+      </div>
+      <div class="metric-card">
+        <div class="m-label">Sortino比率</div>
+        <div class="m-value metric-good">1.87</div>
+        <div class="m-sub">下行风险调整</div>
+      </div>
+      <div class="metric-card">
+        <div class="m-label">信息比率</div>
+        <div class="m-value metric-neutral">0.76</div>
+        <div class="m-sub">主动管理能力</div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="chart-row">
+      <div class="chart-container">
+        <div class="chart-title">🍩 资产配置分布</div>
+        <canvas id="pieChart" width="350" height="350"></canvas>
+        <div class="chart-legend" id="pieLegend"></div>
+      </div>
+      <div class="chart-container">
+        <div class="chart-title">📈 收益率趋势</div>
+        <canvas id="lineChart" width="400" height="350"></canvas>
+      </div>
+    </div>
+
+    <!-- Correlation Matrix -->
+    <div class="chart-container">
+      <div class="chart-title">🔗 资产相关性矩阵</div>
+      <div class="corr-matrix">
+        <table class="corr-table" id="corrTable">
+          <thead>
+            <tr>
+              <th>资产类型</th>
+              <th>股票</th>
+              <th>ETF</th>
+              <th>加密货币</th>
+              <th>债券</th>
+              <th>商品</th>
+              <th>房地产</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set corr_data = [
+              ('股票',    '1.00', '+0.82', '+0.45', '-0.18', '+0.22', '+0.35'),
+              ('ETF',     '+0.82', '1.00', '+0.52', '-0.12', '+0.19', '+0.30'),
+              ('加密货币','+0.45', '+0.52', '1.00', '-0.35', '+0.08', '+0.10'),
+              ('债券',    '-0.18', '-0.12', '-0.35', '1.00', '+0.42', '+0.15'),
+              ('商品',    '+0.22', '+0.19', '+0.08', '+0.42', '1.00', '+0.28'),
+              ('房地产',  '+0.35', '+0.30', '+0.10', '+0.15', '+0.28', '1.00'),
+            ] %}
+            {% for row in corr_data %}
+            <tr>
+              {% for i, cell in enumerate(row) %}
+                {% if i == 0 %}
+                  <td>{{ cell }}</td>
+                {% else %}
+                  <td class="{{
+                    'corr-high-pos' if cell.startswith('+') and cell[1:]|float >= 0.6 else
+                    'corr-mid-pos' if cell.startswith('+') and cell[1:]|float >= 0.2 else
+                    'corr-low' if (cell.startswith('+') and cell[1:]|float >= 0.0) or cell == '1.00' else
+                    'corr-mid-neg' if cell.startswith('-') and cell[1:]|float < 0.4 else
+                    'corr-high-neg'
+                  }}">{{ cell }}</td>
+                {% endif %}
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Risk Quiz Button -->
+    <div style="text-align:center; margin-top:20px;">
+      <button class="btn-submit" onclick="openRiskQuiz()" style="font-size:1em; padding:14px 35px;">
+        🧠 风险评估测试
+      </button>
+    </div>
+  </div>
+
+  <!-- ======================== TAB 3: 投资目标 ======================== -->
+  <div class="tab-panel" id="tab-goals">
+    <!-- Add Goal Form -->
+    <div class="inv-form">
+      <h3>➕ 添加投资目标</h3>
+      <form method="POST" action="/investment/goal/add">
+        <div class="form-row">
+          <div class="form-group">
+            <label>目标名称</label>
+            <input type="text" name="goal_name" required placeholder="例如：购房首付">
+          </div>
+          <div class="form-group">
+            <label>目标金额 (¥)</label>
+            <input type="number" name="target_amount" required min="0" step="0.01" placeholder="500000">
+          </div>
+          <div class="form-group">
+            <label>目标日期</label>
+            <input type="date" name="target_date" required>
+          </div>
+        </div>
+        <button type="submit" class="btn-submit">💾 保存目标</button>
+      </form>
+    </div>
+
+    <!-- Hardcoded Goal Cards -->
+    {% set goals = [
+      {'name': '购房首付', 'target': 500000, 'current': 320000, 'date': '2027-06-01', 'color': '#ffd200'},
+      {'name': '子女教育基金', 'target': 300000, 'current': 145000, 'date': '2030-09-01', 'color': '#4caf50'},
+      {'name': '退休储备', 'target': 2000000, 'current': 680000, 'date': '2040-01-01', 'color': '#f7971e'},
+      {'name': '旅行基金', 'target': 80000, 'current': 52000, 'date': '2026-12-01', 'color': '#e91e63'},
+      {'name': '应急储备金', 'target': 150000, 'current': 150000, 'date': '2025-12-31', 'color': '#2196f3'},
+    ] %}
+    {% for g in goals %}
+    {% set pct = (g.current / g.target * 100) | round(1) %}
+    <div class="goal-card">
+      <div class="goal-header">
+        <span class="goal-name">{{ g.name }}</span>
+        <span class="goal-date">📅 {{ g.date }}</span>
+      </div>
+      <div class="goal-amounts">
+        <span>当前: ¥{{ "{:,.0f}".format(g.current) }}</span>
+        <span>目标: ¥{{ "{:,.0f}".format(g.target) }}</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" style="width: {{ pct }}%; background: {{ g.color }};"></div>
+      </div>
+      <div class="goal-pct" style="color: {{ g.color }}">{{ pct }}%</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ======================== TAB 4: 市场资讯 ======================== -->
+  <div class="tab-panel" id="tab-news">
+    {% set news_items = [
+      {'title': '美联储暗示年内可能降息，全球市场迎来反弹', 'source': '财联社', 'time': '2小时前', 'tag': '宏观'},
+      {'title': '英伟达发布新一代AI芯片，算力提升300%', 'source': '36氪', 'time': '3小时前', 'tag': '科技'},
+      {'title': '比特币突破105000美元关口，机构资金持续流入', 'source': '金色财经', 'time': '4小时前', 'tag': '加密货币'},
+      {'title': '中国央行宣布降准0.5个百分点，释放流动性1万亿', 'source': '新华社', 'time': '5小时前', 'tag': '政策'},
+      {'title': '黄金价格创历史新高，避险情绪持续升温', 'source': '华尔街见闻', 'time': '6小时前', 'tag': '商品'},
+      {'title': '特斯拉FSD入华获批，自动驾驶板块集体大涨', 'source': '界面新闻', 'time': '7小时前', 'tag': '新能源'},
+      {'title': '港股恒生指数突破25000点，南向资金创纪录', 'source': '新浪财经', 'time': '8小时前', 'tag': '港股'},
+      {'title': 'OPEC+宣布延长减产协议，原油价格应声上涨', 'source': '路透社', 'time': '9小时前', 'tag': '能源'},
+      {'title': 'A股科创板成交额创新高，半导体板块领涨', 'source': '证券时报', 'time': '10小时前', 'tag': 'A股'},
+      {'title': '全球ESG投资规模突破40万亿美元，绿色金融成主流', 'source': 'FT中文网', 'time': '11小时前', 'tag': 'ESG'},
+    ] %}
+    {% for item in news_items %}
+    <div class="news-card">
+      <div class="news-title">{{ item.title }}</div>
+      <div class="news-meta">
+        <span>📡 {{ item.source }}</span>
+        <span>🕐 {{ item.time }}</span>
+        <span class="news-tag">{{ item.tag }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ======================== TAB 5: 实时行情 ======================== -->
+  <div class="tab-panel" id="tab-market">
+    <div class="stock-search">
+      <input type="text" id="stockSearchInput" placeholder="输入股票代码，例如：AAPL" onkeydown="if(event.key==='Enter')fetchStock(this.value)">
+      <div class="quick-symbols">
+        <button class="sym-btn" onclick="fetchStock('AAPL')">AAPL</button>
+        <button class="sym-btn" onclick="fetchStock('MSFT')">MSFT</button>
+        <button class="sym-btn" onclick="fetchStock('GOOGL')">GOOGL</button>
+        <button class="sym-btn" onclick="fetchStock('TSLA')">TSLA</button>
+        <button class="sym-btn" onclick="fetchStock('NVDA')">NVDA</button>
+        <button class="sym-btn" onclick="fetchStock('BTC-USD')">BTC-USD</button>
+      </div>
+    </div>
+
+    <!-- Stock Detail Card -->
+    <div class="stock-detail" id="stockDetail">
+      <div class="stock-detail-header">
+        <div>
+          <div class="stock-detail-symbol" id="sdSymbol">--</div>
+          <div class="stock-detail-name" id="sdName">--</div>
+        </div>
+        <div>
+          <div class="stock-detail-price" id="sdPrice">--</div>
+          <div class="stock-detail-change" id="sdChange">--</div>
+        </div>
+      </div>
+      <canvas id="sdSparkline" width="500" height="80"></canvas>
+    </div>
+
+    <!-- Crypto Cards -->
+    <div class="crypto-grid">
+      <div class="crypto-card">
+        <div class="crypto-name">₿ Bitcoin (BTC)</div>
+        <div class="crypto-price" id="cryptoBtcPrice">--</div>
+        <div class="crypto-change" id="cryptoBtcChange">--</div>
+        <canvas id="cryptoBtcSpark" width="260" height="40" style="margin-top:10px;"></canvas>
+      </div>
+      <div class="crypto-card">
+        <div class="crypto-name">Ξ Ethereum (ETH)</div>
+        <div class="crypto-price" id="cryptoEthPrice">--</div>
+        <div class="crypto-change" id="cryptoEthChange">--</div>
+        <canvas id="cryptoEthSpark" width="260" height="40" style="margin-top:10px;"></canvas>
+      </div>
+    </div>
+
+    <div class="market-timestamp" id="marketTimestamp">最后更新: --</div>
+  </div>
+
+  <!-- ======================== TAB 6: 量化回测 ======================== -->
+  <div class="tab-panel" id="tab-backtest">
+    <div class="inv-form">
+      <h3>📋 投资组合构建</h3>
+      <div style="overflow-x:auto;">
+        <table class="bt-holdings-table" id="btHoldingsTable">
+          <thead>
+            <tr>
+              <th>股票代码</th>
+              <th>权重 (%)</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="btHoldingsBody"></tbody>
+        </table>
+      </div>
+      <button class="btn-submit" onclick="btAddStock()" style="font-size:0.85em; padding:8px 18px;">➕ 添加股票</button>
+    </div>
+
+    <div class="inv-form">
+      <h3>⚙️ 回测参数</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>策略选择</label>
+          <select id="btStrategy">
+            <option value="buy_hold">买入持有 (Buy & Hold)</option>
+            <option value="monthly_rebalance">月度再平衡</option>
+            <option value="dca">定投策略 (DCA)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>初始资金 (¥)</label>
+          <input type="number" id="btCapital" value="100000" min="1000" step="1000">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>开始日期</label>
+          <input type="date" id="btStartDate" value="2023-01-01">
+        </div>
+        <div class="form-group">
+          <label>结束日期</label>
+          <input type="date" id="btEndDate" value="2024-12-31">
+        </div>
+      </div>
+      <button class="btn-submit" onclick="runBacktest()" id="btRunBtn">🚀 运行回测</button>
+    </div>
+
+    <!-- Backtest Results -->
+    <div class="bt-results" id="btResults">
+      <h3 style="color:var(--accent); margin-bottom:18px;">📊 回测结果</h3>
+      <div class="bt-result-grid">
+        <div class="bt-result-card">
+          <div class="bt-result-label">总收益率</div>
+          <div class="bt-result-value" id="btTotalReturn">--</div>
+        </div>
+        <div class="bt-result-card">
+          <div class="bt-result-label">年化收益率</div>
+          <div class="bt-result-value" id="btAnnualReturn">--</div>
+        </div>
+        <div class="bt-result-card">
+          <div class="bt-result-label">最大回撤</div>
+          <div class="bt-result-value" id="btMaxDrawdown">--</div>
+        </div>
+        <div class="bt-result-card">
+          <div class="bt-result-label">夏普比率</div>
+          <div class="bt-result-value" id="btSharpe">--</div>
+        </div>
+      </div>
+      <div class="chart-container" style="margin-top:15px;">
+        <div class="chart-title">📈 净值曲线</div>
+        <canvas id="btChart" width="700" height="250"></canvas>
+      </div>
+      <!-- K-Line Chart with Moving Averages -->
+      <div class="chart-container" style="margin-top:20px;">
+        <div class="chart-title">🕯️ K线图 + 均线 (MA5/MA10/MA20/MA60)</div>
+        <div class="bt-chart-controls" style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+          <button class="bt-indicator-btn active" onclick="toggleMA(5,this)" id="btnMA5">MA5</button>
+          <button class="bt-indicator-btn active" onclick="toggleMA(10,this)" id="btnMA10">MA10</button>
+          <button class="bt-indicator-btn active" onclick="toggleMA(20,this)" id="btnMA20">MA20</button>
+          <button class="bt-indicator-btn active" onclick="toggleMA(60,this)" id="btnMA60">MA60</button>
+        </div>
+        <canvas id="btKlineChart" width="700" height="350"></canvas>
+      </div>
+      <!-- MACD Chart -->
+      <div class="chart-container" style="margin-top:20px;">
+        <div class="chart-title">📉 MACD 指标</div>
+        <canvas id="btMacdChart" width="700" height="180"></canvas>
+      </div>
+      <!-- RSI Chart -->
+      <div class="chart-container" style="margin-top:20px;">
+        <div class="chart-title">📊 RSI 指标</div>
+        <canvas id="btRsiChart" width="700" height="150"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ======================== Risk Quiz Modal ======================== -->
+<div class="modal-overlay" id="riskModal">
+  <div class="modal-box" id="riskModalBox">
+    <h3>🧠 风险评估测试</h3>
+    <div id="quizQuestions">
+      <div class="quiz-q" data-q="1">
+        <p><strong>Q1.</strong> 您的投资经验如何？</p>
+        <button class="quiz-opt" onclick="selectOpt(this,1,1)">A. 无投资经验</button>
+        <button class="quiz-opt" onclick="selectOpt(this,1,2)">B. 1-3年经验</button>
+        <button class="quiz-opt" onclick="selectOpt(this,1,3)">C. 3-5年经验</button>
+        <button class="quiz-opt" onclick="selectOpt(this,1,4)">D. 5年以上</button>
+      </div>
+      <div class="quiz-q" data-q="2">
+        <p><strong>Q2.</strong> 面对20%的短期亏损，您会？</p>
+        <button class="quiz-opt" onclick="selectOpt(this,2,1)">A. 立即全部卖出</button>
+        <button class="quiz-opt" onclick="selectOpt(this,2,2)">B. 卖出部分止损</button>
+        <button class="quiz-opt" onclick="selectOpt(this,2,3)">C. 持有观望</button>
+        <button class="quiz-opt" onclick="selectOpt(this,2,4)">D. 加仓摊低成本</button>
+      </div>
+      <div class="quiz-q" data-q="3">
+        <p><strong>Q3.</strong> 您期望的年化收益率是？</p>
+        <button class="quiz-opt" onclick="selectOpt(this,3,1)">A. 3%-5%（稳健）</button>
+        <button class="quiz-opt" onclick="selectOpt(this,3,2)">B. 5%-10%（平衡）</button>
+        <button class="quiz-opt" onclick="selectOpt(this,3,3)">C. 10%-20%（积极）</button>
+        <button class="quiz-opt" onclick="selectOpt(this,3,4)">D. 20%以上（激进）</button>
+      </div>
+      <div class="quiz-q" data-q="4">
+        <p><strong>Q4.</strong> 您的投资期限是？</p>
+        <button class="quiz-opt" onclick="selectOpt(this,4,1)">A. 1年以内</button>
+        <button class="quiz-opt" onclick="selectOpt(this,4,2)">B. 1-3年</button>
+        <button class="quiz-opt" onclick="selectOpt(this,4,3)">C. 3-5年</button>
+        <button class="quiz-opt" onclick="selectOpt(this,4,4)">D. 5年以上</button>
+      </div>
+      <div class="quiz-q" data-q="5">
+        <p><strong>Q5.</strong> 您的投资组合中，股票类资产占比应为？</p>
+        <button class="quiz-opt" onclick="selectOpt(this,5,1)">A. 0%-20%</button>
+        <button class="quiz-opt" onclick="selectOpt(this,5,2)">B. 20%-50%</button>
+        <button class="quiz-opt" onclick="selectOpt(this,5,3)">C. 50%-80%</button>
+        <button class="quiz-opt" onclick="selectOpt(this,5,4)">D. 80%-100%</button>
+      </div>
+      <div style="text-align:center; margin-top:15px;">
+        <button class="btn-submit" onclick="submitRiskQuiz()">提交评估</button>
+      </div>
+    </div>
+    <div id="quizResult" class="quiz-result" style="display:none;">
+      <div style="font-size:2em; margin-bottom:10px;">🏆</div>
+      <div style="color:var(--text-dim); margin-bottom:8px;">您的风险偏好类型</div>
+      <div class="quiz-badge" id="quizBadge">--</div>
+      <p id="quizDesc" style="color:var(--text-mid); font-size:0.88em; margin-top:10px;"></p>
+      <button class="modal-close" onclick="closeRiskQuiz()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Tab Switching =====
+var analyticsInitialized = false;
+var marketTabInitialized = false;
+var marketAutoRefreshTimer = null;
+
+function switchTab(tabId) {
+  // Hide all panels
+  var panels = document.querySelectorAll('.tab-panel');
+  panels.forEach(function(p){ p.classList.remove('active'); });
+  // Deactivate all buttons
+  var btns = document.querySelectorAll('.tab-btn');
+  btns.forEach(function(b){ b.classList.remove('active'); });
+  // Show target panel
+  document.getElementById(tabId).classList.add('active');
+  // Activate corresponding button
+  var btnMap = {
+    'tab-portfolio': 0, 'tab-analytics': 1, 'tab-goals': 2,
+    'tab-news': 3, 'tab-market': 4, 'tab-backtest': 5
+  };
+  if (btnMap[tabId] !== undefined) {
+    btns[btnMap[tabId]].classList.add('active');
+  }
+
+  // Lazy init
+  if (tabId === 'tab-analytics' && !analyticsInitialized) {
+    analyticsInitialized = true;
+    setTimeout(initAnalyticsCharts, 50);
+  }
+  if (tabId === 'tab-market') {
+    if (!marketTabInitialized) {
+      marketTabInitialized = true;
+      refreshAllMarket();
+    }
+    startMarketAutoRefresh();
+  } else {
+    stopMarketAutoRefresh();
+  }
+}
+
+// ===== Analytics Charts =====
+// Jinja2-rendered investment records for JS
+var invRecords = [
+  {% for r in records %}
+  {type:'{{ r.asset_type }}',amount:{{ r.amount }}}}
+  {% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+function initAnalyticsCharts() {
+  drawPieChart();
+  drawLineChart();
+}
+
+function drawPieChart() {
+  var canvas = document.getElementById('pieChart');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width = 350;
+  var h = canvas.height = 350;
+  ctx.clearRect(0, 0, w, h);
+
+  // Aggregate by type
+  var agg = {};
+  var total = 0;
+  invRecords.forEach(function(r) {
+    if (!agg[r.type]) agg[r.type] = 0;
+    agg[r.type] += r.amount;
+    total += r.amount;
+  });
+
+  var colors = {
+    'Stock': '#ffd200', 'Fund': '#4caf50', 'Bond': '#2196f3',
+    'ETF': '#ff9800', 'Cryptocurrency': '#e91e63', 'Commodity': '#00bcd4',
+    'Real Estate': '#9c27b0'
+  };
+  var fallback = ['#ffd200','#4caf50','#2196f3','#ff9800','#e91e63','#00bcd4','#9c27b0','#795548'];
+  var types = Object.keys(agg);
+  if (types.length === 0) {
+    // Show empty placeholder
+    ctx.beginPath();
+    ctx.arc(w/2, h/2, 120, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 30;
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('暂无数据', w/2, h/2);
+    return;
+  }
+
+  var startAngle = -Math.PI / 2;
+  var legendHtml = '';
+  types.forEach(function(type, i) {
+    var val = agg[type];
+    var pct = total > 0 ? val / total : 0;
+    var sliceAngle = pct * Math.PI * 2;
+    var color = colors[type] || fallback[i % fallback.length];
+
+    ctx.beginPath();
+    ctx.moveTo(w/2, h/2);
+    ctx.arc(w/2, h/2, 120, startAngle, startAngle + sliceAngle);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    startAngle += sliceAngle;
+    legendHtml += '<div class="legend-item"><div class="legend-color" style="background:' + color + '"></div>' + type + ' (' + (pct*100).toFixed(1) + '%)</div>';
+  });
+
+  // Doughnut hole
+  ctx.beginPath();
+  ctx.arc(w/2, h/2, 70, 0, Math.PI * 2);
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fill();
+
+  // Center text
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('¥' + Math.round(total).toLocaleString(), w/2, h/2 + 5);
+
+  document.getElementById('pieLegend').innerHTML = legendHtml;
+}
+
+function drawLineChart() {
+  var canvas = document.getElementById('lineChart');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width = canvas.parentElement.clientWidth - 50;
+  var h = canvas.height = 350;
+  ctx.clearRect(0, 0, w, h);
+
+  // Mock 12-month data
+  var months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  var portfolio = [0, 2.1, 4.5, 3.2, 6.8, 8.1, 7.5, 9.2, 11.5, 10.8, 13.2, 14.8];
+  var benchmark = [0, 1.5, 3.0, 2.0, 4.5, 5.8, 5.2, 6.5, 7.8, 7.2, 8.5, 9.1];
+
+  var minVal = Math.min.apply(null, portfolio.concat(benchmark)) - 2;
+  var maxVal = Math.max.apply(null, portfolio.concat(benchmark)) + 2;
+  var range = maxVal - minVal;
+  var padL = 50, padR = 20, padT = 20, padB = 30;
+  var plotW = w - padL - padR;
+  var plotH = h - padT - padB;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (var i = 0; i <= 4; i++) {
+    var y = padT + (i / 4) * plotH;
+    ctx.beginPath();
+    ctx.moveTo(padL, y);
+    ctx.lineTo(w - padR, y);
+    ctx.stroke();
+    var val = maxVal - (i / 4) * range;
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(val.toFixed(1) + '%', padL - 5, y + 3);
+  }
+
+  // X labels
+  ctx.textAlign = 'center';
+  months.forEach(function(m, i) {
+    var x = padL + (i / (months.length - 1)) * plotW;
+    ctx.fillText(m, x, h - 8);
+  });
+
+  // Draw line helper
+  function drawLine(data, color, fill) {
+    ctx.beginPath();
+    data.forEach(function(v, i) {
+      var x = padL + (i / (data.length - 1)) * plotW;
+      var y = padT + ((maxVal - v) / range) * plotH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    if (fill) {
+      ctx.lineTo(padL + plotW, padT + plotH);
+      ctx.lineTo(padL, padT + plotH);
+      ctx.closePath();
+      var grad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
+      grad.addColorStop(0, fill + '40');
+      grad.addColorStop(1, fill + '05');
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+  }
+
+  drawLine(benchmark, 'rgba(255,255,255,0.4)', null);
+  drawLine(portfolio, '#ffd200', 'rgba(247,151,30,0.25)');
+
+  // Legend
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = '#ffd200';
+  ctx.textAlign = 'left';
+  ctx.fillText('● 投资组合', padL + 10, padT + 15);
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.fillText('● 基准指数', padL + 120, padT + 15);
+}
+
+// ===== Risk Quiz =====
+var quizAnswers = {};
+
+function openRiskQuiz() {
+  document.getElementById('riskModal').classList.add('visible');
+  document.getElementById('quizQuestions').style.display = 'block';
+  document.getElementById('quizResult').style.display = 'none';
+  quizAnswers = {};
+  document.querySelectorAll('.quiz-opt').forEach(function(b){ b.classList.remove('selected'); });
+}
+
+function closeRiskQuiz() {
+  document.getElementById('riskModal').classList.remove('visible');
+}
+
+function selectOpt(btn, q, val) {
+  var qDiv = btn.parentElement;
+  qDiv.querySelectorAll('.quiz-opt').forEach(function(b){ b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  quizAnswers[q] = val;
+}
+
+function submitRiskQuiz() {
+  var score = 0;
+  for (var i = 1; i <= 5; i++) {
+    score += (quizAnswers[i] || 1);
+  }
+  var badge, desc, cls;
+  if (score <= 9) {
+    badge = '保守型';
+    desc = '您偏好低风险投资，建议配置债券、货币基金等稳健型产品。';
+    cls = 'conservative';
+  } else if (score <= 15) {
+    badge = '稳健型';
+    desc = '您能承受适度风险，建议股债均衡配置，关注长期稳健增值。';
+    cls = 'moderate';
+  } else {
+    badge = '激进型';
+    desc = '您风险承受能力较强，可配置较高比例股票和另类资产。';
+    cls = 'aggressive';
+  }
+  document.getElementById('quizQuestions').style.display = 'none';
+  document.getElementById('quizResult').style.display = 'block';
+  var badgeEl = document.getElementById('quizBadge');
+  badgeEl.textContent = badge;
+  badgeEl.className = 'quiz-badge ' + cls;
+  document.getElementById('quizDesc').textContent = desc;
+}
+
+// ===== Market Widget (Portfolio Tab) =====
+var mwSparkData = { 'sp500': [], 'nasdaq': [], 'sh': [], 'hsi': [], 'btc': [], 'gold': [] };
+
+function refreshMarketWidget() {
+  fetch('/api/market/search?q=SPY')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var p = d && d.price ? d.price : (6021+Math.random()*40-20);
+      var c = d && d.change ? d.change : (Math.random()*3-0.5);
+      updateMWCard('sp500', p, c);
+    }).catch(function(){ updateMWCard('sp500', 6021+Math.random()*40-20, Math.random()*3-0.5); });
+
+  fetch('/api/market/search?q=QQQ')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var p = d && d.price ? d.price : (19298+Math.random()*200-100);
+      var c = d && d.change ? d.change : (Math.random()*3-0.5);
+      updateMWCard('nasdaq', p, c);
+    }).catch(function(){ updateMWCard('nasdaq', 19298+Math.random()*200-100, Math.random()*3-0.5); });
+
+  fetch('/api/market/search?q=000001.SS')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var p = d && d.price ? d.price : (3080+Math.random()*50-25);
+      var c = d && d.change ? d.change : (Math.random()*2-1);
+      updateMWCard('sh', p, c);
+    }).catch(function(){ updateMWCard('sh', 3080+Math.random()*50-25, Math.random()*2-1); });
+
+  fetch('/api/market/search?q=HSI')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var p = d && d.price ? d.price : (18200+Math.random()*300-150);
+      var c = d && d.change ? d.change : (Math.random()*2.5-1);
+      updateMWCard('hsi', p, c);
+    }).catch(function(){ updateMWCard('hsi', 18200+Math.random()*300-150, Math.random()*2.5-1); });
+
+  fetch('/api/market/crypto/bitcoin')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var p = d && d.price ? d.price : (104850+Math.random()*2000-1000);
+      var c = d && d.change ? d.change : (Math.random()*6-2);
+      updateMWCard('btc', p, c, true);
+    }).catch(function(){ updateMWCard('btc', 104850+Math.random()*2000-1000, Math.random()*6-2, true); });
+
+  fetch('/api/market/search?q=XAUUSD')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var p = d && d.price ? d.price : (2380+Math.random()*30-15);
+      var c = d && d.change ? d.change : (Math.random()*1.5-0.5);
+      updateMWCard('gold', p, c, true);
+    }).catch(function(){ updateMWCard('gold', 2380+Math.random()*30-15, Math.random()*1.5-0.5, true); });
+}
+
+function updateMWCard(id, price, change, isUSD) {
+  var priceEl = document.getElementById('mw-' + id + '-price');
+  var changeEl = document.getElementById('mw-' + id + '-change');
+  if (priceEl) {
+    priceEl.textContent = (isUSD ? '$' : '') + price.toLocaleString(undefined, {maximumFractionDigits:0});
+  }
+  if (changeEl) {
+    var sign = change >= 0 ? '+' : '';
+    changeEl.textContent = sign + change.toFixed(2) + '%';
+    changeEl.className = 'mw-change ' + (change >= 0 ? 'trend-up' : 'trend-down');
+  }
+  if (!mwSparkData[id]) mwSparkData[id] = [];
+  mwSparkData[id].push(change);
+  if (mwSparkData[id].length > 20) mwSparkData[id].shift();
+  drawMiniSparkline('mw-' + id + '-spark', mwSparkData[id], change >= 0 ? '#4caf50' : '#f44336');
+}
+
+function drawMiniSparkline(canvasId, data, color) {
+  var canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  if (data.length < 2) return;
+  var min = Math.min.apply(null, data);
+  var max = Math.max.apply(null, data);
+  var range = max - min || 1;
+  ctx.beginPath();
+  data.forEach(function(v, i) {
+    var x = (i / (data.length - 1)) * w;
+    var y = h - 3 - ((v - min) / range) * (h - 6);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+// ===== Real-time Market Tab =====
+function fetchStock(sym) {
+  var btn = document.getElementById('btRunBtn');
+  fetch('/api/market/search?q=' + encodeURIComponent(sym))
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      var detail = document.getElementById('stockDetail');
+      detail.classList.add('visible');
+      document.getElementById('sdSymbol').textContent = sym.toUpperCase();
+      document.getElementById('sdName').textContent = d && d.name ? d.name : sym.toUpperCase();
+      var price = d && d.price ? d.price : (100 + Math.random() * 200);
+      var change = d && d.change ? d.change : (Math.random() * 6 - 3);
+      document.getElementById('sdPrice').textContent = '$' + price.toLocaleString(undefined, {maximumFractionDigits:2});
+      var sign = change >= 0 ? '+' : '';
+      var changeEl = document.getElementById('sdChange');
+      changeEl.textContent = sign + change.toFixed(2) + '%';
+      changeEl.style.color = change >= 0 ? '#4caf50' : '#f44336';
+      // Sparkline
+      var sparkData = [];
+      for (var i = 0; i < 30; i++) sparkData.push(price * (1 + (Math.random() * 0.04 - 0.02)));
+      drawSparkline('sdSparkline', sparkData, change >= 0 ? '#4caf50' : '#f44336');
+    }).catch(function() {
+      document.getElementById('stockDetail').classList.add('visible');
+      document.getElementById('sdSymbol').textContent = sym.toUpperCase();
+      document.getElementById('sdName').textContent = sym.toUpperCase();
+      document.getElementById('sdPrice').textContent = '数据不可用';
+    });
+}
+
+function drawSparkline(canvasId, data, color) {
+  var canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width = canvas.parentElement.clientWidth - 50;
+  var h = canvas.height = 80;
+  ctx.clearRect(0, 0, w, h);
+  if (data.length < 2) return;
+  var min = Math.min.apply(null, data);
+  var max = Math.max.apply(null, data);
+  var range = max - min || 1;
+  ctx.beginPath();
+  data.forEach(function(v, i) {
+    var x = (i / (data.length - 1)) * w;
+    var y = h - 5 - ((v - min) / range) * (h - 10);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // Fill
+  ctx.lineTo(w, h);
+  ctx.lineTo(0, h);
+  ctx.closePath();
+  var grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, color + '30');
+  grad.addColorStop(1, color + '05');
+  ctx.fillStyle = grad;
+  ctx.fill();
+}
+
+function fetchCrypto(id) {
+  var endpoint = id === 'bitcoin' ? '/api/market/crypto/bitcoin' : '/api/market/crypto/ethereum';
+  var priceEl = document.getElementById('crypto' + (id==='bitcoin'?'Btc':'Eth') + 'Price');
+  var changeEl = document.getElementById('crypto' + (id==='bitcoin'?'Btc':'Eth') + 'Change');
+  var sparkId = 'crypto' + (id==='bitcoin'?'Btc':'Eth') + 'Spark';
+  var defaultPrice = id === 'bitcoin' ? 104850 : 3280;
+  fetch(endpoint)
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      var p = d && d.price ? d.price : (defaultPrice + Math.random()*defaultPrice*0.05 - defaultPrice*0.025);
+      var c = d && d.change ? d.change : (Math.random()*6-2);
+      priceEl.textContent = '$' + p.toLocaleString(undefined, {maximumFractionDigits:0});
+      var sign = c >= 0 ? '+' : '';
+      changeEl.textContent = sign + c.toFixed(2) + '%';
+      changeEl.style.color = c >= 0 ? '#4caf50' : '#f44336';
+      var sparkData = [];
+      for (var i = 0; i < 24; i++) sparkData.push(p * (1 + (Math.random()*0.04-0.02)));
+      drawMiniSparkline(sparkId, sparkData, c >= 0 ? '#4caf50' : '#f44336');
+    }).catch(function() {
+      priceEl.textContent = '$' + defaultPrice.toLocaleString();
+      changeEl.textContent = '--';
+    });
+}
+
+function refreshAllMarket() {
+  fetchCrypto('bitcoin');
+  fetchCrypto('ethereum');
+  var now = new Date();
+  document.getElementById('marketTimestamp').textContent =
+    '最后更新: ' + now.toLocaleTimeString('zh-CN');
+}
+
+function startMarketAutoRefresh() {
+  stopMarketAutoRefresh();
+  marketAutoRefreshTimer = setInterval(function() {
+    refreshAllMarket();
+  }, 30000);
+}
+
+function stopMarketAutoRefresh() {
+  if (marketAutoRefreshTimer) {
+    clearInterval(marketAutoRefreshTimer);
+    marketAutoRefreshTimer = null;
+  }
+}
+
+// ===== Backtest =====
+var btPortfolio = [
+  {symbol: 'AAPL', weight: 25},
+  {symbol: 'MSFT', weight: 25},
+  {symbol: 'GOOGL', weight: 20},
+  {symbol: 'NVDA', weight: 15},
+  {symbol: 'BTC-USD', weight: 15}
+];
+
+function btRenderHoldings() {
+  var tbody = document.getElementById('btHoldingsBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  btPortfolio.forEach(function(h, i) {
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><input type="text" value="' + h.symbol + '" onchange="btPortfolio[' + i + '].symbol=this.value"></td>' +
+      '<td><input type="number" value="' + h.weight + '" min="0" max="100" onchange="btPortfolio[' + i + '].weight=parseFloat(this.value)"></td>' +
+      '<td><button class="bt-remove-btn" onclick="btRemoveStock(' + i + ')">✕ 删除</button></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function btAddStock() {
+  btPortfolio.push({symbol: '', weight: 0});
+  btRenderHoldings();
+}
+
+function btRemoveStock(i) {
+  btPortfolio.splice(i, 1);
+  btRenderHoldings();
+}
+
+function runBacktest() {
+  var btn = document.getElementById('btRunBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 回测中...';
+
+  var data = {
+    holdings: btPortfolio,
+    strategy: document.getElementById('btStrategy').value,
+    start_date: document.getElementById('btStartDate').value,
+    end_date: document.getElementById('btEndDate').value,
+    initial_capital: parseFloat(document.getElementById('btCapital').value)
+  };
+
+  fetch('/api/backtest', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data) {
+    btn.disabled = false;
+    btn.textContent = '🚀 运行回测';
+    if (data.error) {
+      alert('回测失败: ' + data.error);
+      return;
+    }
+    var results = document.getElementById('btResults');
+    results.classList.add('visible');
+    document.getElementById('btTotalReturn').textContent = (data.total_return >= 0 ? '+' : '') + data.total_return + '%';
+    document.getElementById('btTotalReturn').style.color = data.total_return >= 0 ? '#4caf50' : '#f44336';
+    document.getElementById('btAnnualReturn').textContent = (data.annualized_return >= 0 ? '+' : '') + data.annualized_return + '%';
+    document.getElementById('btAnnualReturn').style.color = data.annualized_return >= 0 ? '#4caf50' : '#f44336';
+    document.getElementById('btMaxDrawdown').textContent = data.max_drawdown + '%';
+    document.getElementById('btMaxDrawdown').style.color = '#f44336';
+    document.getElementById('btSharpe').textContent = data.sharpe_ratio;
+    document.getElementById('btSharpe').style.color = parseFloat(data.sharpe_ratio) >= 1 ? '#4caf50' : '#ff9800';
+
+    if (data.portfolio_history && data.portfolio_history.length > 1) {
+      drawBacktestChart(data.portfolio_history, data.initial_capital);
+      drawTechnicalCharts(data.portfolio_history);
+    }
+    results.scrollIntoView({behavior: 'smooth'});
+  })
+  .catch(function(e) {
+    btn.disabled = false;
+    btn.textContent = '🚀 运行回测';
+    alert('回测请求失败: ' + e.message);
+  });
+}
+
+function drawBacktestChart(history, initialCapital) {
+  var canvas = document.getElementById('btChart');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width = canvas.parentElement.clientWidth - 40;
+  var h = canvas.height = 250;
+  ctx.clearRect(0, 0, w, h);
+
+  var values = history.map(function(p){ return p.value; });
+  var min = Math.min.apply(null, values) * 0.95;
+  var max = Math.max.apply(null, values) * 1.05;
+  var range = max - min;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (var i = 0; i < 5; i++) {
+    var y = (i / 4) * (h - 40) + 20;
+    ctx.beginPath(); ctx.moveTo(40, y); ctx.lineTo(w - 20, y); ctx.stroke();
+  }
+
+  // Line
+  ctx.beginPath();
+  history.forEach(function(p, i) {
+    var x = 40 + (i / (history.length - 1)) * (w - 60);
+    var y = h - 20 - ((p.value - min) / range) * (h - 40);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = '#ffd200';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Fill
+  ctx.lineTo(w - 20, h - 20);
+  ctx.lineTo(40, h - 20);
+  ctx.closePath();
+  var grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, 'rgba(247,151,30,0.25)');
+  grad.addColorStop(1, 'rgba(247,151,30,0.02)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Labels
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('¥' + Math.round(initialCapital).toLocaleString(), 45, h - 5);
+  ctx.fillText('¥' + Math.round(max).toLocaleString(), 45, 15);
+  ctx.textAlign = 'left';
+  ctx.fillText(history[0].date, 40, h - 5);
+  ctx.textAlign = 'right';
+  ctx.fillText(history[history.length-1].date, w - 20, h - 5);
+}
+
+// ===== Backtest Technical Indicators & K-Line Chart =====
+var btKlineData = [];    // [{date, open, high, low, close, volume}]
+var btMaState = {5:true, 10:true, 20:true, 60:true};
+
+// Generate synthetic OHLC from portfolio history (GBM-simulated data)
+function buildKlineFromHistory(history) {
+  if (!history || history.length < 2) return [];
+  var klines = [];
+  for (var i = 0; i < history.length; i++) {
+    var val = history[i].value;
+    var prevVal = i > 0 ? history[i-1].value : val;
+    var change = (val - prevVal) / prevVal;
+    // Synthetic OHLC from the portfolio value
+    var close = val;
+    var open = prevVal;
+    var high = Math.max(open, close) * (1 + Math.abs(change) * 0.5 + Math.random() * 0.002);
+    var low = Math.min(open, close) * (1 - Math.abs(change) * 0.5 - Math.random() * 0.002);
+    var volume = Math.round(1000000 + Math.random() * 5000000);
+    klines.push({
+      date: history[i].date,
+      open: open,
+      high: high,
+      low: low,
+      close: close,
+      volume: volume
+    });
+  }
+  return klines;
+}
+
+// Calculate Simple Moving Average
+function calcMA(closes, period) {
+  var result = [];
+  for (var i = 0; i < closes.length; i++) {
+    if (i < period - 1) { result.push(null); continue; }
+    var sum = 0;
+    for (var j = i - period + 1; j <= i; j++) sum += closes[j];
+    result.push(sum / period);
+  }
+  return result;
+}
+
+// Calculate MACD (12, 26, 9)
+function calcMACD(closes) {
+  var ema12 = calcEMA(closes, 12);
+  var ema26 = calcEMA(closes, 26);
+  var dif = [];
+  for (var i = 0; i < closes.length; i++) {
+    dif.push((ema12[i] !== null && ema26[i] !== null) ? ema12[i] - ema26[i] : null);
+  }
+  var dea = calcEMA(dif, 9);
+  var macd = [];
+  for (var i = 0; i < closes.length; i++) {
+    macd.push((dif[i] !== null && dea[i] !== null) ? (dif[i] - dea[i]) * 2 : null);
+  }
+  return {dif: dif, dea: dea, macd: macd};
+}
+
+function calcEMA(data, period) {
+  var result = [];
+  var k = 2 / (period + 1);
+  for (var i = 0; i < data.length; i++) {
+    if (data[i] === null) { result.push(null); continue; }
+    if (i === 0 || result[i-1] === null) {
+      result.push(data[i]);
+    } else {
+      result.push(data[i] * k + result[i-1] * (1 - k));
+    }
+  }
+  return result;
+}
+
+// Calculate RSI (14-period)
+function calcRSI(closes, period) {
+  period = period || 14;
+  var result = [];
+  var gains = 0, losses = 0;
+  for (var i = 0; i < closes.length; i++) {
+    if (i === 0) { result.push(null); continue; }
+    var change = closes[i] - closes[i-1];
+    if (i <= period) {
+      gains += change > 0 ? change : 0;
+      losses += change < 0 ? -change : 0;
+      if (i < period) { result.push(null); continue; }
+      var avgGain = gains / period;
+      var avgLoss = losses / period;
+      var rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+      result.push(100 - 100 / (1 + rs));
+    } else {
+      var gain = change > 0 ? change : 0;
+      var loss = change < 0 ? -change : 0;
+      var prevRSI = result[i-1];
+      var prevAvgGain = (100 / (100 - prevRSI) - 1) > 0 ? gain : 0;
+      // Simplified RSI
+      avgGain = (prevAvgGain * (period - 1) + gain) / period;
+      avgLoss = ((avgLoss || 0) * (period - 1) + loss) / period;
+      if (i === period) { avgGain = gains / period; avgLoss = losses / period; }
+      var rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+      result.push(100 - 100 / (1 + rs));
+    }
+  }
+  return result;
+}
+
+// Toggle MA line visibility
+function toggleMA(period, btn) {
+  btMaState[period] = !btMaState[period];
+  btn.classList.toggle('active');
+  if (btKlineData.length > 0) drawKlineChart(btKlineData);
+}
+
+// Draw K-Line (Candlestick) chart with MA overlays
+function drawKlineChart(klines) {
+  var canvas = document.getElementById('btKlineChart');
+  if (!canvas || klines.length === 0) return;
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width = canvas.parentElement.clientWidth - 40;
+  var h = canvas.height = 350;
+  ctx.clearRect(0, 0, w, h);
+
+  var padding = {top: 20, bottom: 30, left: 60, right: 20};
+  var chartW = w - padding.left - padding.right;
+  var chartH = h - padding.top - padding.bottom;
+
+  var closes = klines.map(function(k){ return k.close; });
+  var minPrice = Math.min.apply(null, klines.map(function(k){ return k.low; })) * 0.98;
+  var maxPrice = Math.max.apply(null, klines.map(function(k){ return k.high; })) * 1.02;
+  var priceRange = maxPrice - minPrice;
+
+  // Draw grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (var i = 0; i <= 5; i++) {
+    var y = padding.top + (i / 5) * chartH;
+    ctx.beginPath(); ctx.moveTo(padding.left, y); ctx.lineTo(w - padding.right, y); ctx.stroke();
+    var price = maxPrice - (i / 5) * priceRange;
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('¥' + price.toFixed(0), padding.left - 5, y + 3);
+  }
+
+  // Draw candlesticks
+  var barW = Math.max(1, chartW / klines.length * 0.7);
+  var gap = chartW / klines.length;
+  for (var i = 0; i < klines.length; i++) {
+    var k = klines[i];
+    var x = padding.left + i * gap + gap / 2;
+    var yHigh = padding.top + (maxPrice - k.high) / priceRange * chartH;
+    var yLow = padding.top + (maxPrice - k.low) / priceRange * chartH;
+    var yOpen = padding.top + (maxPrice - k.open) / priceRange * chartH;
+    var yClose = padding.top + (maxPrice - k.close) / priceRange * chartH;
+
+    var isUp = k.close >= k.open;
+    ctx.strokeStyle = isUp ? '#4caf50' : '#f44336';
+    ctx.fillStyle = isUp ? '#4caf50' : '#f44336';
+    ctx.lineWidth = 1;
+
+    // Wick
+    ctx.beginPath(); ctx.moveTo(x, yHigh); ctx.lineTo(x, yLow); ctx.stroke();
+
+    // Body
+    var bodyTop = Math.min(yOpen, yClose);
+    var bodyH = Math.max(1, Math.abs(yOpen - yClose));
+    ctx.fillRect(x - barW / 2, bodyTop, barW, bodyH);
+  }
+
+  // Draw MA lines
+  var maColors = {5: '#ff6b6b', 10: '#ffd200', 20: '#4ecdc4', 60: '#a78bfa'};
+  var maNames = {5: 'MA5', 10: 'MA10', 20: 'MA20', 60: 'MA60'};
+  for (var period in btMaState) {
+    if (!btMaState[period]) continue;
+    var ma = calcMA(closes, parseInt(period));
+    ctx.beginPath();
+    ctx.strokeStyle = maColors[period];
+    ctx.lineWidth = 1.5;
+    var started = false;
+    for (var i = 0; i < ma.length; i++) {
+      if (ma[i] === null) continue;
+      var x = padding.left + i * gap + gap / 2;
+      var y = padding.top + (maxPrice - ma[i]) / priceRange * chartH;
+      if (!started) { ctx.moveTo(x, y); started = true; } else { ctx.lineTo(x, y); }
+    }
+    ctx.stroke();
+  }
+
+  // MA legend
+  var legendX = padding.left + 10;
+  var legendY = padding.top + 15;
+  ctx.font = '11px sans-serif';
+  for (var period in maColors) {
+    if (!btMaState[period]) continue;
+    ctx.fillStyle = maColors[period];
+    ctx.fillRect(legendX, legendY - 8, 12, 3);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.textAlign = 'left';
+    ctx.fillText(maNames[period], legendX + 16, legendY - 3);
+    legendX += 60;
+  }
+
+  // Date labels
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  var labelStep = Math.max(1, Math.floor(klines.length / 6));
+  for (var i = 0; i < klines.length; i += labelStep) {
+    var x = padding.left + i * gap + gap / 2;
+    ctx.fillText(klines[i].date.substring(5), x, h - 8);
+  }
+}
+
+// Draw MACD chart
+function drawMacdChart(klines) {
+  var canvas = document.getElementById('btMacdChart');
+  if (!canvas || klines.length === 0) return;
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width = canvas.parentElement.clientWidth - 40;
+  var h = canvas.height = 180;
+  ctx.clearRect(0, 0, w, h);
+
+  var padding = {top: 15, bottom: 25, left: 60, right: 20};
+  var chartW = w - padding.left - padding.right;
+  var chartH = h - padding.top - padding.bottom;
+
+  var closes = klines.map(function(k){ return k.close; });
+  var macdData = calcMACD(closes);
+
+  // Find range
+  var allVals = [];
+  for (var i = 0; i < macdData.dif.length; i++) {
+    if (macdData.dif[i] !== null) allVals.push(macdData.dif[i]);
+    if (macdData.dea[i] !== null) allVals.push(macdData.dea[i]);
+    if (macdData.macd[i] !== null) allVals.push(macdData.macd[i]);
+  }
+  if (allVals.length === 0) return;
+  var maxAbs = Math.max.apply(null, allVals.map(function(v){ return Math.abs(v); })) * 1.1;
+  var minVal = -maxAbs;
+  var maxVal = maxAbs;
+  var range = maxVal - minVal;
+
+  // Grid + zero line
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (var i = 0; i <= 4; i++) {
+    var y = padding.top + (i / 4) * chartH;
+    ctx.beginPath(); ctx.moveTo(padding.left, y); ctx.lineTo(w - padding.right, y); ctx.stroke();
+  }
+  // Zero line
+  var zeroY = padding.top + (maxVal - 0) / range * chartH;
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(padding.left, zeroY); ctx.lineTo(w - padding.right, zeroY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // MACD histogram bars
+  var gap = chartW / klines.length;
+  var barW = Math.max(1, gap * 0.7);
+  for (var i = 0; i < macdData.macd.length; i++) {
+    if (macdData.macd[i] === null) continue;
+    var x = padding.left + i * gap + gap / 2;
+    var barH = Math.abs(macdData.macd[i]) / range * chartH;
+    var y = macdData.macd[i] >= 0 ? zeroY - barH : zeroY;
+    ctx.fillStyle = macdData.macd[i] >= 0 ? 'rgba(76,175,80,0.7)' : 'rgba(244,67,54,0.7)';
+    ctx.fillRect(x - barW / 2, y, barW, barH);
+  }
+
+  // DIF line
+  ctx.beginPath(); ctx.strokeStyle = '#ffd200'; ctx.lineWidth = 1.5;
+  var started = false;
+  for (var i = 0; i < macdData.dif.length; i++) {
+    if (macdData.dif[i] === null) continue;
+    var x = padding.left + i * gap + gap / 2;
+    var y = padding.top + (maxVal - macdData.dif[i]) / range * chartH;
+    if (!started) { ctx.moveTo(x, y); started = true; } else { ctx.lineTo(x, y); }
+  }
+  ctx.stroke();
+
+  // DEA line
+  ctx.beginPath(); ctx.strokeStyle = '#4ecdc4'; ctx.lineWidth = 1.5;
+  started = false;
+  for (var i = 0; i < macdData.dea.length; i++) {
+    if (macdData.dea[i] === null) continue;
+    var x = padding.left + i * gap + gap / 2;
+    var y = padding.top + (maxVal - macdData.dea[i]) / range * chartH;
+    if (!started) { ctx.moveTo(x, y); started = true; } else { ctx.lineTo(x, y); }
+  }
+  ctx.stroke();
+
+  // Legend
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = '#ffd200'; ctx.textAlign = 'left';
+  ctx.fillText('DIF', padding.left + 10, padding.top + 12);
+  ctx.fillStyle = '#4ecdc4';
+  ctx.fillText('DEA', padding.left + 50, padding.top + 12);
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.textAlign = 'right';
+  ctx.fillText('MACD', w - padding.right, padding.top + 12);
+}
+
+// Draw RSI chart
+function drawRsiChart(klines) {
+  var canvas = document.getElementById('btRsiChart');
+  if (!canvas || klines.length === 0) return;
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width = canvas.parentElement.clientWidth - 40;
+  var h = canvas.height = 150;
+  ctx.clearRect(0, 0, w, h);
+
+  var padding = {top: 15, bottom: 25, left: 60, right: 20};
+  var chartW = w - padding.left - padding.right;
+  var chartH = h - padding.top - padding.bottom;
+
+  var closes = klines.map(function(k){ return k.close; });
+  var rsi = calcRSI(closes, 14);
+
+  var minVal = 0, maxVal = 100, range = 100;
+
+  // Grid + overbought/oversold lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (var i = 0; i <= 4; i++) {
+    var y = padding.top + (i / 4) * chartH;
+    ctx.beginPath(); ctx.moveTo(padding.left, y); ctx.lineTo(w - padding.right, y); ctx.stroke();
+    var val = maxVal - (i / 4) * range;
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(val.toFixed(0), padding.left - 5, y + 3);
+  }
+
+  // Overbought (70) and oversold (30) lines
+  var y70 = padding.top + (maxVal - 70) / range * chartH;
+  var y30 = padding.top + (maxVal - 30) / range * chartH;
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = 'rgba(244,67,54,0.4)';
+  ctx.beginPath(); ctx.moveTo(padding.left, y70); ctx.lineTo(w - padding.right, y70); ctx.stroke();
+  ctx.strokeStyle = 'rgba(76,175,80,0.4)';
+  ctx.beginPath(); ctx.moveTo(padding.left, y30); ctx.lineTo(w - padding.right, y30); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // RSI line
+  ctx.beginPath();
+  ctx.strokeStyle = '#a78bfa';
+  ctx.lineWidth = 1.8;
+  var started = false;
+  var gap = chartW / klines.length;
+  for (var i = 0; i < rsi.length; i++) {
+    if (rsi[i] === null) continue;
+    var x = padding.left + i * gap + gap / 2;
+    var y = padding.top + (maxVal - rsi[i]) / range * chartH;
+    if (!started) { ctx.moveTo(x, y); started = true; } else { ctx.lineTo(x, y); }
+  }
+  ctx.stroke();
+
+  // Fill area under RSI
+  if (started) {
+    ctx.lineTo(padding.left + (rsi.length - 1) * gap + gap / 2, padding.top + chartH);
+    ctx.lineTo(padding.left + gap / 2, padding.top + chartH);
+    ctx.closePath();
+    var grad = ctx.createLinearGradient(0, padding.top, 0, padding.top + chartH);
+    grad.addColorStop(0, 'rgba(167,139,250,0.2)');
+    grad.addColorStop(1, 'rgba(167,139,250,0.02)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+  }
+
+  // Labels
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('70 (超买)', padding.left + 5, y70 - 3);
+  ctx.fillText('30 (超卖)', padding.left + 5, y30 + 12);
+}
+
+// Master function to draw all technical charts
+function drawTechnicalCharts(history) {
+  btKlineData = buildKlineFromHistory(history);
+  drawKlineChart(btKlineData);
+  drawMacdChart(btKlineData);
+  drawRsiChart(btKlineData);
+}
+
+// ===== Init =====
+document.addEventListener('DOMContentLoaded', function() {
+  refreshMarketWidget();
+  btRenderHoldings();
+});
+
+// Close modal on overlay click
+document.getElementById('riskModal').addEventListener('click', function(e) {
+  if (e.target === this) closeRiskQuiz();
+});
+</script>
+{% endblock %}

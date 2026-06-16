@@ -1,0 +1,1381 @@
+{% extends "base.html" %}
+{% block title %}Fashion Wardrobe{% endblock %}
+{% block content %}
+<style>
+/* ═══════════════════════════════════════════
+   FASHION WARDROBE — Dark UI / Purple·Pink
+   ═══════════════════════════════════════════ */
+:root {
+  --bg-deep: #0d0a1a;
+  --bg-card: rgba(255,255,255,0.04);
+  --bg-card-hover: rgba(255,255,255,0.08);
+  --accent-1: #a18cd1;
+  --accent-2: #fbc2eb;
+  --accent-3: #c3b5e5;
+  --text-primary: #eee5f8;
+  --text-secondary: rgba(255,255,255,0.55);
+  --text-muted: rgba(255,255,255,0.35);
+  --border: rgba(161,140,209,0.15);
+  --border-hover: rgba(161,140,209,0.35);
+  --gradient-main: linear-gradient(135deg, #a18cd1, #fbc2eb);
+  --gradient-soft: linear-gradient(135deg, rgba(161,140,209,0.15), rgba(251,194,235,0.15));
+}
+
+/* ── Layout ── */
+.fh-container { max-width: 1320px; margin: 0 auto; padding: 0 28px 80px; }
+.fh-section { margin-bottom: 56px; }
+.fh-section-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+}
+.fh-section-header h2 {
+  font-size: 1.45em; font-weight: 700;
+  background: var(--gradient-main);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.fh-section-header .section-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--gradient-soft);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1em; border: 1px solid var(--border);
+}
+.fh-section-header p {
+  color: var(--text-muted); font-size: 0.88em; margin-left: auto;
+}
+
+/* ── Hero ── */
+.fh-hero {
+  text-align: center; padding: 48px 20px 56px;
+  position: relative; overflow: hidden;
+}
+.fh-hero::before {
+  content: ''; position: absolute; top: -50%; left: 50%; transform: translateX(-50%);
+  width: 600px; height: 600px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(161,140,209,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.fh-hero h1 {
+  font-size: 2.8em; font-weight: 800; letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #c4b5fd, #f9a8d4, #fde68a);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; position: relative;
+}
+.fh-hero .hero-sub {
+  color: var(--text-secondary); margin-top: 12px; font-size: 1.05em; position: relative;
+}
+.fh-hero .hero-emoji { font-size: 1.2em; }
+
+/* ── Stats Bar ── */
+.fh-stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px; margin-bottom: 48px;
+}
+.stat-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px 22px; text-align: left;
+  transition: all 0.3s; position: relative; overflow: hidden;
+}
+.stat-card::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--gradient-main); opacity: 0; transition: opacity 0.3s;
+}
+.stat-card:hover { border-color: var(--border-hover); transform: translateY(-2px); background: var(--bg-card-hover); }
+.stat-card:hover::after { opacity: 1; }
+.stat-card .stat-label { font-size: 0.78em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
+.stat-card .stat-value { font-size: 1.9em; font-weight: 700; margin: 4px 0; color: var(--text-primary); }
+.stat-card .stat-icon { float: right; font-size: 1.8em; opacity: 0.25; }
+.stat-card .stat-delta { font-size: 0.78em; color: #a18cd1; }
+
+/* ── Filters ── */
+.fh-filters { display: flex; gap: 10px; margin-bottom: 28px; flex-wrap: wrap; align-items: center; }
+.fh-filters a {
+  padding: 8px 20px; border-radius: 20px; text-decoration: none;
+  background: rgba(161,140,209,0.08); color: var(--accent-3);
+  border: 1px solid rgba(161,140,209,0.15); transition: all 0.3s; font-size: 0.88em;
+}
+.fh-filters a:hover, .fh-filters a.active {
+  background: var(--gradient-main); color: #fff; border-color: transparent;
+}
+.fh-filters .filter-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.08); }
+.fh-filter-label { color: var(--text-muted); font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.8px; margin-right: 4px; }
+
+/* ── Wardrobe Grid ── */
+.wardrobe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+.wd-card {
+  background: var(--bg-card); border-radius: 16px;
+  border: 1px solid var(--border); transition: all 0.35s cubic-bezier(.4,0,.2,1);
+  overflow: hidden; position: relative; cursor: default;
+}
+.wd-card:hover { border-color: var(--border-hover); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(161,140,209,0.1); }
+.wd-card-top {
+  padding: 22px 22px 14px; display: flex; align-items: flex-start; justify-content: space-between;
+}
+.wd-card-top h3 { color: var(--text-primary); font-size: 1.08em; font-weight: 600; flex: 1; }
+.wd-card-actions { display: flex; gap: 6px; }
+.wd-action-btn {
+  width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border);
+  background: rgba(255,255,255,0.05); color: var(--text-muted); font-size: 0.75em;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.wd-action-btn:hover { background: rgba(161,140,209,0.2); color: #fff; border-color: var(--accent-1); }
+.color-swatch {
+  width: 48px; height: 48px; border-radius: 14px; display: inline-block;
+  border: 2px solid rgba(255,255,255,0.1); position: relative;
+  box-shadow: inset 0 0 12px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2);
+}
+.color-swatch::after {
+  content: attr(title); position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%);
+  font-size: 0.65em; white-space: nowrap; color: var(--text-muted); opacity: 0;
+  transition: opacity 0.3s; pointer-events: none;
+}
+.color-swatch:hover::after { opacity: 1; }
+.wd-card-colors { padding: 0 22px 14px; display: flex; gap: 8px; align-items: center; }
+.wd-card-meta { padding: 0 22px 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+.wd-tag {
+  padding: 3px 12px; border-radius: 8px; font-size: 0.75em; font-weight: 500;
+}
+.tag-season { background: rgba(161,140,209,0.15); color: var(--accent-1); }
+.tag-style { background: rgba(251,194,235,0.15); color: var(--accent-2); }
+.tag-category { background: rgba(253,230,138,0.1); color: #fde68a; }
+.tag-color-label { background: rgba(255,255,255,0.07); color: var(--text-secondary); }
+.wd-card-desc { padding: 0 22px 22px; color: var(--text-muted); font-size: 0.82em; line-height: 1.6; }
+
+/* ── Outfit Builder ── */
+.outfit-builder {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 32px;
+}
+.ob-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.ob-canvas {
+  background: rgba(0,0,0,0.25); border-radius: 16px; border: 2px dashed rgba(161,140,209,0.2);
+  min-height: 380px; padding: 24px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 14px; position: relative; overflow: hidden;
+}
+.ob-canvas::before {
+  content: '✨'; font-size: 3em; opacity: 0.15; position: absolute;
+}
+.ob-canvas.filled::before { display: none; }
+.ob-canvas .ob-placeholder { color: var(--text-muted); font-size: 0.92em; text-align: center; }
+.ob-zones { display: flex; flex-direction: column; gap: 14px; width: 100%; }
+.ob-zone {
+  background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px; transition: all 0.3s; position: relative;
+}
+.ob-zone:hover { border-color: var(--accent-1); }
+.ob-zone-label { font-size: 0.72em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+.ob-zone-item { color: var(--text-primary); font-size: 0.95em; display: flex; align-items: center; gap: 8px; }
+.ob-zone-item .mini-swatch { width: 16px; height: 16px; border-radius: 4px; display: inline-block; }
+.ob-zone .remove-btn {
+  position: absolute; top: 10px; right: 12px; width: 24px; height: 24px;
+  border-radius: 6px; border: none; background: rgba(255,100,100,0.15); color: #ff8a8a;
+  font-size: 0.7em; cursor: pointer; opacity: 0; transition: all 0.2s;
+}
+.ob-zone:hover .remove-btn { opacity: 1; }
+.ob-zone.selected { border-color: var(--accent-1); background: rgba(161,140,209,0.06); }
+.ob-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; max-height: 380px; overflow-y: auto; }
+.ob-picker::-webkit-scrollbar { width: 4px; }
+.ob-picker::-webkit-scrollbar-thumb { background: rgba(161,140,209,0.3); border-radius: 4px; }
+.ob-picker-item {
+  background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px; cursor: pointer; transition: all 0.3s;
+}
+.ob-picker-item:hover, .ob-picker-item.selected {
+  border-color: var(--accent-1); background: rgba(161,140,209,0.08);
+}
+.ob-picker-item .opi-name { color: var(--text-primary); font-size: 0.85em; margin-bottom: 6px; }
+.ob-picker-item .opi-colors { display: flex; gap: 4px; }
+.ob-picker-item .opc { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); }
+.ob-actions { display: flex; gap: 10px; margin-top: 24px; }
+.btn-primary {
+  padding: 10px 28px; border-radius: 12px; border: none; cursor: pointer;
+  background: var(--gradient-main); color: #fff; font-weight: 600; font-size: 0.88em;
+  transition: all 0.3s;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(161,140,209,0.3); }
+.btn-ghost {
+  padding: 10px 28px; border-radius: 12px; border: 1px solid var(--border);
+  background: transparent; color: var(--accent-3); font-size: 0.88em; cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-ghost:hover { border-color: var(--accent-1); color: #fff; }
+
+/* ── Style Quiz ── */
+.style-quiz {
+  background: linear-gradient(135deg, rgba(161,140,209,0.08), rgba(251,194,235,0.06));
+  border: 1px solid var(--border); border-radius: 20px; padding: 32px;
+}
+.q-progress-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; margin-bottom: 28px; overflow: hidden; }
+.q-progress-fill { height: 100%; background: var(--gradient-main); border-radius: 3px; transition: width 0.5s; }
+.q-question { font-size: 1.25em; color: var(--text-primary); font-weight: 600; margin-bottom: 8px; }
+.q-sub { color: var(--text-muted); font-size: 0.85em; margin-bottom: 24px; }
+.q-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 28px; }
+.q-option {
+  padding: 18px 20px; border-radius: 14px; border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03); cursor: pointer; transition: all 0.3s;
+  text-align: center; color: var(--text-secondary); font-size: 0.9em;
+}
+.q-option:hover { border-color: var(--accent-1); background: rgba(161,140,209,0.08); color: #fff; }
+.q-option.sel { border-color: var(--accent-1); background: rgba(161,140,209,0.12); color: #fff; }
+.q-option .opt-icon { font-size: 2em; display: block; margin-bottom: 8px; }
+.q-nav { display: flex; justify-content: space-between; align-items: center; }
+.q-result {
+  text-align: center; padding: 40px 20px; display: none;
+}
+.q-result .result-icon { font-size: 3.5em; margin-bottom: 16px; }
+.q-result h3 { font-size: 1.5em; color: var(--text-primary); margin-bottom: 8px; }
+.q-result p { color: var(--text-secondary); max-width: 500px; margin: 0 auto; line-height: 1.6; }
+
+/* ── Seasonal Lookbook ── */
+.lookbook { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 22px; }
+.lb-card {
+  border-radius: 18px; overflow: hidden; border: 1px solid var(--border);
+  transition: all 0.35s cubic-bezier(.4,0,.2,1); position: relative;
+}
+.lb-card:hover { transform: translateY(-4px); box-shadow: 0 14px 48px rgba(161,140,209,0.12); }
+.lb-visual {
+  height: 190px; display: flex; align-items: center; justify-content: center;
+  font-size: 4em; position: relative; overflow: hidden;
+}
+.lb-visual .lb-emoji-float {
+  position: absolute; font-size: 1.5em; opacity: 0.12;
+  animation: floatUp 6s infinite ease-in-out;
+}
+@keyframes floatUp {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(10deg); }
+}
+.lb-info { padding: 20px 22px; }
+.lb-season-tag {
+  display: inline-block; padding: 3px 12px; border-radius: 8px;
+  font-size: 0.75em; font-weight: 600; margin-bottom: 10px;
+}
+.lb-info h3 { color: var(--text-primary); font-size: 1.08em; margin-bottom: 8px; }
+.lb-info p { color: var(--text-muted); font-size: 0.82em; line-height: 1.6; }
+.lb-colors { display: flex; gap: 6px; margin-top: 12px; }
+.lb-c { width: 22px; height: 22px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.1); }
+
+/* ── Color Palette Generator ── */
+.palette-gen {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 32px;
+}
+.pg-controls { display: flex; gap: 16px; align-items: center; margin-bottom: 28px; flex-wrap: wrap; }
+.pg-hue { display: flex; gap: 8px; flex-wrap: wrap; }
+.pg-hue-btn {
+  width: 36px; height: 36px; border-radius: 50%; border: 2px solid transparent;
+  cursor: pointer; transition: all 0.3s; position: relative;
+}
+.pg-hue-btn:hover, .pg-hue-btn.active { transform: scale(1.15); border-color: #fff; }
+.pg-hue-btn.active::after { content: '✓'; color: #fff; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.7em; font-weight: 700; }
+.pg-swatches { display: flex; gap: 12px; margin-bottom: 24px; }
+.pg-swatch {
+  flex: 1; height: 120px; border-radius: 14px;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  padding-bottom: 16px; border: 1px solid rgba(255,255,255,0.08);
+  transition: all 0.3s; cursor: pointer; position: relative; overflow: hidden;
+}
+.pg-swatch:hover { transform: translateY(-3px); }
+.pg-swatch:active { transform: scale(0.96); }
+.pg-swatch .ps-label {
+  background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+  padding: 3px 10px; border-radius: 6px; font-size: 0.75em; color: #fff;
+}
+.pg-swatch .ps-copied {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-size: 1.5em; opacity: 0; transition: opacity 0.3s;
+}
+.pg-swatch.show-copied .ps-copied { opacity: 1; }
+.pg-info { display: flex; gap: 20px; align-items: center; }
+
+/* ── Mood Board ── */
+.mood-board {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
+  overflow: hidden;
+}
+.mb-canvas {
+  min-height: 300px; padding: 28px;
+  background-image: radial-gradient(rgba(161,140,209,0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+  display: flex; flex-wrap: wrap; gap: 16px; align-content: flex-start; position: relative;
+}
+.mb-item {
+  border-radius: 12px; overflow: hidden; padding: 14px 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04); cursor: grab; transition: transform 0.2s;
+  min-width: 120px; max-width: 200px;
+}
+.mb-item:hover { transform: scale(1.03); }
+.mb-item .mb-icon { font-size: 1.6em; margin-bottom: 6px; }
+.mb-item .mb-label { color: var(--text-primary); font-size: 0.85em; font-weight: 600; }
+.mb-item .mb-note { color: var(--text-muted); font-size: 0.72em; margin-top: 4px; }
+.mb-controls { padding: 16px 28px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: center; }
+.mb-controls input {
+  flex: 1; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04); color: var(--text-primary); font-size: 0.85em; outline: none;
+}
+.mb-controls input:focus { border-color: var(--accent-1); }
+.mb-controls select {
+  padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04); color: var(--text-primary); font-size: 0.85em;
+  outline: none; cursor: pointer;
+}
+
+/* ── Inspiration Cards ── */
+.inspo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.inspo-card {
+  border-radius: 18px; border: 1px solid var(--border); overflow: hidden;
+  background: var(--bg-card); transition: all 0.35s; position: relative;
+}
+.inspo-card:hover { border-color: var(--border-hover); transform: translateY(-4px); }
+.inspo-top {
+  padding: 24px 24px 16px;
+  background: var(--gradient-soft);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.inspo-top .inspo-avatar {
+  width: 48px; height: 48px; border-radius: 14px;
+  background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;
+  font-size: 1.4em; border: 1px solid rgba(255,255,255,0.1);
+}
+.inspo-top .inspo-tag {
+  padding: 3px 12px; border-radius: 8px;
+  background: rgba(0,0,0,0.2); color: var(--text-secondary);
+  font-size: 0.75em;
+}
+.inspo-body { padding: 20px 24px; }
+.inspo-body h4 { color: var(--text-primary); font-size: 1em; margin-bottom: 8px; }
+.inspo-body p { color: var(--text-muted); font-size: 0.83em; line-height: 1.65; }
+.inspo-fabrics { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; }
+.inspo-fabric {
+  padding: 3px 10px; border-radius: 6px;
+  background: rgba(161,140,209,0.1); color: var(--accent-3);
+  font-size: 0.72em; border: 1px solid rgba(161,140,209,0.12);
+}
+
+/* ── Care Tips ── */
+.care-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+.care-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 24px; transition: all 0.3s; position: relative;
+}
+.care-card:hover { border-color: var(--border-hover); background: var(--bg-card-hover); }
+.care-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--gradient-soft); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3em; margin-bottom: 14px;
+}
+.care-card h4 { color: var(--text-primary); font-size: 0.95em; margin-bottom: 8px; }
+.care-card p { color: var(--text-muted); font-size: 0.8em; line-height: 1.6; }
+.care-tip-level {
+  display: inline-block; padding: 2px 8px; border-radius: 5px;
+  font-size: 0.68em; font-weight: 600; margin-top: 10px; letter-spacing: 0.5px;
+}
+.level-easy { background: rgba(16,185,129,0.15); color: #34d399; }
+.level-medium { background: rgba(245,158,11,0.15); color: #fbbf24; }
+.level-hard { background: rgba(239,68,68,0.15); color: #f87171; }
+
+/* ── Wardrobe Statistics ── */
+.ws-charts { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.ws-chart {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 18px; padding: 24px; transition: all 0.3s;
+}
+.ws-chart:hover { border-color: var(--border-hover); }
+.ws-chart h4 { color: var(--text-primary); font-size: 0.95em; margin-bottom: 20px; }
+.bar-group { margin-bottom: 12px; }
+.bar-label { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.bar-label span { font-size: 0.78em; color: var(--text-secondary); }
+.bar-track { height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .fh-hero h1 { font-size: 2em; }
+  .ob-layout { grid-template-columns: 1fr; }
+  .fh-stats { grid-template-columns: repeat(2, 1fr); }
+  .pg-swatches { flex-wrap: wrap; }
+  .pg-swatch { min-width: calc(50% - 6px); }
+}
+
+/* ── Animations ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.wd-card, .lb-card, .inspo-card, .care-card, .stat-card, .ws-chart {
+  animation: fadeInUp 0.5s ease forwards;
+}
+.wd-card:nth-child(odd), .lb-card:nth-child(odd), .inspo-card:nth-child(odd) { animation-delay: 0.06s; }
+.wd-card:nth-child(even), .lb-card:nth-child(even), .inspo-card:nth-child(even) { animation-delay: 0.12s; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(161,140,209,0.3); border-radius: 3px; }
+
+/* ═══ Trend Forecast ═══ */
+.trend-forecast {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 32px; margin-bottom: 56px;
+}
+.tf-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.tf-header h3 { color: var(--text-primary); font-size: 1.15em; }
+.tf-tabs { display: flex; gap: 8px; margin-left: auto; }
+.tf-tab {
+  padding: 6px 16px; border-radius: 12px; border: 1px solid var(--border);
+  background: transparent; color: var(--text-muted); font-size: 0.78em;
+  cursor: pointer; transition: all 0.3s;
+}
+.tf-tab:hover, .tf-tab.active { background: var(--gradient-main); color: #fff; border-color: transparent; }
+.tf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.tf-card {
+  border-radius: 14px; border: 1px solid var(--border); overflow: hidden;
+  transition: all 0.35s; position: relative;
+}
+.tf-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(161,140,209,0.12); }
+.tf-visual {
+  height: 140px; display: flex; align-items: center; justify-content: center;
+  font-size: 3.5em; position: relative;
+}
+.tf-visual .trend-badge {
+  position: absolute; top: 10px; right: 10px; padding: 2px 10px;
+  border-radius: 6px; font-size: 0.65em; font-weight: 600;
+}
+.badge-hot { background: rgba(239,68,68,0.2); color: #f87171; }
+.badge-new { background: rgba(16,185,129,0.2); color: #34d399; }
+.badge-classic { background: rgba(161,140,209,0.2); color: var(--accent-1); }
+.tf-info { padding: 16px 18px; }
+.tf-info h4 { color: var(--text-primary); font-size: 0.92em; margin-bottom: 6px; }
+.tf-info p { color: var(--text-muted); font-size: 0.78em; line-height: 1.5; }
+.tf-tags { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.tf-tag { padding: 2px 8px; border-radius: 5px; font-size: 0.68em; background: rgba(161,140,209,0.1); color: var(--accent-3); }
+.tf-colors { display: flex; gap: 4px; margin-top: 10px; }
+.tf-c { width: 16px; height: 16px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); }
+
+/* ═══ Wishlist ═══ */
+.wishlist-section { margin-bottom: 56px; }
+.wl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.wl-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px; display: flex; gap: 16px;
+  align-items: center; transition: all 0.3s; position: relative;
+}
+.wl-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+.wl-color { width: 56px; height: 56px; border-radius: 14px; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.1); }
+.wl-info { flex: 1; }
+.wl-info h4 { color: var(--text-primary); font-size: 0.95em; margin-bottom: 4px; }
+.wl-info p { color: var(--text-muted); font-size: 0.78em; }
+.wl-price { color: var(--accent-2); font-weight: 600; font-size: 0.9em; margin-top: 4px; }
+.wl-actions { display: flex; gap: 6px; }
+.wl-btn {
+  width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+  background: rgba(255,255,255,0.05); color: var(--text-muted); font-size: 0.8em;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.wl-btn:hover { background: rgba(161,140,209,0.2); color: #fff; border-color: var(--accent-1); }
+.wl-btn.purchased { background: rgba(16,185,129,0.15); color: #34d399; border-color: #34d399; }
+.wl-add-form {
+  display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap;
+}
+.wl-add-form input {
+  padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04); color: var(--text-primary);
+  font-size: 0.82em; outline: none;
+}
+.wl-add-form input:focus { border-color: var(--accent-1); }
+
+/* ═══ Color Palette Matcher ═══ */
+.cpm-match {
+  margin-top: 24px; padding: 20px;
+  background: rgba(0,0,0,0.15); border-radius: 14px;
+  border: 1px solid var(--border);
+}
+.cpm-match h4 { color: var(--text-primary); font-size: 0.9em; margin-bottom: 12px; }
+.cpm-items { display: flex; flex-wrap: wrap; gap: 8px; }
+.cpm-item {
+  padding: 6px 14px; border-radius: 10px; font-size: 0.8em;
+  border: 1px solid var(--border); background: rgba(255,255,255,0.03);
+  color: var(--text-secondary); cursor: pointer; transition: all 0.3s;
+  display: flex; align-items: center; gap: 6px;
+}
+.cpm-item:hover { border-color: var(--accent-1); color: #fff; }
+.cpm-item .cpm-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.cpm-item.matched { border-color: var(--accent-1); background: rgba(161,140,209,0.1); color: #fff; }
+
+/* ── Responsive additions ── */
+@media (max-width: 768px) {
+  .tf-grid { grid-template-columns: repeat(2, 1fr); }
+  .wl-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<!-- ══════════════════════════════════════
+     HERO HEADER
+     ══════════════════════════════════════ -->
+<div class="fh-hero">
+  <span class="hero-emoji">👗</span>
+  <h1>Fashion Wardrobe</h1>
+  <p class="hero-sub">Curate · Create · Express — Your Personal Style Universe</p>
+</div>
+
+<div class="fh-container">
+
+<!-- ══════════════════════════════════════
+     WARDROBE STATISTICS
+     ══════════════════════════════════════ -->
+<div class="fh-section">
+  <div class="fh-section-header">
+    <div class="section-icon">📊</div>
+    <h2>Wardrobe Statistics</h2>
+    <p>Overview of your collection at a glance</p>
+  </div>
+  <div class="fh-stats">
+    <div class="stat-card">
+      <span class="stat-icon">👚</span>
+      <div class="stat-label">Total Items</div>
+      <div class="stat-value" id="stat-count">{{ items|length }}</div>
+      <div class="stat-delta">All categories</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">🎨</span>
+      <div class="stat-label">Unique Colors</div>
+      <div class="stat-value" id="stat-colors">—</div>
+      <div class="stat-delta">In your palette</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">🌸</span>
+      <div class="stat-label">Top Season</div>
+      <div class="stat-value" id="stat-season" style="font-size:1.3em">—</div>
+      <div class="stat-delta">Most worn</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">✨</span>
+      <div class="stat-label">Styles</div>
+      <div class="stat-value" id="stat-styles">{{ styles|length }}</div>
+      <div class="stat-delta">Registered</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">👠</span>
+      <div class="stat-label">Categories</div>
+      <div class="stat-value" id="stat-cats">—</div>
+      <div class="stat-delta">Diverse range</div>
+    </div>
+  </div>
+
+  <div class="ws-charts">
+    <div class="ws-chart">
+      <h4>Items by Season</h4>
+      <div id="chart-season"></div>
+    </div>
+    <div class="ws-chart">
+      <h4>Items by Style</h4>
+      <div id="chart-style"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     FILTERS
+     ══════════════════════════════════════ -->
+<div class="fh-section" id="wardrobe">
+  <div class="fh-section-header">
+    <div class="section-icon">🎛️</div>
+    <h2>Wardrobe</h2>
+    <p>{{ items|length }} items in collection</p>
+  </div>
+  <div class="fh-filters">
+    <span class="fh-filter-label">Season</span>
+    <a href="/fashion" class="{{ 'active' if not filter_season and not filter_style else '' }}">All</a>
+    {% for s in seasons %}
+    <a href="/fashion?season={{ s.season }}" class="{{ 'active' if filter_season == s.season else '' }}">{{ s.season }}</a>
+    {% endfor %}
+    <span class="filter-divider"></span>
+    <span class="fh-filter-label">Style</span>
+    {% for s in styles %}
+    <a href="/fashion?style={{ s.style }}" class="{{ 'active' if filter_style == s.style else '' }}">{{ s.style }}</a>
+    {% endfor %}
+  </div>
+
+  <!-- ════════════════════════════════════
+       WARDROBE ITEMS GRID w/ COLOR SWATCHES
+       ════════════════════════════════════ -->
+  <div class="wardrobe-grid" id="wardrobe-grid">
+    {% for item in items %}
+    <div class="wd-card"
+         data-category="{{ item.category }}"
+         data-season="{{ item.season }}"
+         data-style="{{ item.style }}"
+         data-color="{{ item.color }}">
+      <div class="wd-card-top">
+        <h3>{{ item.name }}</h3>
+        <div class="wd-card-actions">
+          <button class="wd-action-btn" title="Add to outfit" onclick="addToOutfit('{{ item.id }}','{{ item.name|replace("'", "\\'") }}','{{ item.color }}')">+</button>
+          <button class="wd-action-btn" title="Favorite" onclick="this.textContent=this.textContent==='♡'?'♥':'♡';this.style.color=this.textContent==='♥'?'#fbc2eb':'rgba(255,255,255,0.35)'">♡</button>
+        </div>
+      </div>
+      <div class="wd-card-colors">
+        <div class="color-swatch" style="background:{{ item.color | lower }};width:38px;height:38px" title="{{ item.color }}" data-name="{{ item.color }}" onmouseenter="this.style.transform='scale(1.15)'" onmouseleave="this.style.transform='scale(1)'"></div>
+      </div>
+      <div class="wd-card-meta">
+        <span class="wd-tag tag-season">{{ item.season }}</span>
+        <span class="wd-tag tag-style">{{ item.style }}</span>
+        <span class="wd-tag tag-category">{{ item.category }}</span>
+        <span class="wd-tag tag-color-label">{{ item.color }}</span>
+      </div>
+      <div class="wd-card-desc">{{ item.description }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     OUTFIT BUILDER
+     ══════════════════════════════════════ -->
+<div class="fh-section" id="outfits">
+  <div class="fh-section-header">
+    <div class="section-icon">👗</div>
+    <h2>Outfit Builder</h2>
+    <p>Mix & match your wardrobe pieces</p>
+  </div>
+  <div class="outfit-builder">
+    <div class="ob-layout">
+      <div class="ob-canvas" id="ob-canvas">
+        <div class="ob-placeholder">Select items from the right panel<br>to build your outfit</div>
+        <div class="ob-zones" id="ob-zones"></div>
+      </div>
+      <div class="ob-picker" id="ob-picker">
+        {% for item in items %}
+        <div class="ob-picker-item" data-id="{{ item.id }}" data-name="{{ item.name }}" data-color="{{ item.color }}" onclick="pickOutfitItem(this)">
+          <div class="opi-name">{{ item.name }}</div>
+          <div class="opi-colors">
+            <div class="opc" style="background:{{ item.color | lower }}"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="ob-actions">
+      <button class="btn-primary" onclick="saveOutfit()">💾 Save Outfit</button>
+      <button class="btn-ghost" onclick="shuffleOutfit()">🎲 Shuffle</button>
+      <button class="btn-ghost" onclick="clearOutfit()">✕ Clear All</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     STYLE QUIZ
+     ══════════════════════════════════════ -->
+<div class="fh-section" id="quiz">
+  <div class="fh-section-header">
+    <div class="section-icon">🎯</div>
+    <h2>Style Quiz</h2>
+    <p>Discover your unique fashion personality</p>
+  </div>
+  <div class="style-quiz" id="styleQuiz">
+    <div class="q-progress-bar"><div class="q-progress-fill" id="qProgress" style="width:0%"></div></div>
+    <div id="qContent"></div>
+    <div class="q-nav" id="qNav">
+      <button class="btn-ghost" id="btnPrev" onclick="quizPrev()" style="visibility:hidden">← Back</button>
+      <span style="color:var(--text-muted);font-size:0.82em" id="qIndicator">Question 1 of 5</span>
+      <button class="btn-primary" id="btnNext" onclick="quizNext()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SEASONAL LOOKBOOK
+     ══════════════════════════════════════ -->
+<div class="fh-section" id="lookbook">
+  <div class="fh-section-header">
+    <div class="section-icon">📖</div>
+    <h2>Seasonal Lookbook</h2>
+    <p>Curated seasonal outfit inspirations</p>
+  </div>
+  <div class="lookbook" id="lookbookGrid"></div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SEASONAL TREND FORECAST
+     ══════════════════════════════════════ -->
+<div class="fh-section" id="trends">
+  <div class="fh-section-header">
+    <div class="section-icon">🔮</div>
+    <h2>Seasonal Trend Forecast</h2>
+    <p>Upcoming trends for the season ahead</p>
+  </div>
+  <div class="trend-forecast">
+    <div class="tf-header">
+      <h3>Trending Now</h3>
+      <div class="tf-tabs">
+        <button class="tf-tab active" onclick="switchTrendTab('spring',this)">Spring</button>
+        <button class="tf-tab" onclick="switchTrendTab('summer',this)">Summer</button>
+        <button class="tf-tab" onclick="switchTrendTab('autumn',this)">Autumn</button>
+        <button class="tf-tab" onclick="switchTrendTab('winter',this)">Winter</button>
+      </div>
+    </div>
+    <div class="tf-grid" id="tfGrid"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SHOPPING WISHLIST
+     ══════════════════════════════════════ -->
+<div class="fh-section wishlist-section" id="wishlist">
+  <div class="fh-section-header">
+    <div class="section-icon">🛍️</div>
+    <h2>Shopping Wishlist</h2>
+    <p>Items you're eyeing for your next haul</p>
+  </div>
+  <div class="wl-add-form">
+    <input type="text" id="wlName" placeholder="Item name..." style="flex:2;min-width:160px">
+    <input type="text" id="wlColor" placeholder="Color (#hex)" style="width:110px">
+    <input type="text" id="wlPrice" placeholder="Est. price" style="width:100px">
+    <input type="text" id="wlNote" placeholder="Note (optional)" style="flex:1;min-width:120px">
+    <button class="btn-primary" onclick="addWishItem()">+ Add</button>
+  </div>
+  <div class="wl-grid" id="wlGrid"></div>
+</div>
+
+<!-- ══════════════════════════════════════
+     COLOR PALETTE GENERATOR
+     ══════════════════════════════════════ -->
+<div class="fh-section" id="palette">
+  <div class="fh-section-header">
+    <div class="section-icon">🎨</div>
+    <h2>Color Palette Generator</h2>
+    <p>Generate harmonious color palettes for your outfits</p>
+  </div>
+  <div class="palette-gen">
+    <div class="pg-controls">
+      <span style="color:var(--text-muted);font-size:0.82em">Choose a base:</span>
+      <div class="pg-hue">
+        <div class="pg-hue-btn active" style="background:#6d28d9" onclick="genPalette(this,262)" title="Purple"></div>
+        <div class="pg-hue-btn" style="background:#ec4899" onclick="genPalette(this,330)" title="Pink"></div>
+        <div class="pg-hue-btn" style="background:#0ea5e9" onclick="genPalette(this,199)" title="Sky"></div>
+        <div class="pg-hue-btn" style="background:#10b981" onclick="genPalette(this,160)" title="Emerald"></div>
+        <div class="pg-hue-btn" style="background:#f59e0b" onclick="genPalette(this,38)" title="Amber"></div>
+        <div class="pg-hue-btn" style="background:#ef4444" onclick="genPalette(this,0)" title="Red"></div>
+        <div class="pg-hue-btn" style="background:#8b5cf6" onclick="genPalette(this,270)" title="Violet"></div>
+        <div class="pg-hue-btn" style="background:#84cc16" onclick="genPalette(this,82)" title="Lime"></div>
+        <div class="pg-hue-btn" style="background:#f97316" onclick="genPalette(this,24)" title="Orange"></div>
+        <div class="pg-hue-btn" style="background:#6366f1" onclick="genPalette(this,243)" title="Indigo"></div>
+      </div>
+      <button class="btn-primary" onclick="genRandomPalette()">🎲 Random Palette</button>
+    </div>
+    <div class="pg-swatches" id="pgSwatches"></div>
+    <div class="pg-info">
+      <span style="color:var(--text-muted);font-size:0.8em">Click any swatch to copy hex code</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     FASHION MOOD BOARD
+     ══════════════════════════════════════ -->
+<div class="fh-section" id="moodboard">
+  <div class="fh-section-header">
+    <div class="section-icon">🖼️</div>
+    <h2>Fashion Mood Board</h2>
+    <p>Pin your inspirations & fabric ideas</p>
+  </div>
+  <div class="mood-board">
+    <div class="mb-canvas" id="mbCanvas">
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--text-muted);font-size:0.85em;text-align:center">
+        Add items below to start your mood board
+      </div>
+    </div>
+    <div class="mb-controls">
+      <input type="text" id="mbInput" placeholder="Add a note, fabric, or inspiration..." onkeydown="if(event.key==='Enter')addMoodItem()">
+      <select id="mbType">
+        <option value="💡">💡 Idea</option>
+        <option value="🧵">🧵 Fabric</option>
+        <option value="🎨">🎨 Color</option>
+        <option value="👗">👗 Garment</option>
+        <option value="📝">📝 Note</option>
+      </select>
+      <button class="btn-primary" onclick="addMoodItem()">Add</button>
+      <button class="btn-ghost" onclick="clearMoodBoard()">Clear</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     STYLE INSPIRATION CARDS
+     ══════════════════════════════════════ -->
+<div class="fh-section" id="inspiration">
+  <div class="fh-section-header">
+    <div class="section-icon">💫</div>
+    <h2>Style Inspiration</h2>
+    <p>Trending fabrics & classic style guides</p>
+  </div>
+  <div class="inspo-grid" id="inspoGrid"></div>
+</div>
+
+<!-- ══════════════════════════════════════
+     CLOTHING CARE TIPS
+     ══════════════════════════════════════ -->
+<div class="fh-section" id="care">
+  <div class="fh-section-header">
+    <div class="section-icon">🧺</div>
+    <h2>Clothing Care Tips</h2>
+    <p>Keep your wardrobe looking its best</p>
+  </div>
+  <div class="care-grid" id="careGrid"></div>
+</div>
+
+</div><!-- /fh-container -->
+
+<script>
+(function(){
+// ═══════════════════════════════════════
+//  DATA — derived from server-side items
+// ═══════════════════════════════════════
+var rawItems = [
+  {% for item in items %}
+  { id: "{{ item.id }}", name: "{{ item.name }}", category: "{{ item.category }}", season: "{{ item.season }}", color: "{{ item.color }}", style: "{{ item.style }}", description: "{{ item.description }}" }
+  {% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+var SEASON_COLORS = {
+  '春': '#a7f3d0', '夏': '#fde68a', '秋': '#fdba74', '冬': '#bfdbfe',
+  'Spring': '#a7f3d0', 'Summer': '#fde68a', 'Autumn': '#fdba74', 'Winter': '#bfdbfe',
+  '早春': '#bbf7d0', '晚秋': '#fed7aa', '早春': '#d9f99d', '初夏': '#fef08a',
+  '全季': '#c4b5fd', 'All': '#c4b5fd', '中性': '#d4d4d8'
+};
+
+var STYLE_COLORS = ['#a78bfa','#f472b6','#fb923c','#34d399','#60a5fa','#fbbf24','#f87171','#a3e635'];
+
+// ═══════════════════════════════════════
+//  STATISTICS & CHARTS
+// ═══════════════════════════════════════
+function calcStats(){
+  var colors = {};
+  var seasons = {};
+  var styles = {};
+  var cats = {};
+  rawItems.forEach(function(it){
+    colors[it.color] = (colors[it.color]||0)+1;
+    seasons[it.season] = (seasons[it.season]||0)+1;
+    styles[it.style] = (styles[it.style]||0)+1;
+    cats[it.category] = (cats[it.category]||0)+1;
+  });
+  var uniqueColors = Object.keys(colors).length;
+  var topSeason = '';
+  var topCount = 0;
+  Object.keys(seasons).forEach(function(s){ if(seasons[s]>topCount){ topCount=seasons[s]; topSeason=s; }});
+  document.getElementById('stat-colors').textContent = uniqueColors;
+  document.getElementById('stat-season').textContent = topSeason||'—';
+  document.getElementById('stat-cats').textContent = Object.keys(cats).length;
+
+  // Season chart
+  var maxS = Math.max.apply(null, Object.values(seasons));
+  var seasonHtml = '';
+  var sci = 0;
+  Object.keys(seasons).forEach(function(s){
+    var pct = maxS ? Math.round(seasons[s]/maxS*100) : 0;
+    var ec = SEASON_COLORS[s] || STYLE_COLORS[sci % STYLE_COLORS.length];
+    var sc = STYLE_COLORS[sci % STYLE_COLORS.length];
+    seasonHtml += '<div class="bar-group"><div class="bar-label"><span> '+s+'</span><span>'+seasons[s]+'</span></div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+sc+'"></div></div></div>';
+    sci++;
+  });
+  document.getElementById('chart-season').innerHTML = seasonHtml;
+
+  // Style chart
+  var maxSt = Math.max.apply(null, Object.values(styles));
+  var styleHtml = '';
+  var sti = 0;
+  Object.keys(styles).forEach(function(s){
+    var pct = maxSt ? Math.round(styles[s]/maxSt*100) : 0;
+    var sc = STYLE_COLORS[sti % STYLE_COLORS.length];
+    styleHtml += '<div class="bar-group"><div class="bar-label"><span> '+s+'</span><span>'+styles[s]+'</span></div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+sc+'"></div></div></div>';
+    sti++;
+  });
+  document.getElementById('chart-style').innerHTML = styleHtml;
+}
+calcStats();
+
+// ═══════════════════════════════════════
+//  OUTFIT BUILDER
+// ═══════════════════════════════════════
+var outfitSlots = [];
+
+window.addToOutfit = function(id, name, color) {
+  if(outfitSlots.find(function(s){return s.id===id;})) return;
+  outfitSlots.push({id:id, name:name, color:color});
+  renderOutfit();
+};
+
+window.pickOutfitItem = function(el) {
+  var items2 = document.querySelectorAll('.ob-picker-item');
+  items2.forEach(function(e){ e.classList.remove('sel'); });
+  el.classList.add('sel');
+  var id = el.dataset.id, name = el.dataset.name, color = el.dataset.color;
+  // Find first empty slot or append
+  outfitSlots.push({id:id, name:name, color:color});
+  renderOutfit();
+};
+
+function renderOutfit() {
+  var canvas = document.getElementById('ob-canvas');
+  var zones = document.getElementById('ob-zones');
+  var placeholder = canvas.querySelector('.ob-placeholder');
+  if(outfitSlots.length === 0) {
+    canvas.classList.remove('filled');
+    placeholder.style.display = '';
+    zones.innerHTML = '';
+    return;
+  }
+  canvas.classList.add('filled');
+  placeholder.style.display = 'none';
+  zones.innerHTML = '';
+  var zoneNames = ['Top','Bottom','Dress','Outerwear','Shoes','Accessories'];
+  outfitSlots.forEach(function(slot, i) {
+    var zoneName = zoneNames[i] || 'Layer '+(i+1);
+    var div = document.createElement('div');
+    div.className = 'ob-zone';
+    div.innerHTML = '<div class="ob-zone-label">'+zoneName+'</div>'
+      +'<div class="ob-zone-item"><span class="mini-swatch" style="background:'+slot.color+'"></span> '+slot.name+'</div>'
+      +'<button class="remove-btn" onclick="removeOutfitSlot('+i+')">✕</button>';
+    zones.appendChild(div);
+  });
+  // Add "+" button
+  if(outfitSlots.length < 8) {
+    var addDiv = document.createElement('div');
+    addDiv.className = 'ob-zone';
+    addDiv.innerHTML = '<div class="ob-zone-label">Add layer</div><div class="ob-zone-item" style="color:var(--text-muted);font-size:0.85em">+ Pick from wardrobe</div>';
+    addDiv.style.opacity = '0.5';
+    zones.appendChild(addDiv);
+  }
+}
+
+window.removeOutfitSlot = function(i) {
+  outfitSlots.splice(i, 1);
+  renderOutfit();
+};
+
+window.clearOutfit = function() {
+  outfitSlots = [];
+  document.querySelectorAll('.ob-picker-item.sel').forEach(function(e){ e.classList.remove('sel'); });
+  renderOutfit();
+};
+
+window.saveOutfit = function() {
+  if(!outfitSlots.length) return alert('Build an outfit first!');
+  var names = outfitSlots.map(function(s){return s.name;}).join(' + ');
+  alert('✨ Outfit saved!\n\n' + names);
+};
+
+window.shuffleOutfit = function() {
+  var shuffled = rawItems.slice().sort(function(){ return Math.random()-0.5; });
+  outfitSlots = shuffled.slice(0, 3+Math.floor(Math.random()*3)).map(function(it){
+    return {id:it.id, name:it.name, color:it.color};
+  });
+  document.querySelectorAll('.ob-picker-item.sel').forEach(function(e){ e.classList.remove('sel'); });
+  renderOutfit();
+};
+
+// ═══════════════════════════════════════
+//  STYLE QUIZ
+// ═══════════════════════════════════════
+var quizQuestions = [
+  {
+    q: "What's your ideal weekend outfit?",
+    sub: "Choose the one that resonates most",
+    options: [
+      { icon: '👖', label: 'Jeans & tee', scores: { casual:3, minimalist:1 } },
+      { icon: '👗', label: 'Flowy dress', scores: { romantic:3, feminine:2 } },
+      { icon: '🧥', label: 'Blazer & trousers', scores: { classic:3, minimalist:2 } },
+      { icon: '🎽', label: 'Streetwear vibes', scores: { edgy:3, casual:1 } }
+    ]
+  },
+  {
+    q: "Which color palette draws you in?",
+    sub: "Your go-to colors say a lot",
+    options: [
+      { icon: '🖤', label: 'Black & white', scores: { minimalist:3, classic:2 } },
+      { icon: '💜', label: 'Purples & pinks', scores: { romantic:3, feminine:2 } },
+      { icon: '🤎', label: 'Earthy tones', scores: { bohemian:3, casual:1 } },
+      { icon: '❤️‍🔥', label: 'Bold & bright', scores: { edgy:3, bohemian:1 } }
+    ]
+  },
+  {
+    q: "Pick a fashion era you love",
+    sub: "Style nostalgia is powerful",
+    options: [
+      { icon: '✨', label: '1920s Glam', scores: { classic:2, romantic:3 } },
+      { icon: '🕶️', label: '1980s Power', scores: { edgy:3, classic:1 } },
+      { icon: '☮️', label: '1970s Boho', scores: { bohemian:3, casual:1 } },
+      { icon: '📱', label: 'Modern Minimal', scores: { minimalist:3, classic:1 } }
+    ]
+  },
+  {
+    q: "Your dream shopping trip is...",
+    sub: "Where would you spend hours?",
+    options: [
+      { icon: '🏪', label: 'A designer boutique', scores: { classic:3, romantic:1 } },
+      { icon: '🛒', label: 'Vintage thrift store', scores: { bohemian:3, edgy:1 } },
+      { icon: '🏬', label: 'Trendy fast-fashion', scores: { casual:2, edgy:2 } },
+      { icon: '🎨', label: 'Minimalist concept store', scores: { minimalist:3, classic:1 } }
+    ]
+  },
+  {
+    q: "How do you accessorize?",
+    sub: "The finishing touches",
+    options: [
+      { icon: '💍', label: 'Lots of jewelry', scores: { romantic:3, bohemian:1 } },
+      { icon: '⌚', label: 'One quality watch', scores: { minimalist:3, classic:2 } },
+      { icon: '🎒', label: 'Statement bag', scores: { edgy:2, classic:2 } },
+      { icon: '🌸', label: 'Scarves & hair clips', scores: { feminine:3, bohemian:1 } }
+    ]
+  }
+];
+
+var quizResultStyles = {
+  classic:  { icon: '👔', name: 'Classic Elegance', desc: 'Timeless silhouettes refined by impeccable tailoring. You gravitate toward structured pieces, neutral palettes, and investment items that last decades.' },
+  romantic: { icon: '🌹', name: 'Romantic Dreamer', desc: 'Soft fabrics, delicate details, and ethereal silhouettes define your look. Lace, florals, and flowing materials speak to your soul.' },
+  minimalist:{ icon: '⬜', name: 'Modern Minimalist', desc: 'Less is more. Clean lines, intentional pieces, and a curated capsule wardrobe. Every item earns its place in your closet.' },
+  bohemian: { icon: '🌻', name: 'Free Spirit Boho', desc: 'Eclectic patterns, natural textures, and effortless layering. Your style tells a story of wanderlust and artistic expression.' },
+  edgy:     { icon: '🖤', name: 'Bold & Edgy', desc: 'Leather, metallics, and unexpected cuts. You push boundaries and make a statement with every outfit.' },
+  casual:   { icon: '🌿', name: 'Effortless Casual', desc: 'Comfort meets style. Elevated basics and easygoing pieces that look put-together without trying too hard.' },
+  feminine: { icon: '🌷', name: 'Soft Femininity', desc: 'Feminine details, soft colors, and graceful silhouettes. You embrace the beauty of classic feminine style.' }
+};
+
+var qCurrent = 0;
+var qAnswers = [];
+var qScores = {};
+
+function renderQuiz() {
+  var q = quizQuestions[qCurrent];
+  var progress = ((qCurrent)/quizQuestions.length*100).toFixed(0);
+  document.getElementById('qProgress').style.width = progress+'%';
+  document.getElementById('qIndicator').textContent = 'Question '+(qCurrent+1)+' of '+quizQuestions.length;
+  document.getElementById('btnPrev').style.visibility = qCurrent>0 ? 'visible' : 'hidden';
+
+  var last = qCurrent === quizQuestions.length-1;
+  document.getElementById('btnNext').textContent = last ? 'See Results →' : 'Next →';
+
+  var html = '<div class="q-question">'+q.q+'</div>';
+  html += '<div class="q-sub">'+q.sub+'</div>';
+  html += '<div class="q-options">';
+  q.options.forEach(function(opt, i){
+    html += '<div class="q-option'+(qAnswers[qCurrent]===i?' sel':'')+'" onclick="quizSelect('+i+')"><span class="opt-icon">'+opt.icon+'</span>'+opt.label+'</div>';
+  });
+  html += '</div>';
+
+  document.getElementById('qContent').innerHTML = html;
+}
+
+window.quizSelect = function(i) {
+  qAnswers[qCurrent] = i;
+  document.querySelectorAll('.q-option').forEach(function(el,j){
+    el.classList.toggle('sel', j===i);
+  });
+};
+
+window.quizNext = function() {
+  if(qAnswers[qCurrent] === undefined) return alert('Please select an option');
+  if(qCurrent < quizQuestions.length-1) {
+    qCurrent++;
+    renderQuiz();
+  } else {
+    // Calculate results
+    qScores = {};
+    qAnswers.forEach(function(ansIdx, qi) {
+      var opt = quizQuestions[qi].options[ansIdx];
+      Object.keys(opt.scores).forEach(function(style){
+        qScores[style] = (qScores[style]||0) + opt.scores[style];
+      });
+    });
+    var topStyle = '';
+    var topScore = 0;
+    Object.keys(qScores).forEach(function(s){
+      if(qScores[s] > topScore) { topScore = qScores[s]; topStyle = s; }
+    });
+    var result = quizResultStyles[topStyle] || quizResultStyles.casual;
+    document.getElementById('qContent').innerHTML =
+      '<div class="q-result" style="display:block">'
+      +'<div class="result-icon">'+result.icon+'</div>'
+      +'<h3>You are: '+result.name+'</h3>'
+      +'<p>'+result.desc+'</p>'
+      +'<br><button class="btn-ghost" onclick="quizRestart()">Retake Quiz</button>'
+      +'</div>';
+    document.getElementById('qNav').style.display = 'none';
+    document.getElementById('qProgress').style.width = '100%';
+  }
+};
+
+window.quizPrev = function() {
+  if(qCurrent > 0) { qCurrent--; renderQuiz(); }
+};
+
+window.quizRestart = function() {
+  qCurrent = 0; qAnswers = []; qScores = {};
+  document.getElementById('qNav').style.display = '';
+  renderQuiz();
+};
+
+renderQuiz();
+
+// ═══════════════════════════════════════
+//  SEASONAL LOOKBOOK
+// ═══════════════════════════════════════
+var lookbookData = [
+  { season: 'Spring', tagColor: '#34d399', tagBg: 'rgba(52,211,153,0.15)', bg: 'linear-gradient(135deg,#064e3b,#065f46)', emoji: '🌸',
+    title: 'Pastel Garden Party', desc: 'Soft lavender blouses, flowy midi skirts, and woven accessories for breezy spring days.',
+    colors: ['#c4b5fd','#a78bfa','#f9a8d4','#f0abfc','#d1fae5'],
+    floats: ['🌷','🦋','🌸'] },
+  { season: 'Summer', tagColor: '#fde68a', tagBg: 'rgba(253,230,138,0.15)', bg: 'linear-gradient(135deg,#78350f,#92400e)', emoji: '☀️',
+    title: 'Coastal Breeze', desc: 'Linen sets, breezy sundresses, straw hats, and cool neutrals for sun-soaked days.',
+    colors: ['#fde68a','#fcd34d','#fef3c7','#fffbeb','#f5f5f4'],
+    floats: ['🌊','🐚','⛱️'] },
+  { season: 'Autumn', tagColor: '#fdba74', tagBg: 'rgba(253,186,116,0.15)', bg: 'linear-gradient(135deg,#7c2d12,#9a3412)', emoji: '🍂',
+    title: 'Warm Earth Tones', desc: 'Layered knits, earthy palettes, suede boots, and cozy scarves for crisp autumn days.',
+    colors: ['#fdba74','#f97316','#92400e','#451a03','#78350f'],
+    floats: ['🍁','🦂','🎃'] },
+  { season: 'Winter', tagColor: '#bfdbfe', tagBg: 'rgba(191,219,254,0.15)', bg: 'linear-gradient(135deg,#1e3a5f,#1e40af)', emoji: '❄️',
+    title: 'Midnight Elegance', desc: 'Velvet, faux fur, deep jewel tones, and statement coats for the coldest months.',
+    colors: ['#bfdbfe','#60a5fa','#1e3a5f','#c4b5fd','#f9a8d4'],
+    floats: ['❄️','✨','🧊'] },
+  { season: 'All-Season', tagColor: '#c4b5fd', tagBg: 'rgba(196,181,253,0.15)', bg: 'linear-gradient(135deg,#4c1d95,#5b21b6)', emoji: '✨',
+    title: 'Capsule Essentials', desc: 'Timeless building blocks: white shirts, tailored denim, knit layers, and neutral accessories.',
+    colors: ['#e5e7eb','#9ca3af','#4b5563','#c4b5fd','#f9a8d4'],
+    floats: ['🤍','🧥','👟'] },
+  { season: 'Date Night', tagColor: '#f9a8d4', tagBg: 'rgba(249,168,212,0.15)', bg: 'linear-gradient(135deg,#831843,#9d174d)', emoji: '💕',
+    title: 'Romantic Evening', desc: 'Silk slip dresses, delicate jewelry, strappy heels, and soft smoky eye moments.',
+    colors: ['#f9a8d4','#fb7185','#fda4af','#fce7f3','#be185d'],
+    floats: ['💕','🕯️','🌹'] }
+];
+
+function renderLookbook() {
+  var grid = document.getElementById('lookbookGrid');
+  var html = '';
+  lookbookData.forEach(function(lb){
+    html += '<div class="lb-card">';
+    html += '<div class="lb-visual" style="background:'+lb.bg+'">';
+    html += '<span style="font-size:2em">'+lb.emoji+'</span>';
+    lb.floats.forEach(function(f,i){
+      html += '<span class="lb-emoji-float" style="top:'+(20+i*30)+'%;left:'+(10+i*25)+'%;animation-delay:'+i+'s">'+f+'</span>';
+    });
+    html += '</div>';
+    html += '<div class="lb-info">';
+    html += '<span class="lb-season-tag" style="background:'+lb.tagBg+';color:'+lb.tagColor+'">'+lb.season+'</span>';
+    html += '<h3>'+lb.title+'</h3>';
+    html += '<p>'+lb.desc+'</p>';
+    html += '<div class="lb-colors">';
+    lb.colors.forEach(function(c){ html += '<div class="lb-c" style="background:'+c+'"></div>'; });
+    html += '</div></div></div>';
+  });
+  grid.innerHTML = html;
+}
+renderLookbook();
+
+// ═══════════════════════════════════════
+//  COLOR PALETTE GENERATOR
+// ═══════════════════════════════════════
+function hslToHex(h,s,l) {
+  s /= 100; l /= 100;
+  var a = s * Math.min(l, 1-l);
+  function f(n){
+    var k = (n + h/30) % 12;
+    var color = l - a * Math.max(Math.min(k-3, 9-k, 1), -1);
+    return Math.round(255*color).toString(16).padStart(2,'0');
+  }
+  return '#'+f(0)+f(8)+f(4);
+}
+
+function genPalette(el, hue) {
+  document.querySelectorAll('.pg-hue-btn').forEach(function(b){ b.classList.remove('active'); });
+  el.classList.add('active');
+  var swatches = ['Monochromatic','Analogous','Complementary','Triadic','Split-Comp'];
+  var palettes = {
+    'Monochromatic': [ {h:hue,s:20,l:90}, {h:hue,s:35,l:70}, {h:hue,s:50,l:55}, {h:hue,s:65,l:35}, {h:hue,s:80,l:20} ],
+    'Analogous': [ {h:hue,s:40,l:75}, {h:hue+30,s:45,l:65}, {h:hue,s:50,l:55}, {h:hue-30,s:45,l:50}, {h:hue,s:60,l:30} ],
+    'Complementary': [ {h:hue,s:30,l:80}, {h:hue,s:40,l:60}, {h:hue,s:50,l:50}, {h:hue+180,s:40,l:55}, {h:hue+180,s:50,l:35} ],
+    'Triadic': [ {h:hue,s:45,l:75}, {h:hue+120,s:40,l:65}, {h:hue,s:50,l:55}, {h:hue+240,s:45,l:60}, {h:hue,s:55,l:30} ],
+    'Split-Comp': [ {h:hue,s:35,l:80}, {h:hue+150,s:40,l:60}, {h:hue,s:50,l:55}, {h:hue+210,s:40,l:55}, {h:hue,s:60,l:28} ]
+  };
+  // Use first palette scheme
+  var scheme = palettes['Analogous'];
+  var html = '';
+  var labels = ['Light','Soft','Base','Deep','Dark'];
+  scheme.forEach(function(c,i){
+    var hex = hslToHex(c.h, c.s, c.l);
+    html += '<div class="pg-swatch" style="background:'+hex+'" onclick="copyHex(this,\''+hex+'\')">';
+    html += '<span class="ps-copied">✓</span>';
+    html += '<span class="ps-label">' + hex.toUpperCase() + '</span>';
+    html += '</div>';
+  });
+  document.getElementById('pgSwatches').innerHTML = html;
+}
+
+window.genRandomPalette = function() {
+  var hue = Math.floor(Math.random()*360);
+  document.querySelectorAll('.pg-hue-btn').forEach(function(b){ b.classList.remove('active'); });
+  var el = document.createElement('div');
+  el.style.background = hslToHex(hue, 50, 50);
+  genPalette(el, hue);
+};
+
+window.copyHex = function(el, hex) {
+  if(navigator.clipboard) navigator.clipboard.writeText(hex);
+  el.classList.add('show-copied');
+  setTimeout(function(){ el.classList.remove('show-copied'); }, 1200);
+};
+
+// Init palette
+genPalette(document.querySelector('.pg-hue-btn'), 262);
+
+// ═══════════════════════════════════════
+//  MOOD BOARD
+// ═══════════════════════════════════════
+var moodItems = [];
+
+function addMoodItem() {
+  var input = document.getElementById('mbInput');
+  var type = document.getElementById('mbType').value;
+  var text = input.value.trim();
+  if(!text) return;
+  moodItems.push({ icon: type, label: text, note: '' });
+  input.value = '';
+  renderMoodBoard();
+}
+
+function renderMoodBoard() {
+  var canvas = document.getElementById('mbCanvas');
+  if(!moodItems.length) {
+    canvas.innerHTML = "<div style=\"position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--text-muted);font-size:0.85em;text-align:center\">Add items below to start your mood board</div>";
+    return;
+  }
+  var html = '';
+  moodItems.forEach(function(item, i) {
+    html += '<div class="mb-item" style="animation:fadeInUp 0.3s '+(i*0.05)+'s ease both">';
+    html += '<div class="mb-icon">' + item.icon + '</div>';
+    html += '<div class="mb-label">' + item.label + '</div>';
+    html += '</div>';
+  });
+  canvas.innerHTML = html;
+}
+
+window.clearMoodBoard = function() {
+  moodItems = [];
+  renderMoodBoard();
+};
+
+// ═══════════════════════════════════════
+//  STYLE INSPIRATION CARDS
+// ═══════════════════════════════════════
+var inspoData = [
+  { avatar: '👑', tag: 'Classic', tagColor: 'rgba(196,181,253,0.15)', tagTextColor: '#c4b5fd',
+    title: 'The Power Suit', desc: 'A well-tailored blazer transforms any outfit. Invest in quality wool with structured shoulders.',
+    fabrics: ['Wool','Cashmere','Silk','Cotton'] },
+  { avatar: '🦋', tag: 'Romantic', tagColor: 'rgba(249,168,212,0.15)', tagTextColor: '#f9a8d4',
+    title: 'Delicate Details', desc: 'Lace, embroidery, and pearl buttons add feminine charm to everyday pieces.',
+    fabrics: ['Lace','Chiffon','Satin','Organza'] },
+  { avatar: '🌿', tag: 'Casual', tagColor: 'rgba(167,243,208,0.15)', tagTextColor: '#a7f3d0',
+    title: 'Effortless Layers', desc: 'Linen shirts, relaxed denim, and neutral sneakers for the perfectly undone look.',
+    fabrics: ['Linen','Denim','Canvas','Jersey'] },
+  { avatar: '⚡', tag: 'Edgy', tagColor: 'rgba(252,165,165,0.15)', tagTextColor: '#fca5a5',
+    title: 'Statement Pieces', desc: 'Leather, metallics, and asymmetric cuts for when you want to turn heads.',
+    fabrics: ['Leather','Mesh','Metallic','PVC'] },
+  { avatar: '🌻', tag: 'Boho', tagColor: 'rgba(253,230,138,0.15)', tagTextColor: '#fde68a',
+    title: 'Artisan Textures', desc: 'Fringe, crochet, and hand-dyed fabrics create an eclectic, worldly aesthetic.',
+    fabrics: ['Crochet','Suede','Tweed','Velvet'] },
+  { avatar: '✨', tag: 'Minimalist', tagColor: 'rgba(196,181,253,0.12)', tagTextColor: '#a5b4fc',
+    title: 'The Capsule Edit', desc: '12 pieces, 30 outfits. Master the art of intentional dressing with a curated selection.',
+    fabrics: ['Pima Cotton','Merino','Silk','Modal'] }
+];
+
+function renderInspo() {
+  var grid = document.getElementById('inspoGrid');
+  var html = '';
+  inspoData.forEach(function(card){
+    html += '<div class="inspo-card">';
+    html += '<div class="inspo-top">';
+    html += '<div class="inspo-avatar">'+card.avatar+'</div>';
+    html += '<span class="inspo-tag" style="background:'+card.tagColor+';color:'+card.tagTextColor+'">'+card.tag+'</span>';
+    html += '</div>';
+    html += '<div class="inspo-body">';
+    html += '<h4>'+card.title+'</h4>';
+    html += '<p>'+card.desc+'</p>';
+    html += '<div class="inspo-fabrics">';
+    card.fabrics.forEach(function(f){ html += '<span class="inspo-fabric">'+f+'</span>'; });
+    html += '</div></div></div>';
+  });
+  grid.innerHTML = html;
+}
+renderInspo();
+
+// ═══════════════════════════════════════
+//  CARE TIPS
+// ═══════════════════════════════════════
+var careData = [
+  { icon: '🧊', title: 'Wash Cold, Dry Low', desc: 'Cold water prevents shrinking and color fading. Low heat protects fabric fibers from damage.', level: 'easy' },
+  { icon: '🪢', title: 'Zip & Button First', desc: 'Close zippers and buttons before washing to prevent snags, stretching, and metal corrosion.', level: 'easy' },
+  { icon: '👕', title: 'Turn Prints Inside Out', desc: 'Graphic tees and printed fabrics last longer when washed with prints facing inward, reducing surface friction.', level: 'easy' },
+  { icon: '☀️', title: 'Dry in the Shade', desc: 'UV rays degrade elastic fibers and fade dyes. Air-dry delicate items away from direct sunlight.', level: 'medium' },
+  { icon: '🪮', title: 'Steam, Don\'t Iron Silk', desc: 'Direct ironing can scorch silk fibers. Use a steamer on low hold 6 inches from the fabric surface.', level: 'medium' },
+  { icon: '🧴', title: 'Invest in Wooden Hangers', desc: 'Wire hangers distort shoulder shapes. Padded or wooden hangers maintain garment structure and prevent creasing.', level: 'easy' },
+  { icon: '💨', title: 'Canvas Shoe Storage', desc: 'Store shoes in breathable canvas bags, sealed plastic traps moisture and breeds mold on leather.', level: 'medium' },
+  { icon: '🪡', title: 'Mend Before Washing', desc: 'Small tears and loose threads worsen in the machine. Inspect and repair garments before they hit the laundry.', level: 'hard' },
+  { icon: '🧂', title: 'Salt for Color Lock', desc: 'Add a tablespoon of salt to the first wash of dark or vibrant garments to help set dyes and prevent bleeding.', level: 'easy' },
+  { icon: '📦', title: 'Fold Knits, Don\'t Hang', desc: 'Heavy knits stretch on hangers. Always fold sweaters with acid-free tissue to preserve shape during storage.', level: 'medium' },
+  { icon: '🌬️', title: 'Cedar for Moth Defense', desc: 'Cedar blocks and lavender sachets naturally repel moths and absorb moisture in stored seasonal garments.', level: 'easy' },
+  { icon: '🔄', title: 'Rotate Your Wardrobe', desc: 'Give garments at least 48 hours between wears. Fabrics need time to breathe, fibers to recover, and odors to dissipate.', level: 'easy' }
+];
+
+function renderCare() {
+  var grid = document.getElementById('careGrid');
+  var html = '';
+  careData.forEach(function(tip){
+    html += '<div class="care-card">';
+    html += '<div class="care-icon">' + tip.icon + '</div>';
+    html += '<h4>' + tip.title + '</h4>';
+    html += '<p>' + tip.desc + '</p>';
+    html += '<span class="care-tip-level level-' + tip.level + '">' + tip.level.toUpperCase() + '</span>';
+    html += '</div>';
+  });
+  grid.innerHTML = html;
+}
+renderCare();
+
+// Global functions for onclick handlers
+window.addToOutfit = function(id, name, color) {
+    var canvas = document.getElementById('outfit-canvas');
+    if (canvas) {
+        var slot = canvas.querySelector('.outfit-slot:empty') || canvas.querySelector('.outfit-slot');
+        if (slot) {
+            slot.innerHTML = '<div class="outfit-item-tag" style="background:' + color + '">' + name + '</div>';
+            slot.classList.add('filled');
+        }
+    }
+};
+window.pickOutfitItem = function(el) {
+    el.classList.toggle('selected');
+};
+window.saveOutfit = function() {
+    alert('搭配已保存！');
+};
+window.shuffleOutfit = function() {
+    var slots = document.querySelectorAll('.outfit-slot');
+    slots.forEach(function(s) { s.innerHTML = ''; s.classList.remove('filled'); });
+    alert('已清空，请重新搭配');
+};
+window.clearOutfit = function() {
+    var slots = document.querySelectorAll('.outfit-slot');
+    slots.forEach(function(s) { s.innerHTML = ''; s.classList.remove('filled'); });
+};
+window.quizPrev = function() {
+    var container = document.getElementById('quiz-container');
+    if (container) container.scrollBy({left: -300, behavior: 'smooth'});
+};
+window.quizNext = function() {
+    var container = document.getElementById('quiz-container');
+    if (container) container.scrollBy({left: 300, behavior: 'smooth'});
+};
+
+})();
+</script>
+{% endblock %}

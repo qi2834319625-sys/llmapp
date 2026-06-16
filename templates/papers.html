@@ -1,0 +1,464 @@
+{% extends "base.html" %}
+{% block title %}密钥协商论文库{% endblock %}
+{% block extra_css %}
+<style>
+.pk-header { text-align:center; padding:30px 20px 10px; }
+.pk-header h1 { font-size:2em; background:linear-gradient(135deg,#00f5ff,#39ff14,#ffe600); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.pk-header p { color:rgba(255,255,255,0.5); margin-top:8px; }
+.pk-container { max-width:1400px; margin:0 auto; padding:20px 30px 60px; }
+
+/* Stats Bar */
+.pk-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:24px; }
+.pk-stat { background:rgba(255,255,255,0.04); border-radius:10px; padding:16px; text-align:center; border:1px solid rgba(255,255,255,0.06); }
+.pk-stat-val { font-size:1.6em; font-weight:700; color:#00f5ff; }
+.pk-stat-label { font-size:0.78em; color:rgba(255,255,255,0.4); margin-top:4px; }
+
+/* Category Grid */
+.pk-categories { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; margin-bottom:24px; }
+.pk-cat-card {
+  padding:16px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px; cursor:pointer; transition:all 0.3s; position:relative; overflow:hidden;
+}
+.pk-cat-card:hover { transform:translateY(-3px); box-shadow:0 4px 20px rgba(0,0,0,0.3); }
+.pk-cat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.pk-cat-icon { font-size:1.8em; margin-bottom:8px; }
+.pk-cat-name { color:#fff; font-weight:600; font-size:0.95em; }
+.pk-cat-count { color:rgba(255,255,255,0.4); font-size:0.8em; margin-top:4px; }
+.pk-cat-desc { color:rgba(255,255,255,0.3); font-size:0.75em; margin-top:6px; line-height:1.4; }
+
+/* Filter Bar */
+.pk-filters { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+.pk-search { flex:1; min-width:200px; padding:10px 16px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:#fff; font-size:0.9em; outline:none; }
+.pk-search:focus { border-color:#00f5ff; }
+.pk-select { padding:8px 12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:#fff; font-size:0.88em; }
+
+/* Paper List */
+.pk-paper-list { display:flex; flex-direction:column; gap:10px; }
+.pk-paper-card {
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px; padding:18px; transition:all 0.2s; cursor:pointer;
+}
+.pk-paper-card:hover { border-color:rgba(0,245,255,0.3); background:rgba(0,245,255,0.03); }
+.pk-paper-title { color:#fff; font-weight:600; font-size:1em; margin-bottom:6px; line-height:1.4; }
+.pk-paper-meta { display:flex; gap:12px; flex-wrap:wrap; color:rgba(255,255,255,0.4); font-size:0.8em; }
+.pk-paper-meta span { display:flex; align-items:center; gap:4px; }
+.pk-paper-abstract { color:rgba(255,255,255,0.5); font-size:0.85em; margin-top:8px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.pk-paper-actions { display:flex; gap:8px; margin-top:10px; }
+.pk-paper-actions button, .pk-paper-actions a {
+  padding:4px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+  border-radius:12px; color:rgba(255,255,255,0.6); font-size:0.78em; cursor:pointer; text-decoration:none; transition:all 0.2s;
+}
+.pk-paper-actions button:hover, .pk-paper-actions a:hover { background:rgba(0,245,255,0.15); color:#00f5ff; border-color:#00f5ff; }
+.pk-paper-actions button.download { background:rgba(57,255,20,0.1); color:#39ff14; border-color:rgba(57,255,20,0.3); }
+.pk-paper-actions button.summarize { background:rgba(176,38,255,0.1); color:#b026ff; border-color:rgba(176,38,255,0.3); }
+
+/* Timeline */
+.pk-timeline { position:relative; padding-left:30px; }
+.pk-timeline::before { content:''; position:absolute; left:10px; top:0; bottom:0; width:2px; background:linear-gradient(to bottom,#00f5ff,#39ff14,#ffe600); opacity:0.3; }
+.pk-timeline-year { font-size:1.2em; font-weight:700; color:#00f5ff; margin:20px 0 10px; position:relative; }
+.pk-timeline-year::before { content:''; position:absolute; left:-24px; top:50%; width:10px; height:10px; background:#00f5ff; border-radius:50%; transform:translateY(-50%); box-shadow:0 0 8px #00f5ff; }
+
+/* Review Section */
+.pk-review { background:rgba(255,255,255,0.03); border-radius:12px; padding:20px; margin-top:16px; border:1px solid rgba(255,255,255,0.06); }
+.pk-review h4 { color:#ffe600; margin-bottom:12px; }
+.pk-review-content { color:rgba(255,255,255,0.7); font-size:0.9em; line-height:1.8; white-space:pre-wrap; }
+
+/* Pagination */
+.pk-pagination { display:flex; justify-content:center; gap:8px; margin-top:20px; }
+.pk-pagination button { padding:6px 14px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:#fff; cursor:pointer; font-size:0.85em; }
+.pk-pagination button.active { background:rgba(0,245,255,0.2); border-color:#00f5ff; color:#00f5ff; }
+.pk-pagination button:hover { background:rgba(0,245,255,0.1); }
+
+/* Modal */
+.pk-modal { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1000; justify-content:center; align-items:center; backdrop-filter:blur(4px); }
+.pk-modal.open { display:flex; }
+.pk-modal-box { background:#12122a; border:1px solid rgba(0,245,255,0.2); border-radius:18px; padding:32px; max-width:800px; width:90%; max-height:85vh; overflow-y:auto; box-shadow:0 0 40px rgba(0,245,255,0.1); }
+.pk-modal-box h3 { color:#00f5ff; margin-bottom:16px; }
+.pk-modal-close { position:absolute; top:16px; right:16px; background:none; border:none; color:rgba(255,255,255,0.5); font-size:1.5em; cursor:pointer; }
+
+/* Loading */
+.pk-loading { text-align:center; padding:40px; display:none; }
+.pk-loading.show { display:block; }
+.pk-spinner { width:32px; height:32px; border:3px solid rgba(0,245,255,0.2); border-top-color:#00f5ff; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 12px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pk-header">
+    <h1>🔐 密钥协商论文库</h1>
+    <p>全面梳理密钥协商研究方向 · 15个分类 · LLM智能总结 · 文献综述生成</p>
+</div>
+
+<div class="pk-container">
+    <!-- Stats -->
+    <div class="pk-stats" id="pkStats">
+        <div class="pk-stat"><div class="pk-stat-val" id="statTotal">--</div><div class="pk-stat-label">总论文数</div></div>
+        <div class="pk-stat"><div class="pk-stat-val" id="statDownloaded">--</div><div class="pk-stat-label">已下载</div></div>
+        <div class="pk-stat"><div class="pk-stat-val" id="statCategories">--</div><div class="pk-stat-label">研究方向</div></div>
+        <div class="pk-stat"><div class="pk-stat-val" id="statSummarized">--</div><div class="pk-stat-label">已总结</div></div>
+    </div>
+    
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('browse')">📚 论文浏览</button>
+        <button class="tab-btn" onclick="switchTab('timeline')">📅 时间线</button>
+        <button class="tab-btn" onclick="switchTab('reviews')">📝 文献综述</button>
+        <button class="tab-btn" onclick="switchTab('import')">📥 批量导入</button>
+    </div>
+    
+    <!-- Browse Tab -->
+    <div id="tab-browse" class="tab-panel active">
+        <!-- Categories -->
+        <h3 style="color:#00f5ff;margin-bottom:12px;">🔬 研究方向</h3>
+        <div class="pk-categories" id="pkCategories"></div>
+        
+        <!-- Filters -->
+        <div class="pk-filters">
+            <input type="text" class="pk-search" id="pkSearch" placeholder="搜索论文标题、作者、关键词..." onkeyup="if(event.key==='Enter')loadPapers()">
+            <select class="pk-select" id="pkYear" onchange="loadPapers()">
+                <option value="">所有年份</option>
+            </select>
+            <select class="pk-select" id="pkStatus" onchange="loadPapers()">
+                <option value="">所有状态</option>
+                <option value="downloaded">已下载</option>
+                <option value="pending">待处理</option>
+            </select>
+            <button class="glow-btn" onclick="loadPapers()">🔍 搜索</button>
+        </div>
+        
+        <!-- Paper List -->
+        <div class="pk-paper-list" id="pkPaperList"></div>
+        <div class="pk-pagination" id="pkPagination"></div>
+    </div>
+    
+    <!-- Timeline Tab -->
+    <div id="tab-timeline" class="tab-panel" style="display:none;">
+        <h3 style="color:#00f5ff;margin-bottom:16px;">📅 论文时间线</h3>
+        <div class="pk-timeline" id="pkTimeline"></div>
+    </div>
+    
+    <!-- Reviews Tab -->
+    <div id="tab-reviews" class="tab-panel" style="display:none;">
+        <h3 style="color:#00f5ff;margin-bottom:16px;">📝 文献综述</h3>
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+            <select class="pk-select" id="reviewCategory" style="min-width:200px;"></select>
+            <input type="text" class="pk-search" id="reviewStart" placeholder="起始年份" value="2020" style="width:100px;">
+            <input type="text" class="pk-search" id="reviewEnd" placeholder="结束年份" value="2025" style="width:100px;">
+            <button class="glow-btn" onclick="generateReview()">🤖 生成综述</button>
+        </div>
+        <div id="pkReviews"></div>
+    </div>
+    
+    <!-- Import Tab -->
+    <div id="tab-import" class="tab-panel" style="display:none;">
+        <h3 style="color:#00f5ff;margin-bottom:16px;">📥 批量导入论文</h3>
+        <div style="background:rgba(255,255,255,0.04);border-radius:12px;padding:20px;margin-bottom:16px;">
+            <p style="color:rgba(255,255,255,0.5);margin-bottom:12px;">支持从 IACR ePrint、arXiv、DOI 导入论文元数据</p>
+            <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+                <select class="pk-select" id="importCategory" style="min-width:200px;"></select>
+                <input type="text" class="pk-search" id="importQuery" placeholder="搜索关键词，如: key agreement" style="flex:1;min-width:200px;">
+                <button class="glow-btn" onclick="searchExternalPapers()">🔍 搜索外部论文</button>
+            </div>
+            <div id="externalResults"></div>
+        </div>
+        <div style="background:rgba(255,255,255,0.04);border-radius:12px;padding:20px;">
+            <p style="color:rgba(255,255,255,0.5);margin-bottom:12px;">或粘贴 JSON 数据批量导入</p>
+            <textarea class="pk-search" id="importJson" placeholder='[{"title":"...","authors":"...","year":2024,"venue":"..."}]' style="width:100%;height:150px;resize:vertical;font-family:monospace;font-size:0.85em;"></textarea>
+            <button class="glow-btn" style="margin-top:10px;" onclick="importFromJson()">📥 导入 JSON</button>
+        </div>
+    </div>
+</div>
+
+<!-- Paper Detail Modal -->
+<div class="pk-modal" id="pkModal">
+    <div class="pk-modal-box" id="pkModalContent"></div>
+</div>
+
+<script>
+var currentPage = 1;
+var currentCategory = null;
+var allCategories = [];
+
+// ===== Tab Switching =====
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelectorAll('.tab-panel').forEach(function(p){ p.style.display='none'; });
+    event.target.classList.add('active');
+    document.getElementById('tab-'+tab).style.display='block';
+    if(tab==='timeline') loadTimeline();
+    if(tab==='reviews') loadReviews();
+}
+
+// ===== Load Stats =====
+function loadStats() {
+    fetch('/api/papers/stats', {credentials:'include'})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        document.getElementById('statTotal').textContent = d.total;
+        document.getElementById('statDownloaded').textContent = d.downloaded;
+        document.getElementById('statCategories').textContent = d.by_category ? d.by_category.length : 0;
+        var summarized = 0;
+        if(d.recent) d.recent.forEach(function(r){ if(r.llm_summary) summarized++; });
+        document.getElementById('statSummarized').textContent = summarized;
+    });
+}
+
+// ===== Load Categories =====
+function loadCategories() {
+    fetch('/api/papers/categories', {credentials:'include'})
+    .then(function(r){ return r.json(); })
+    .then(function(cats){
+        allCategories = cats;
+        var grid = document.getElementById('pkCategories');
+        grid.innerHTML = cats.filter(function(c){ return !c.parent_id; }).map(function(c){
+            var count = c.count || 0;
+            return '<div class="pk-cat-card" onclick="filterByCategory('+c.id+')" style="border-color:'+c.color+'40;">' +
+                '<div class="pk-cat-icon">'+c.icon+'</div>' +
+                '<div class="pk-cat-name">'+c.name_zh+'</div>' +
+                '<div class="pk-cat-count">'+count+' 篇论文</div>' +
+                '<div class="pk-cat-desc">'+c.description+'</div>' +
+                '</div>';
+        }).join('');
+        
+        // Fill review category select
+        var reviewSel = document.getElementById('reviewCategory');
+        if(reviewSel) reviewSel.innerHTML = cats.map(function(c){ return '<option value="'+c.id+'">'+c.icon+' '+c.name_zh+'</option>'; }).join('');
+        
+        // Fill import category select
+        var importSel = document.getElementById('importCategory');
+        if(importSel) importSel.innerHTML = cats.map(function(c){ return '<option value="'+c.id+'">'+c.name_zh+'</option>'; }).join('');
+    });
+}
+
+// ===== Load Papers =====
+function loadPapers(page) {
+    page = page || 1;
+    currentPage = page;
+    var params = new URLSearchParams({
+        page: page, per_page: 20,
+        category_id: currentCategory || '',
+        year: document.getElementById('pkYear').value || '',
+        search: document.getElementById('pkSearch').value || '',
+        status: document.getElementById('pkStatus').value || ''
+    });
+    fetch('/api/papers?'+params, {credentials:'include'})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        var list = document.getElementById('pkPaperList');
+        if(d.papers.length === 0) {
+            list.innerHTML = '<p style="text-align:center;color:rgba(255,255,255,0.3);padding:40px;">暂无论文，请导入或搜索</p>';
+        } else {
+            list.innerHTML = d.papers.map(function(p){
+                var statusColor = p.downloaded ? '#39ff14' : '#ff6b00';
+                var statusText = p.downloaded ? '已下载' : '待处理';
+                return '<div class="pk-paper-card" onclick="showPaperDetail('+p.id+')">' +
+                    '<div class="pk-paper-title">'+(p.title||'未命名论文')+'</div>' +
+                    '<div class="pk-paper-meta">' +
+                        '<span>👤 '+(p.authors||'未知')+'</span>' +
+                        '<span>📅 '+(p.year||'')+'</span>' +
+                        '<span>📰 '+(p.venue||'')+'</span>' +
+                        '<span style="color:'+statusColor+'">● '+statusText+'</span>' +
+                    '</div>' +
+                    (p.abstract ? '<div class="pk-paper-abstract">'+p.abstract.substring(0,150)+'...</div>' : '') +
+                    '<div class="pk-paper-actions">' +
+                        (p.downloaded ? '<a href="/api/papers/'+p.id+'/pdf" target="_blank">📄 查看PDF</a>' : '') +
+                        '<button class="download" onclick="event.stopPropagation();downloadPaper('+p.id+')">⬇️ 下载</button>' +
+                        '<button class="summarize" onclick="event.stopPropagation();summarizePaper('+p.id+')">🤖 总结</button>' +
+                    '</div></div>';
+            }).join('');
+        }
+        
+        // Pagination
+        var pag = document.getElementById('pkPagination');
+        var pages = '';
+        for(var i=1; i<=d.pages; i++) {
+            pages += '<button class="'+(i===page?'active':'')+'" onclick="loadPapers('+i+')">'+i+'</button>';
+        }
+        pag.innerHTML = pages;
+    });
+}
+
+// ===== Filter by Category =====
+function filterByCategory(catId) {
+    currentCategory = catId;
+    loadPapers(1);
+}
+
+// ===== Show Paper Detail =====
+function showPaperDetail(id) {
+    fetch('/api/papers/'+id, {credentials:'include'})
+    .then(function(r){ return r.json(); })
+    .then(function(p){
+        var modal = document.getElementById('pkModal');
+        var content = document.getElementById('pkModalContent');
+        content.innerHTML = '<button class="pk-modal-close" onclick="document.getElementById(\'pkModal\').classList.remove(\'open\')">×</button>' +
+            '<h3>'+p.title+'</h3>' +
+            '<div style="color:rgba(255,255,255,0.5);margin-bottom:16px;">👤 '+(p.authors||'')+' · 📅 '+(p.year||'')+' · 📰 '+(p.venue||'')+'</div>' +
+            (p.abstract ? '<div style="margin-bottom:16px;"><h4 style="color:#00f5ff;margin-bottom:8px;">摘要</h4><p style="color:rgba(255,255,255,0.7);line-height:1.6;">'+p.abstract+'</p></div>' : '') +
+            (p.llm_summary ? '<div class="pk-review"><h4>🤖 LLM 总结</h4><div class="pk-review-content">'+p.llm_summary+'</div></div>' : '') +
+            '<div style="display:flex;gap:10px;margin-top:16px;">' +
+                '<button class="glow-btn" onclick="downloadPaper('+p.id+')">⬇️ 下载 PDF</button>' +
+                '<button class="glow-btn magenta" onclick="summarizePaper('+p.id+')">🤖 生成总结</button>' +
+            '</div>';
+        modal.classList.add('open');
+    });
+}
+
+// ===== Download Paper =====
+function downloadPaper(id) {
+    var pdfUrl = prompt('请输入 PDF 链接（留空则使用论文自带的链接）:');
+    if(pdfUrl === null) return;
+    fetch('/api/papers/'+id+'/download', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({pdf_url: pdfUrl})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if(d.success) showToast('下载成功: '+d.filename, 'success');
+        else showToast('下载失败: '+(d.error||'未知错误'), 'error');
+    });
+}
+
+// ===== Summarize Paper =====
+function summarizePaper(id) {
+    showToast('正在生成 LLM 总结...', 'info');
+    fetch('/api/papers/'+id+'/summarize', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({language: 'zh'})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if(d.success) {
+            showToast('总结生成成功！', 'success');
+            showPaperDetail(id); // Refresh
+        } else {
+            showToast('生成失败: '+(d.error||''), 'error');
+        }
+    });
+}
+
+// ===== Timeline =====
+function loadTimeline() {
+    fetch('/api/papers?per_page=100', {credentials:'include'})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        var years = {};
+        d.papers.forEach(function(p){
+            var y = p.year || '未知';
+            if(!years[y]) years[y] = [];
+            years[y].push(p);
+        });
+        var html = '';
+        Object.keys(years).sort().reverse().forEach(function(y){
+            html += '<div class="pk-timeline-year">'+y+'</div>';
+            years[y].forEach(function(p){
+                html += '<div class="pk-paper-card" onclick="showPaperDetail('+p.id+')" style="margin-bottom:8px;">' +
+                    '<div class="pk-paper-title">'+p.title+'</div>' +
+                    '<div class="pk-paper-meta"><span>👤 '+(p.authors||'')+'</span><span>📰 '+(p.venue||'')+'</span></div>' +
+                    '</div>';
+            });
+        });
+        document.getElementById('pkTimeline').innerHTML = html || '<p style="color:rgba(255,255,255,0.3);text-align:center;padding:40px;">暂无论文</p>';
+    });
+}
+
+// ===== Generate Review =====
+function generateReview() {
+    var catId = document.getElementById('reviewCategory').value;
+    var start = document.getElementById('reviewStart').value;
+    var end = document.getElementById('reviewEnd').value;
+    showToast('正在生成文献综述，这可能需要几分钟...', 'info');
+    fetch('/api/papers/review/'+catId, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({language: 'zh', period_start: start, period_end: end})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if(d.success) {
+            showToast('文献综述生成成功！', 'success');
+            loadReviews();
+        } else {
+            showToast('生成失败: '+(d.error||''), 'error');
+        }
+    });
+}
+
+// ===== Load Reviews =====
+function loadReviews() {
+    fetch('/api/papers/reviews', {credentials:'include'})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+        var html = data.map(function(r){
+            return '<div class="pk-review">' +
+                '<h4>'+r.title+'</h4>' +
+                '<div style="color:rgba(255,255,255,0.4);font-size:0.8em;margin-bottom:8px;">'+r.period_start+'-'+r.period_end+' · '+r.paper_count+' 篇论文 · '+r.created_at+'</div>' +
+                '<div class="pk-review-content">'+r.content.substring(0,500)+'...</div>' +
+                '<button class="glow-btn" style="margin-top:8px;padding:4px 12px;font-size:0.8em;" onclick="alert(\''+r.content.replace(/'/g,"\\'")+'\')">查看完整内容</button>' +
+                '</div>';
+        }).join('');
+        document.getElementById('pkReviews').innerHTML = html || '<p style="color:rgba(255,255,255,0.3);text-align:center;padding:40px;">暂无文献综述</p>';
+    });
+}
+
+// ===== Search External Papers =====
+function searchExternalPapers() {
+    var query = document.getElementById('importQuery').value;
+    if(!query) { showToast('请输入搜索关键词', 'warning'); return; }
+    showToast('正在搜索外部论文...', 'info');
+    // Search IACR ePrint via web scraping or API
+    fetch('/api/papers/import', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({
+            papers: [],  // Will be filled by external search
+            category_id: document.getElementById('importCategory').value
+        })
+    });
+    showToast('搜索功能需要配置外部 API Key', 'warning');
+}
+
+// ===== Import from JSON =====
+function importFromJson() {
+    var json = document.getElementById('importJson').value.trim();
+    if(!json) { showToast('请输入 JSON 数据', 'warning'); return; }
+    try {
+        var data = JSON.parse(json);
+        if(!Array.isArray(data)) data = [data];
+        fetch('/api/papers/import', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({papers: data, category_id: document.getElementById('importCategory').value})
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            showToast('成功导入 '+d.imported+' 篇论文', 'success');
+            loadPapers();
+            loadStats();
+        });
+    } catch(e) {
+        showToast('JSON 格式错误: '+e.message, 'error');
+    }
+}
+
+// ===== Year Select =====
+var yearSel = document.getElementById('pkYear');
+var currentYear = new Date().getFullYear();
+for(var y=currentYear; y>=2015; y--) {
+    yearSel.innerHTML += '<option value="'+y+'">'+y+'</option>';
+}
+
+// ===== Init =====
+loadStats();
+loadCategories();
+loadPapers();
+</script>
+{% endblock %}

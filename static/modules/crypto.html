@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔐 密码学论文系统</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@keyframes bgMove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes glow{0%,100%{box-shadow:0 0 10px rgba(67,233,123,.2)}50%{box-shadow:0 0 25px rgba(67,233,123,.4)}}
+
+body{
+  min-height:100vh;
+  background:linear-gradient(135deg,#0a1a0a 0%,#1a2e1a 25%,#0d2610 50%,#1a2e1a 75%,#0a1a0a 100%);
+  background-size:400% 400%;animation:bgMove 20s ease infinite;
+  font-family:'Segoe UI','Microsoft YaHei',sans-serif;color:#fff;overflow-x:hidden;
+}
+#app{position:relative;z-index:1}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:16px 40px;background:rgba(0,0,0,.3);backdrop-filter:blur(10px);position:fixed;top:0;left:0;right:0;z-index:100}
+.nav .logo{font-size:22px;cursor:pointer;background:linear-gradient(135deg,#43e97b,#38f9d7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700}
+.back-btn{padding:8px 20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;color:#fff;font-size:14px;cursor:pointer;transition:all .3s}
+.back-btn:hover{background:rgba(67,233,123,.3)}
+
+.main{padding:90px 40px 40px;max-width:1400px;margin:0 auto}
+
+/* Menu */
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:24px}
+.menu-item{
+  padding:14px;border-radius:12px;cursor:pointer;text-align:center;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  transition:all .3s;font-size:14px;
+}
+.menu-item:hover{background:rgba(67,233,123,.15)}
+.menu-item.active{background:linear-gradient(135deg,rgba(67,233,123,.3),rgba(56,249,215,.2));border-color:#43e97b;font-weight:600}
+
+/* Section */
+.section{background:rgba(255,255,255,.05);backdrop-filter:blur(15px);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:28px;margin-bottom:20px;animation:fadeInUp .4s ease}
+.section-title{font-size:22px;margin-bottom:18px;display:flex;align-items:center;gap:10px}
+
+/* Search & Filter */
+.filter-row{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.filter-row input{flex:1;min-width:200px;padding:10px 16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;font-size:14px;outline:none}
+.filter-row input:focus{border-color:#43e97b}
+.filter-row select{padding:10px 16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;font-size:14px;outline:none}
+.filter-row select option{background:#1a2e1a;color:#fff}
+.filter-row button{padding:10px 24px;background:linear-gradient(135deg,#43e97b,#38f9d7);border:none;border-radius:10px;color:#fff;font-size:14px;cursor:pointer;font-weight:600}
+.filter-row label{display:flex;align-items:center;gap:6px;font-size:14px;color:rgba(255,255,255,.7);cursor:pointer}
+
+/* Paper Card */
+.paper-card{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:22px;margin-bottom:14px;
+  transition:all .3s;animation:fadeInUp .3s ease backwards;position:relative;
+}
+.paper-card:hover{background:rgba(67,233,123,.06);border-color:rgba(67,233,123,.25)}
+.paper-card.classic{border-left:3px solid #ffd32a}
+.paper-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:8px}
+.paper-year{padding:3px 10px;background:rgba(67,233,123,.2);border-radius:8px;font-size:13px;color:#43e97b;font-weight:600;white-space:nowrap}
+.paper-title{font-size:17px;font-weight:600;flex:1;line-height:1.4}
+.paper-authors{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:8px}
+.paper-cat{display:inline-block;padding:2px 10px;background:rgba(255,255,255,.08);border-radius:10px;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:10px}
+.paper-abstract{color:rgba(255,255,255,.6);font-size:14px;line-height:1.6;margin-bottom:12px}
+.ai-summary{
+  background:rgba(67,233,123,.08);border:1px solid rgba(67,233,123,.15);
+  border-radius:10px;padding:14px;margin-top:10px;
+}
+.ai-summary h4{color:#43e97b;margin-bottom:6px;font-size:14px}
+.ai-summary pre{color:rgba(255,255,255,.7);font-size:13px;white-space:pre-wrap;line-height:1.7;font-family:inherit}
+.paper-link{display:inline-block;margin-top:10px;color:#43e97b;font-size:13px;text-decoration:none}
+.paper-link:hover{text-decoration:underline}
+.classic-badge{position:absolute;top:16px;right:16px;padding:2px 10px;background:rgba(255,211,42,.2);border-radius:8px;font-size:11px;color:#ffd32a}
+
+/* Timeline */
+.timeline{position:relative}
+.timeline-year{margin-bottom:28px}
+.year-header{
+  font-size:24px;font-weight:700;color:#43e97b;
+  padding:10px 0;border-bottom:2px solid rgba(67,233,123,.3);
+  margin-bottom:16px;display:flex;align-items:center;gap:10px;
+}
+.year-header .count{font-size:14px;color:rgba(255,255,255,.4);font-weight:400}
+.year-papers{display:flex;flex-direction:column;gap:10px}
+.tl-paper{
+  display:flex;gap:14px;align-items:flex-start;
+  padding:14px 18px;background:rgba(255,255,255,.03);
+  border-radius:10px;border:1px solid rgba(255,255,255,.06);
+  transition:all .3s;
+}
+.tl-paper:hover{background:rgba(67,233,123,.06)}
+.tl-paper .tl-cat{padding:2px 8px;background:rgba(255,255,255,.08);border-radius:8px;font-size:11px;color:rgba(255,255,255,.5);white-space:nowrap}
+.tl-paper .tl-title{font-size:15px;font-weight:600;flex:1}
+.tl-paper .tl-summary{font-size:13px;color:rgba(255,255,255,.5);margin-top:4px;line-height:1.5}
+
+/* Stats */
+.stats-bar{display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.stat-item{padding:12px 20px;background:rgba(255,255,255,.05);border-radius:12px;text-align:center}
+.stat-num{font-size:24px;font-weight:700;background:linear-gradient(135deg,#43e97b,#38f9d7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-label{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px}
+
+/* Category colors */
+.cat-symmetric{color:#43e97b}
+.cat-asymmetric{color:#4facfe}
+.cat-hash{color:#ffd32a}
+.cat-post_quantum{color:#ff6b6b}
+.cat-homomorphic{color:#a55eea}
+.cat-zkp{color:#ff9ff3}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="nav">
+    <div class="logo" @click="goHome">🔐 密码学论文系统</div>
+    <button class="back-btn" @click="goHome">← 返回主页</button>
+  </div>
+
+  <div class="main">
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat-item"><div class="stat-num">{{ papers.length }}</div><div class="stat-label">论文总数</div></div>
+      <div class="stat-item"><div class="stat-num">{{ classicCount }}</div><div class="stat-label">经典论文</div></div>
+      <div class="stat-item"><div class="stat-num">{{ yearRange }}</div><div class="stat-label">年份跨度</div></div>
+      <div class="stat-item"><div class="stat-num">{{ categories.length }}</div><div class="stat-label">研究方向</div></div>
+    </div>
+
+    <!-- Menu -->
+    <div class="menu-grid">
+      <div class="menu-item" :class="{active:sub==='papers'}" @click="sub='papers'">📄 论文列表</div>
+      <div class="menu-item" :class="{active:sub==='timeline'}" @click="sub='timeline'">📅 研究时间线</div>
+      <div class="menu-item" :class="{active:sub==='symmetric'}" @click="filterByCat('symmetric')">🔑 对称加密</div>
+      <div class="menu-item" :class="{active:sub==='asymmetric'}" @click="filterByCat('asymmetric')">🔐 非对称加密</div>
+      <div class="menu-item" :class="{active:sub==='hash'}" @click="filterByCat('hash')">#️⃣ 哈希函数</div>
+      <div class="menu-item" :class="{active:sub==='post_quantum'}" @click="filterByCat('post_quantum')">⚛️ 后量子密码</div>
+      <div class="menu-item" :class="{active:sub==='homomorphic'}" @click="filterByCat('homomorphic')">🧮 同态加密</div>
+      <div class="menu-item" :class="{active:sub==='zkp'}" @click="filterByCat('zkp')">🕵️ 零知识证明</div>
+    </div>
+
+    <!-- Papers List -->
+    <div class="section" v-if="sub==='papers'||sub==='symmetric'||sub==='asymmetric'||sub==='hash'||sub==='post_quantum'||sub==='homomorphic'||sub==='zkp'">
+      <div class="section-title">📄 论文列表 <span style="font-size:14px;color:rgba(255,255,255,.4);font-weight:400">({{ filteredPapers.length }}篇)</span></div>
+      <div class="filter-row">
+        <input v-model="searchQ" placeholder="搜索论文标题或摘要..." @keyup.enter="doSearch">
+        <select v-model="yearFrom">
+          <option value="">起始年份</option>
+          <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
+        </select>
+        <select v-model="yearTo">
+          <option value="">截止年份</option>
+          <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
+        </select>
+        <label><input type="checkbox" v-model="classicOnly"> 仅经典</label>
+        <button @click="doSearch">搜索</button>
+      </div>
+      <div v-for="(p,i) in filteredPapers" :key="p.id" class="paper-card" :class="{classic:p.is_classic}" :style="'animation-delay:'+(i*0.04)+'s'">
+        <span class="classic-badge" v-if="p.is_classic">⭐ 经典</span>
+        <div class="paper-header">
+          <span class="paper-year">{{ p.year }}</span>
+          <span class="paper-title">{{ p.title }}</span>
+        </div>
+        <div class="paper-authors">👥 {{ p.authors }}</div>
+        <span class="paper-cat" :class="'cat-'+p.category">{{ catName(p.category) }}</span>
+        <div class="paper-abstract">{{ p.abstract }}</div>
+        <div class="ai-summary" v-if="p.ai_summary">
+          <h4>🤖 AI 智能总结</h4>
+          <pre>{{ p.ai_summary }}</pre>
+        </div>
+        <a class="paper-link" :href="p.url" target="_blank" v-if="p.url">🔗 查看原文</a>
+      </div>
+      <div v-if="!filteredPapers.length" style="text-align:center;padding:40px;color:rgba(255,255,255,.3)">没有找到匹配的论文</div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="section" v-if="sub==='timeline'">
+      <div class="section-title">📅 密码学研究进展时间线</div>
+      <div class="timeline">
+        <div class="timeline-year" v-for="(papers,year) in timeline" :key="year">
+          <div class="year-header">{{ year }}年 <span class="count">({{ papers.length }}篇)</span></div>
+          <div class="year-papers">
+            <div class="tl-paper" v-for="p in papers" :key="p.title">
+              <span class="tl-cat">{{ catName(p.category) }}</span>
+              <div>
+                <div class="tl-title">{{ p.title }}</div>
+                <div class="tl-summary">{{ p.ai_summary }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const {createApp}=Vue;
+createApp({
+  data(){
+    return{
+      sub:'papers',
+      papers:[],
+      timeline:{},
+      searchQ:'',
+      yearFrom:'',
+      yearTo:'',
+      classicOnly:false,
+      currentCat:'',
+    }
+  },
+  computed:{
+    classicCount(){return this.papers.filter(p=>p.is_classic).length},
+    yearRange(){
+      const years=this.papers.map(p=>p.year).filter(Boolean);
+      if(!years.length) return '-';
+      return Math.min(...years)+'-'+Math.max(...years);
+    },
+    categories(){return[...new Set(this.papers.map(p=>p.category))].filter(Boolean)},
+    years(){return[...new Set(this.papers.map(p=>p.year))].sort((a,b)=>b-a)},
+    filteredPapers(){
+      let items=this.papers;
+      if(this.currentCat) items=items.filter(p=>p.category===this.currentCat);
+      if(this.searchQ){
+        const q=this.searchQ.toLowerCase();
+        items=items.filter(p=>(p.title||'').toLowerCase().includes(q)||(p.abstract||'').toLowerCase().includes(q));
+      }
+      if(this.yearFrom) items=items.filter(p=>p.year>=parseInt(this.yearFrom));
+      if(this.yearTo) items=items.filter(p=>p.year<=parseInt(this.yearTo));
+      if(this.classicOnly) items=items.filter(p=>p.is_classic);
+      return items.sort((a,b)=>b.year-a.year);
+    }
+  },
+  methods:{
+    goHome(){window.location.href='/main'},
+    filterByCat(cat){this.currentCat=cat;this.sub=cat},
+    doSearch(){/* computed handles filtering */},
+    catName(c){
+      return{symmetric:'对称加密',asymmetric:'非对称加密',hash:'哈希函数',post_quantum:'后量子密码',homomorphic:'同态加密',zkp:'零知识证明'}[c]||c;
+    },
+    async loadData(){
+      const[papers,timeline]=await Promise.all([
+        fetch('/api/crypto/papers',{headers:{'Authorization':'Bearer '+token}}).then(r=>r.json()),
+        fetch('/api/crypto/timeline',{headers:{'Authorization':'Bearer '+token}}).then(r=>r.json()),
+      ]);
+      this.papers=papers;
+      this.timeline=timeline;
+    },
+  },
+  mounted(){this.loadData()}
+}).mount('#app');
+
+const token=localStorage.getItem('token')||'';
+if(!token) window.location.href='/';
+</script>
+</body>
+</html>

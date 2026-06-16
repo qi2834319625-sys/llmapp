@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal - 登录</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@keyframes bgMove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-20px)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 20px rgba(102,126,234,.4)}50%{box-shadow:0 0 40px rgba(102,126,234,.8)}}
+@keyframes particle{0%{transform:translateY(100vh) scale(0);opacity:1}100%{transform:translateY(-100px) scale(1);opacity:0}}
+
+body{
+  min-height:100vh;
+  display:flex;justify-content:center;align-items:center;
+  background:linear-gradient(135deg,#0c0c1d 0%,#1a1a3e 25%,#2d1b4e 50%,#1a1a3e 75%,#0c0c1d 100%);
+  background-size:400% 400%;
+  animation:bgMove 15s ease infinite;
+  font-family:'Segoe UI','Microsoft YaHei',sans-serif;
+  overflow:hidden;position:relative;
+}
+
+.particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.particle{
+  position:absolute;width:4px;height:4px;background:rgba(255,255,255,.3);
+  border-radius:50%;animation:particle linear infinite;
+}
+
+.login-box{
+  position:relative;z-index:1;
+  width:400px;padding:50px 40px;
+  background:rgba(255,255,255,.05);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:24px;
+  animation:fadeInUp .8s ease;
+}
+.login-box h1{
+  text-align:center;font-size:32px;font-weight:700;margin-bottom:8px;
+  background:linear-gradient(135deg,#667eea,#764ba2,#f093fb);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.login-box .subtitle{text-align:center;color:rgba(255,255,255,.5);margin-bottom:36px;font-size:14px}
+.form-group{margin-bottom:20px}
+.form-group label{display:block;color:rgba(255,255,255,.7);margin-bottom:8px;font-size:14px}
+.form-group input{
+  width:100%;padding:14px 18px;background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.15);border-radius:12px;
+  color:#fff;font-size:16px;transition:all .3s;outline:none;
+}
+.form-group input:focus{
+  border-color:#667eea;
+  box-shadow:0 0 20px rgba(102,126,234,.3);
+  background:rgba(255,255,255,.1);
+}
+.form-group input::placeholder{color:rgba(255,255,255,.3)}
+
+.btn-login{
+  width:100%;padding:14px;margin-top:10px;
+  background:linear-gradient(135deg,#667eea,#764ba2);
+  border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:600;
+  cursor:pointer;transition:all .3s;animation:pulse 3s ease infinite;
+}
+.btn-login:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(102,126,234,.5)}
+.btn-login:active{transform:translateY(0)}
+.error-msg{color:#ff6b6b;text-align:center;margin-top:16px;font-size:14px;min-height:20px}
+
+.brand{text-align:center;margin-top:24px;color:rgba(255,255,255,.3);font-size:12px}
+</style>
+</head>
+<body>
+<div class="particles" id="particles"></div>
+
+<div class="login-box">
+  <h1>✨ Portal</h1>
+  <p class="subtitle">探索无限可能的数字世界</p>
+  <div class="form-group">
+    <label>用户名</label>
+    <input type="text" id="username" placeholder="请输入用户名" autocomplete="on">
+  </div>
+  <div class="form-group">
+    <label>密码</label>
+    <input type="password" id="password" placeholder="请输入密码" autocomplete="on">
+  </div>
+  <button class="btn-login" onclick="login()">登 录</button>
+  <div class="error-msg" id="error"></div>
+  <div class="brand">Powered by OWL · ZOO</div>
+</div>
+
+<script>
+// Create particles
+const pc = document.getElementById('particles');
+for(let i=0;i<40;i++){
+  const p=document.createElement('div');
+  p.className='particle';
+  p.style.left=Math.random()*100+'%';
+  p.style.animationDuration=(Math.random()*15+10)+'s';
+  p.style.animationDelay=Math.random()*10+'s';
+  p.style.width=p.style.height=(Math.random()*4+2)+'px';
+  pc.appendChild(p);
+}
+
+// Enter key
+document.getElementById('password').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+
+async function login(){
+  const u=document.getElementById('username').value.trim();
+  const p=document.getElementById('password').value;
+  if(!u||!p){document.getElementById('error').textContent='请输入用户名和密码';return}
+  try{
+    const r=await fetch('/api/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username:u,password:p})
+    });
+    if(!r.ok){const d=await r.json();document.getElementById('error').textContent=d.detail||'登录失败';return}
+    const d=await r.json();
+    localStorage.setItem('token',d.token);
+    localStorage.setItem('username',d.username);
+    window.location.href='/main';
+  }catch(e){document.getElementById('error').textContent='网络错误，请重试'}
+}
+</script>
+</body>
+</html>

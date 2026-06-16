@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}多系统门户{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/cybertech.css">
+    <style>
+        /* Page-specific overrides */
+        body { background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0a0a2a 100%); }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+body>
+    <!-- Particle Background -->
+    <canvas id="particle-canvas"></canvas>
+    <div class="scanlines"></div>
+    
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <!-- Nav Back -->
+    <a href="/dashboard" class="nav-back" id="navBack" style="display:none; position:fixed; top:16px; left:16px; z-index:100; padding:8px 20px; background:rgba(0,0,0,0.4); border:1px solid rgba(0,245,255,0.3); border-radius:20px; color:var(--neon-cyan); text-decoration:none; font-size:0.85em; backdrop-filter:blur(10px);">← 返回控制台</a>
+    
+    {% block content %}{% endblock %}
+    
+    <script src="/static/js/cybertech.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

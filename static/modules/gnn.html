@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧠 GNN结构化匹配系统</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@keyframes bgMove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+body{
+  min-height:100vh;
+  background:linear-gradient(135deg,#0f0a1e 0%,#1e1533 25%,#2a1a4a 50%,#1e1533 75%,#0f0a1e 100%);
+  background-size:400% 400%;animation:bgMove 20s ease infinite;
+  font-family:'Segoe UI','Microsoft YaHei',sans-serif;color:#fff;overflow-x:hidden;
+}
+#app{position:relative;z-index:1}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:16px 40px;background:rgba(0,0,0,.3);backdrop-filter:blur(10px);position:fixed;top:0;left:0;right:0;z-index:100}
+.nav .logo{font-size:22px;cursor:pointer;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700}
+.back-btn{padding:8px 20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;color:#fff;font-size:14px;cursor:pointer;transition:all .3s}
+.back-btn:hover{background:rgba(102,126,234,.3)}
+
+.main{padding:90px 40px 40px;max-width:1400px;margin:0 auto}
+
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:24px}
+.menu-item{padding:14px;border-radius:12px;cursor:pointer;text-align:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);transition:all .3s;font-size:14px}
+.menu-item:hover{background:rgba(102,126,234,.15)}
+.menu-item.active{background:linear-gradient(135deg,rgba(102,126,234,.3),rgba(118,75,162,.2));border-color:#667eea;font-weight:600}
+
+.section{background:rgba(255,255,255,.05);backdrop-filter:blur(15px);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:28px;margin-bottom:20px;animation:fadeInUp .4s ease}
+.section-title{font-size:22px;margin-bottom:18px;display:flex;align-items:center;gap:10px}
+
+.filter-row{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.filter-row select{padding:10px 16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;font-size:14px;outline:none}
+.filter-row select option{background:#1e1533;color:#fff}
+
+/* Resource Card */
+.res-card{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:20px;margin-bottom:12px;
+  transition:all .3s;animation:fadeInUp .3s ease backwards;
+}
+.res-card:hover{background:rgba(102,126,234,.08);transform:translateY(-3px)}
+.res-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.res-type{padding:3px 10px;border-radius:8px;font-size:12px;font-weight:600}
+.res-type.paper{background:rgba(102,126,234,.2);color:#667eea}
+.res-type.code{background:rgba(46,213,115,.2);color:#2ed573}
+.res-type.tutorial{background:rgba(255,165,2,.2);color:#ffa502}
+.res-type.survey{background:rgba(255,107,107,.2);color:#ff6b6b}
+.res-title{font-size:16px;font-weight:600;flex:1}
+.res-desc{color:rgba(255,255,255,.6);font-size:14px;line-height:1.6;margin-bottom:8px}
+.res-cat{display:inline-block;padding:2px 10px;background:rgba(255,255,255,.08);border-radius:10px;font-size:12px;color:rgba(255,255,255,.5);margin-right:8px}
+.res-link{color:#667eea;font-size:13px;text-decoration:none}
+.res-link:hover{text-decoration:underline}
+
+/* Graph visualization area */
+.graph-area{
+  background:rgba(0,0,0,.2);border-radius:14px;padding:24px;
+  min-height:300px;text-align:center;
+}
+.graph-node{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:80px;height:80px;border-radius:50%;margin:10px;
+  font-size:13px;font-weight:600;cursor:pointer;transition:all .3s;
+}
+.graph-node:hover{transform:scale(1.15)}
+
+/* Stats */
+.stats-bar{display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.stat-item{padding:12px 20px;background:rgba(255,255,255,.05);border-radius:12px;text-align:center}
+.stat-num{font-size:24px;font-weight:700;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-label{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="nav">
+    <div class="logo" @click="goHome">🧠 GNN结构化匹配系统</div>
+    <button class="back-btn" @click="goHome">← 返回主页</button>
+  </div>
+
+  <div class="main">
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat-item"><div class="stat-num">{{ resources.length }}</div><div class="stat-label">资源总数</div></div>
+      <div class="stat-item"><div class="stat-num">{{ paperCount }}</div><div class="stat-label">论文</div></div>
+      <div class="stat-item"><div class="stat-num">{{ codeCount }}</div><div class="stat-label">代码库</div></div>
+      <div class="stat-item"><div class="stat-num">{{ matchingCount }}</div><div class="stat-label">匹配相关</div></div>
+    </div>
+
+    <!-- Menu -->
+    <div class="menu-grid">
+      <div class="menu-item" :class="{active:sub==='all'}" @click="sub='all';filterCat=''">📚 全部资源</div>
+      <div class="menu-item" :class="{active:sub==='matching'}" @click="sub='matching'">🔗 实体匹配</div>
+      <div class="menu-item" :class="{active:sub==='gnn'}" @click="sub='gnn'">🧠 GNN模型</div>
+      <div class="menu-item" :class="{active:sub==='code'}" @click="sub='code'">💻 代码库</div>
+      <div class="menu-item" :class="{active:sub==='tutorial'}" @click="sub='tutorial'">📖 教程</div>
+      <div class="menu-item" :class="{active:sub==='kg'}" @click="sub='kg'">🗺️ 知识图谱</div>
+    </div>
+
+    <!-- Resource List -->
+    <div class="section">
+      <div class="section-title">
+        📚 {{ subTitle }}
+        <span style="font-size:14px;color:rgba(255,255,255,.4);font-weight:400">({{ displayResources.length }})</span>
+      </div>
+      <div class="filter-row">
+        <select v-model="filterType">
+          <option value="">全部类型</option>
+          <option value="paper">论文</option>
+          <option value="code">代码</option>
+          <option value="tutorial">教程</option>
+          <option value="survey">综述</option>
+        </select>
+      </div>
+      <div v-for="(r,i) in displayResources" :key="r.id" class="res-card" :style="'animation-delay:'+(i*0.04)+'s'">
+        <div class="res-header">
+          <span class="res-type" :class="r.resource_type">{{ typeName(r.resource_type) }}</span>
+          <span class="res-title">{{ r.title }}</span>
+        </div>
+        <div class="res-desc">{{ r.description }}</div>
+        <span class="res-cat">{{ r.category }}</span>
+        <a class="res-link" :href="r.url" target="_blank" v-if="r.url">🔗 访问资源</a>
+      </div>
+      <div v-if="!displayResources.length" style="text-align:center;padding:40px;color:rgba(255,255,255,.3)">暂无相关资源</div>
+    </div>
+
+    <!-- Concept Graph -->
+    <div class="section" v-if="sub==='all'||sub==='matching'">
+      <div class="section-title">🔗 实体连接与图匹配概念图</div>
+      <div class="graph-area">
+        <div style="display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:20px;padding:20px">
+          <div>
+            <div class="graph-node" style="background:linear-gradient(135deg,#667eea,#764ba2)">知识图谱A</div>
+            <div style="text-align:center;margin-top:8px;font-size:12px;color:rgba(255,255,255,.5)">实体集合</div>
+          </div>
+          <div style="font-size:30px;color:rgba(102,126,234,.5)">⟷</div>
+          <div>
+            <div class="graph-node" style="background:linear-gradient(135deg,#f093fb,#f5576c)">GNN编码</div>
+            <div style="text-align:center;margin-top:8px;font-size:12px;color:rgba(255,255,255,.5)">图神经网络</div>
+          </div>
+          <div style="font-size:30px;color:rgba(102,126,234,.5)">⟷</div>
+          <div>
+            <div class="graph-node" style="background:linear-gradient(135deg,#43e97b,#38f9d7)">相似度匹配</div>
+            <div style="text-align:center;margin-top:8px;font-size:12px;color:rgba(255,255,255,.5)">实体对齐</div>
+          </div>
+          <div style="font-size:30px;color:rgba(102,126,234,.5)">⟷</div>
+          <div>
+            <div class="graph-node" style="background:linear-gradient(135deg,#ffd32a,#ff9f43)">知识图谱B</div>
+            <div style="text-align:center;margin-top:8px;font-size:12px;color:rgba(255,255,255,.5)">实体集合</div>
+          </div>
+        </div>
+        <div style="margin-top:20px;padding:16px;background:rgba(255,255,255,.03);border-radius:10px;text-align:left">
+          <h4 style="color:#667eea;margin-bottom:10px">核心流程</h4>
+          <p style="color:rgba(255,255,255,.6);font-size:14px;line-height:1.8">
+            1. <b>图编码</b>: 使用GCN/GAT/GraphSAGE等GNN模型将知识图谱中的实体和关系编码为向量表示<br>
+            2. <b>相似度计算</b>: 计算两个图谱中实体嵌入的相似度(余弦相似度/欧氏距离)<br>
+            3. <b>实体对齐</b>: 基于相似度矩阵进行匹配，找到跨图谱的等价实体<br>
+            4. <b>迭代优化</b>: 利用已对齐实体作为种子，迭代扩展对齐结果<br>
+            5. <b>图匹配网络(GMN)</b>: 端到端学习图结构相似度，同时考虑节点和边的匹配
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const {createApp}=Vue;
+createApp({
+  data(){
+    return{
+      sub:'all',
+      filterCat:'',
+      filterType:'',
+      resources:[],
+    }
+  },
+  computed:{
+    paperCount(){return this.resources.filter(r=>r.resource_type==='paper').length},
+    codeCount(){return this.resources.filter(r=>r.resource_type==='code').length},
+    matchingCount(){return this.resources.filter(r=>(r.category||'').toLowerCase().includes('match')).length},
+    subTitle(){
+      return{all:'全部资源',matching:'实体匹配',gnn:'GNN模型',code:'代码库',tutorial:'教程',kg:'知识图谱'}[this.sub]||'资源';
+    },
+    displayResources(){
+      let items=this.resources;
+      if(this.sub==='matching') items=items.filter(r=>(r.category||'').toLowerCase().includes('match'));
+      else if(this.sub==='gnn') items=items.filter(r=>(r.category||'').toLowerCase().includes('gcn')||(r.category||'').toLowerCase().includes('gat')||(r.category||'').toLowerCase().includes('sage')||(r.category||'').toLowerCase().includes('theory'));
+      else if(this.sub==='code') items=items.filter(r=>r.resource_type==='code');
+      else if(this.sub==='tutorial') items=items.filter(r=>r.resource_type==='tutorial');
+      else if(this.sub==='kg') items=items.filter(r=>(r.category||'').toLowerCase().includes('knowledge')||(r.category||'').toLowerCase().includes('embedding'));
+      if(this.filterType) items=items.filter(r=>r.resource_type===this.filterType);
+      return items;
+    }
+  },
+  methods:{
+    goHome(){window.location.href='/main'},
+    typeName(t){return{paper:'论文',code:'代码',tutorial:'教程',survey:'综述'}[t]||t},
+    async loadData(){
+      const r=await fetch('/api/gnn/resources',{headers:{'Authorization':'Bearer '+token}});
+      if(r.ok) this.resources=await r.json();
+    },
+  },
+  mounted(){this.loadData()}
+}).mount('#app');
+
+const token=localStorage.getItem('token')||'';
+if(!token) window.location.href='/';
+</script>
+</body>
+</html>

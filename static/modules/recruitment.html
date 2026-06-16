@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💼 秋招备战系统</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@keyframes bgMove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 15px rgba(79,172,254,.3)}50%{box-shadow:0 0 30px rgba(79,172,254,.6)}}
+
+body{
+  min-height:100vh;
+  background:linear-gradient(135deg,#0a0e1a 0%,#1a2a4a 25%,#0d2137 50%,#1a2a4a 75%,#0a0e1a 100%);
+  background-size:400% 400%;animation:bgMove 20s ease infinite;
+  font-family:'Segoe UI','Microsoft YaHei',sans-serif;color:#fff;overflow-x:hidden;
+}
+#app{position:relative;z-index:1}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:16px 40px;background:rgba(0,0,0,.3);backdrop-filter:blur(10px);position:fixed;top:0;left:0;right:0;z-index:100}
+.nav .logo{font-size:22px;cursor:pointer;background:linear-gradient(135deg,#4facfe,#00f2fe);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700}
+.back-btn{padding:8px 20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;color:#fff;font-size:14px;cursor:pointer;transition:all .3s}
+.back-btn:hover{background:rgba(79,172,254,.3)}
+
+.main{padding:90px 40px 40px;max-width:1400px;margin:0 auto}
+
+/* Menu */
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:28px}
+.menu-item{
+  padding:16px;border-radius:14px;cursor:pointer;text-align:center;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  transition:all .3s;font-size:15px;
+}
+.menu-item:hover{background:rgba(79,172,254,.15);transform:translateY(-2px)}
+.menu-item.active{background:linear-gradient(135deg,rgba(79,172,254,.3),rgba(0,242,254,.2));border-color:#4facfe;font-weight:600}
+
+/* Section */
+.section{background:rgba(255,255,255,.05);backdrop-filter:blur(15px);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:28px;margin-bottom:20px;animation:fadeInUp .4s ease}
+.section-title{font-size:22px;margin-bottom:18px;display:flex;align-items:center;gap:10px}
+
+/* Search */
+.search-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.search-bar input{flex:1;min-width:200px;padding:10px 16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;font-size:14px;outline:none}
+.search-bar input:focus{border-color:#4facfe}
+.search-bar select{padding:10px 16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;font-size:14px;outline:none}
+.search-bar select option{background:#1a2a4a;color:#fff}
+.search-bar button{padding:10px 24px;background:linear-gradient(135deg,#4facfe,#00f2fe);border:none;border-radius:10px;color:#fff;font-size:14px;cursor:pointer;font-weight:600}
+
+/* Problem Card */
+.problem-card{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:20px;margin-bottom:12px;
+  transition:all .3s;animation:fadeInUp .3s ease backwards;
+}
+.problem-card:hover{background:rgba(79,172,254,.08);border-color:rgba(79,172,254,.3)}
+.problem-header{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.problem-num{color:#4facfe;font-weight:700;font-size:16px;min-width:50px}
+.problem-title{font-size:17px;font-weight:600;flex:1}
+.difficulty{padding:3px 12px;border-radius:12px;font-size:12px;font-weight:600}
+.difficulty.Easy{background:rgba(46,213,115,.2);color:#2ed573}
+.difficulty.Medium{background:rgba(255,165,2,.2);color:#ffa502}
+.difficulty.Hard{background:rgba(255,71,87,.2);color:#ff4757}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tag{padding:2px 10px;background:rgba(255,255,255,.08);border-radius:10px;font-size:12px;color:rgba(255,255,255,.6)}
+.problem-desc{color:rgba(255,255,255,.6);font-size:14px;line-height:1.6;max-height:60px;overflow:hidden}
+.problem-solution{margin-top:14px;padding:16px;background:rgba(0,0,0,.2);border-radius:10px;display:none}
+.problem-solution.show{display:block}
+.problem-solution h4{color:#4facfe;margin-bottom:8px}
+.problem-solution pre{color:rgba(255,255,255,.7);font-size:13px;white-space:pre-wrap;line-height:1.6;font-family:inherit}
+.toggle-btn{margin-top:10px;padding:6px 18px;background:rgba(79,172,254,.2);border:1px solid rgba(79,172,254,.4);border-radius:10px;color:#4facfe;font-size:13px;cursor:pointer}
+.toggle-btn:hover{background:rgba(79,172,254,.3)}
+.ref-link{display:inline-block;margin-top:8px;color:#4facfe;font-size:13px;text-decoration:none}
+.ref-link:hover{text-decoration:underline}
+
+/* Pagination */
+.pagination{display:flex;gap:8px;justify-content:center;margin-top:20px}
+.pagination button{padding:8px 16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#fff;cursor:pointer;font-size:14px}
+.pagination button.active{background:linear-gradient(135deg,#4facfe,#00f2fe);border-color:transparent}
+.pagination button:disabled{opacity:.4;cursor:not-allowed}
+
+/* GitHub Cards */
+.repo-card{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:20px;margin-bottom:12px;
+  transition:all .3s;animation:fadeInUp .3s ease backwards;
+}
+.repo-card:hover{background:rgba(79,172,254,.08);transform:translateY(-3px)}
+.repo-name{font-size:17px;font-weight:600;color:#4facfe;text-decoration:none;display:block;margin-bottom:6px}
+.repo-name:hover{text-decoration:underline}
+.repo-desc{color:rgba(255,255,255,.6);font-size:14px;line-height:1.6;margin-bottom:10px}
+.repo-meta{display:flex;gap:16px;align-items:center;font-size:13px;color:rgba(255,255,255,.5)}
+.repo-lang{display:flex;align-items:center;gap:4px}
+.lang-dot{width:10px;height:10px;border-radius:50%}
+.repo-stars{color:#ffd32a}
+
+/* YouTube */
+.video-card{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:16px;margin-bottom:12px;
+  transition:all .3s;animation:fadeInUp .3s ease backwards;
+}
+.video-card:hover{background:rgba(255,71,87,.08);transform:translateY(-3px)}
+.video-card a{color:#ff6b6b;text-decoration:none;font-size:16px;font-weight:600}
+.video-card a:hover{text-decoration:underline}
+.video-desc{color:rgba(255,255,255,.5);font-size:13px;margin-top:6px}
+
+/* Stats bar */
+.stats-bar{display:flex;gap:20px;margin-bottom:20px;flex-wrap:wrap}
+.stat-item{padding:14px 24px;background:rgba(255,255,255,.05);border-radius:12px;text-align:center}
+.stat-num{font-size:28px;font-weight:700;background:linear-gradient(135deg,#4facfe,#00f2fe);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-label{font-size:13px;color:rgba(255,255,255,.5);margin-top:4px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="nav">
+    <div class="logo" @click="goHome">💼 秋招备战系统</div>
+    <button class="back-btn" @click="goHome">← 返回主页</button>
+  </div>
+
+  <div class="main">
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat-item"><div class="stat-num">{{ lcTotal }}</div><div class="stat-label">LeetCode题</div></div>
+      <div class="stat-item"><div class="stat-num">{{ ghTotal }}</div><div class="stat-label">GitHub仓库</div></div>
+      <div class="stat-item"><div class="stat-num">{{ ytTotal }}</div><div class="stat-label">视频资源</div></div>
+      <div class="stat-item"><div class="stat-num">{{ easyCount }}/{{ medCount }}/{{ hardCount }}</div><div class="stat-label">Easy/Med/Hard</div></div>
+    </div>
+
+    <!-- Menu -->
+    <div class="menu-grid">
+      <div class="menu-item" :class="{active:sub==='leetcode'}" @click="sub='leetcode'">📝 LeetCode Hot100</div>
+      <div class="menu-item" :class="{active:sub==='github'}" @click="sub='github'">🐙 GitHub仓库</div>
+      <div class="menu-item" :class="{active:sub==='youtube'}" @click="sub='youtube'">🎬 YouTube视频</div>
+    </div>
+
+    <!-- LeetCode -->
+    <div class="section" v-if="sub==='leetcode'">
+      <div class="section-title">📝 LeetCode Hot 100 精选题解</div>
+      <div class="search-bar">
+        <input v-model="lcSearch" placeholder="搜索题号或题目关键词..." @keyup.enter="searchLC">
+        <select v-model="lcDiff">
+          <option value="">全部难度</option>
+          <option value="Easy">Easy</option>
+          <option value="Medium">Medium</option>
+          <option value="Hard">Hard</option>
+        </select>
+        <select v-model="lcTag">
+          <option value="">全部标签</option>
+          <option v-for="t in lcTags" :key="t" :value="t">{{ t }}</option>
+        </select>
+        <button @click="searchLC">搜索</button>
+      </div>
+      <div v-for="(p,i) in leetcode" :key="p.id" class="problem-card" :style="'animation-delay:'+(i*0.04)+'s'">
+        <div class="problem-header">
+          <span class="problem-num">#{{ p.number }}</span>
+          <span class="problem-title">{{ p.title }}</span>
+          <span class="difficulty" :class="p.difficulty">{{ p.difficulty }}</span>
+        </div>
+        <div class="tags">
+          <span class="tag" v-for="t in (p.tags||'').split(',')" :key="t.trim()">{{ t.trim() }}</span>
+        </div>
+        <div class="problem-desc">{{ p.description }}</div>
+        <button class="toggle-btn" @click="p.show=!p.show">{{ p.show?'收起':'查看题解' }}</button>
+        <div class="problem-solution" :class="{show:p.show}">
+          <h4>📖 解题思路 & 参考答案</h4>
+          <pre>{{ p.solution }}</pre>
+          <a class="ref-link" :href="p.reference_url" target="_blank">🔗 原题链接</a>
+        </div>
+      </div>
+      <div class="pagination">
+        <button @click="lcPage--" :disabled="lcPage<=1">上一页</button>
+        <button v-for="pg in lcPages" :key="pg" :class="{active:pg===lcPage}" @click="lcPage=pg">{{ pg }}</button>
+        <button @click="lcPage++" :disabled="lcPage>=lcTotalPage">下一页</button>
+      </div>
+    </div>
+
+    <!-- GitHub -->
+    <div class="section" v-if="sub==='github'">
+      <div class="section-title">🐙 GitHub 热门技术仓库</div>
+      <div class="search-bar">
+        <select v-model="ghLang">
+          <option value="">全部语言</option>
+          <option v-for="l in ghLangs" :key="l" :value="l">{{ l }}</option>
+        </select>
+        <select v-model="ghCat">
+          <option value="">全部分类</option>
+          <option v-for="c in ghCats" :key="c" :value="c">{{ c }}</option>
+        </select>
+        <button @click="filterGH">筛选</button>
+      </div>
+      <div v-for="(r,i) in github" :key="r.id" class="repo-card" :style="'animation-delay:'+(i*0.04)+'s'">
+        <a class="repo-name" :href="r.url" target="_blank">📦 {{ r.name }}</a>
+        <div class="repo-desc">{{ r.description }}</div>
+        <div class="repo-meta">
+          <span class="repo-lang"><span class="lang-dot" :style="{background:langColor(r.language)}"></span>{{ r.language }}</span>
+          <span class="repo-stars">⭐ {{ formatStars(r.stars) }}</span>
+          <span>{{ r.category }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- YouTube -->
+    <div class="section" v-if="sub==='youtube'">
+      <div class="section-title">🎬 YouTube 学习资源</div>
+      <div class="search-bar">
+        <select v-model="ytCat">
+          <option value="">全部分类</option>
+          <option v-for="c in ytCats" :key="c" :value="c">{{ c }}</option>
+        </select>
+      </div>
+      <div v-for="(v,i) in youtube" :key="v.id" class="video-card" :style="'animation-delay:'+(i*0.04)+'s'">
+        <a :href="'https://www.youtube.com/watch?v='+v.video_id" target="_blank">▶ {{ v.title }}</a>
+        <div class="video-desc">{{ v.description }}</div>
+        <div style="margin-top:6px;font-size:12px;color:rgba(255,255,255,.4)">分类: {{ v.category }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const {createApp}=Vue;
+createApp({
+  data(){
+    return{
+      sub:'leetcode',
+      // LeetCode
+      leetcode:[],lcTotal:0,lcPage:1,lcSize:20,lcSearch:'',lcDiff:'',lcTag:'',lcAll:[],
+      // GitHub
+      github:[],githubAll:[],
+      // YouTube
+      youtube:[],youtubeAll:[],
+    }
+  },
+  computed:{
+    lcTotalPage(){return Math.ceil(this.lcTotal/this.lcSize)||1},
+    lcPages(){
+      const pages=[],start=Math.max(1,this.lcPage-2),end=Math.min(this.lcTotalPage,start+4);
+      for(let i=start;i<=end;i++) pages.push(i);
+      return pages;
+    },
+    lcTags(){
+      const s=new Set();
+      this.lcAll.forEach(p=>(p.tags||'').split(',').forEach(t=>s.add(t.trim())));
+      return [...s].filter(Boolean).sort();
+    },
+    lcFiltered(){
+      let items=this.lcAll;
+      if(this.lcDiff) items=items.filter(p=>p.difficulty===this.lcDiff);
+      if(this.lcTag) items=items.filter(p=>(p.tags||'').includes(this.lcTag));
+      if(this.lcSearch){
+        const q=this.lcSearch.toLowerCase();
+        items=items.filter(p=>p.title.toLowerCase().includes(q)||String(p.number).includes(q));
+      }
+      return items;
+    },
+    easyCount(){return this.lcAll.filter(p=>p.difficulty==='Easy').length},
+    medCount(){return this.lcAll.filter(p=>p.difficulty==='Medium').length},
+    hardCount(){return this.lcAll.filter(p=>p.difficulty==='Hard').length},
+    ghTotal(){return this.githubAll.length},
+    ytTotal(){return this.youtubeAll.length},
+    ghLangs(){return[...new Set(this.githubAll.map(r=>r.language))].filter(Boolean).sort()},
+    ghCats(){return[...new Set(this.githubAll.map(r=>r.category))].filter(Boolean).sort()},
+    ytCats(){return[...new Set(this.youtubeAll.map(v=>v.category))].filter(Boolean).sort()},
+  },
+  watch:{
+    lcPage:'paginateLC',
+    lcFiltered:'paginateLC',
+  },
+  methods:{
+    goHome(){window.location.href='/main'},
+    async loadData(){
+      const[lc,gh,yt]=await Promise.all([
+        fetch('/api/recruitment/leetcode?page=1&size=200',{headers:{'Authorization':'Bearer '+token}}).then(r=>r.json()),
+        fetch('/api/recruitment/github',{headers:{'Authorization':'Bearer '+token}}).then(r=>r.json()),
+        fetch('/api/recruitment/youtube',{headers:{'Authorization':'Bearer '+token}}).then(r=>r.json()),
+      ]);
+      this.lcAll=(lc.items||[]).map(p=>({...p,show:false}));
+      this.lcTotal=lc.total||this.lcAll.length;
+      this.githubAll=gh;this.github=gh;
+      this.youtubeAll=yt;this.youtube=yt;
+      this.paginateLC();
+    },
+    paginateLC(){
+      const start=(this.lcPage-1)*this.lcSize;
+      this.leetcode=this.lcFiltered.slice(start,start+this.lcSize);
+    },
+    searchLC(){this.lcPage=1;this.paginateLC()},
+    filterGH(){
+      let items=this.githubAll;
+      if(this.ghLang) items=items.filter(r=>r.language===this.ghLang);
+      if(this.ghCat) items=items.filter(r=>r.category===this.ghCat);
+      this.github=items;
+    },
+    langColor(l){
+      const colors={'JavaScript':'#f1e05a','TypeScript':'#2b7489','Python':'#3572A5','Java':'#b07219','Go':'#00ADD8','Rust':'#dea584','C++':'#f34b7d','C':'#555555','Ruby':'#701516'};
+      return colors[l]||'#888';
+    },
+    formatStars(s){return s>=1000?(s/1000).toFixed(1)+'k':s},
+  },
+  mounted(){this.loadData()}
+}).mount('#app');
+
+const token=localStorage.getItem('token')||'';
+if(!token) window.location.href='/';
+</script>
+</body>
+</html>

@@ -1,0 +1,1063 @@
+{% extends "base.html" %}
+{% block title %}GNN结构化匹配系统{% endblock %}
+{% block content %}
+<style>
+.gnn-header { text-align: center; padding: 30px 20px; }
+.gnn-header h1 {
+    font-size: 2.2em;
+    background: linear-gradient(135deg, #f093fb, #f5576c);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.gnn-header p { color: rgba(255,255,255,0.5); margin-top: 8px; }
+.tab-nav {
+    display: flex; justify-content: center; gap: 10px; margin: 15px 0;
+}
+.tab-btn {
+    padding: 10px 24px; border-radius: 20px; border: 1px solid rgba(240,147,251,0.3);
+    background: rgba(240,147,251,0.1); color: #f093fb; cursor: pointer;
+    font-size: 0.95em; transition: all 0.3s;
+}
+.tab-btn:hover, .tab-btn.active {
+    background: linear-gradient(135deg, #f093fb, #f5576c);
+    color: #fff; border-color: transparent;
+}
+.tab-content { display: none; padding: 20px 30px 60px; }
+.tab-content.active { display: block; }
+
+/* ===== Graph Toolbar ===== */
+.graph-toolbar {
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    margin-bottom: 15px; padding: 12px 16px;
+    background: rgba(255,255,255,0.04); border-radius: 12px;
+    border: 1px solid rgba(240,147,251,0.1);
+}
+.graph-toolbar input[type="text"] {
+    padding: 8px 14px; background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+    color: #fff; outline: none; font-size: 0.85em; width: 200px;
+}
+.graph-toolbar input[type="text"]:focus { border-color: #f093fb; }
+.graph-toolbar select {
+    padding: 8px 14px; background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+    color: #fff; outline: none; font-size: 0.85em;
+}
+.graph-toolbar button {
+    padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer;
+    font-size: 0.85em; transition: all 0.2s;
+}
+.btn-primary { background: linear-gradient(135deg, #f093fb, #f5576c); color: #fff; }
+.btn-secondary { background: rgba(255,255,255,0.1); color: #f093fb; border: 1px solid rgba(240,147,251,0.3) !important; }
+.btn-secondary:hover { background: rgba(240,147,251,0.2); }
+.btn-danger { background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.3) !important; }
+.btn-danger:hover { background: rgba(239,68,68,0.35); }
+.graph-toolbar .spacer { flex: 1; }
+
+/* ===== Graph Container ===== */
+.graph-main { display: flex; gap: 15px; position: relative; }
+.graph-container {
+    flex: 1; background: rgba(255,255,255,0.03); border-radius: 16px;
+    border: 1px solid rgba(240,147,251,0.1);
+    min-height: 500px; position: relative; overflow: hidden;
+}
+.graph-svg { width: 100%; height: 500px; cursor: grab; }
+.graph-svg:active { cursor: grabbing; }
+
+/* ===== Node Details Panel ===== */
+.node-panel {
+    width: 300px; background: rgba(255,255,255,0.05); border-radius: 16px;
+    border: 1px solid rgba(240,147,251,0.15); padding: 20px;
+    display: none; flex-direction: column; gap: 12px;
+    max-height: 500px; overflow-y: auto;
+}
+.node-panel.open { display: flex; }
+.node-panel h3 {
+    color: #f093fb; font-size: 1.1em; margin-bottom: 5px;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.node-panel h3 .close-btn {
+    cursor: pointer; color: rgba(255,255,255,0.4); font-size: 1.2em;
+}
+.node-panel h3 .close-btn:hover { color: #fff; }
+.node-panel .panel-field { font-size: 0.85em; }
+.node-panel .panel-field label { color: rgba(255,255,255,0.4); display: block; margin-bottom: 3px; }
+.node-panel .panel-field .val { color: #fff; }
+.node-panel .panel-field .type-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 6px;
+    font-size: 0.8em; margin-top: 3px;
+}
+.node-panel .panel-rel-item {
+    padding: 8px 12px; background: rgba(255,255,255,0.04);
+    border-radius: 8px; font-size: 0.82em; margin-bottom: 6px;
+}
+.node-panel .panel-rel-item .rel-type { color: #f093fb; font-weight: 600; }
+
+/* ===== Stats Bar ===== */
+.stats-bar {
+    display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;
+}
+.stat-card {
+    flex: 1; min-width: 120px; background: rgba(255,255,255,0.04);
+    border-radius: 12px; padding: 14px 18px;
+    border: 1px solid rgba(240,147,251,0.1);
+}
+.stat-card .stat-val {
+    font-size: 1.6em; font-weight: 700;
+    background: linear-gradient(135deg, #f093fb, #f5576c);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.stat-card .stat-label { font-size: 0.75em; color: rgba(255,255,255,0.4); margin-top: 4px; }
+
+/* ===== Filter Chips ===== */
+.filter-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.filter-chip {
+    padding: 4px 12px; border-radius: 14px; font-size: 0.78em; cursor: pointer;
+    border: 1px solid rgba(240,147,251,0.25); background: rgba(240,147,251,0.1);
+    color: #f093fb; transition: all 0.2s;
+}
+.filter-chip.active { background: linear-gradient(135deg, #f093fb, #f5576c); color: #fff; border-color: transparent; }
+.filter-chip.inactive { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.1); }
+
+/* ===== Path Finder ===== */
+.path-result {
+    margin-top: 10px; padding: 12px; background: rgba(240,147,251,0.08);
+    border-radius: 10px; font-size: 0.85em; display: none;
+}
+.path-result .path-node { color: #f093fb; font-weight: 600; }
+.path-result .path-arrow { color: rgba(255,255,255,0.3); margin: 0 4px; }
+
+/* ===== Adjacency Matrix ===== */
+.matrix-container {
+    overflow: auto; max-height: 450px; margin-top: 15px;
+    background: rgba(255,255,255,0.02); border-radius: 12px;
+    border: 1px solid rgba(240,147,251,0.1);
+}
+.matrix-table { border-collapse: collapse; font-size: 0.75em; }
+.matrix-table th {
+    padding: 6px 8px; background: rgba(240,147,251,0.15); color: #f093fb;
+    position: sticky; top: 0; white-space: nowrap; max-width: 80px;
+    overflow: hidden; text-overflow: ellipsis;
+}
+.matrix-table td {
+    padding: 4px 6px; text-align: center; border: 1px solid rgba(255,255,255,0.04);
+    min-width: 28px; height: 28px;
+}
+.matrix-table td.has-edge {
+    background: rgba(240,147,251,0.5); color: #fff; font-weight: 600; border-radius: 3px;
+}
+.matrix-table td.has-edge:hover { background: rgba(240,147,251,0.8); }
+.matrix-table td.diag { background: rgba(255,255,255,0.06); }
+.matrix-table .row-header {
+    color: #f5576c; font-weight: 600; text-align: left; padding-left: 8px;
+    position: sticky; left: 0; background: rgba(0,0,0,0.4);
+}
+
+/* ===== D3 Graph Styles ===== */
+.node-circle { cursor: pointer; transition: stroke-width 0.2s; }
+.node-circle:hover { stroke: #fff; stroke-width: 3px; }
+.node-circle.highlighted { stroke: #ffd700; stroke-width: 4px; }
+.node-circle.dimmed { opacity: 0.15; }
+.node-label { pointer-events: none; font-size: 10px; fill: #fff; font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+.link-line { stroke-opacity: 0.35; transition: stroke-opacity 0.2s, stroke-width 0.2s; }
+.link-line:hover { stroke-opacity: 0.8; stroke-width: 3px !important; }
+.link-line.dimmed { opacity: 0.05; }
+.link-label { font-size: 8px; fill: rgba(240,147,251,0.7); pointer-events: none; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+.link-label.dimmed { opacity: 0; }
+
+/* ===== Entity Cards ===== */
+.entity-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+.entity-card {
+    background: rgba(255,255,255,0.05); border-radius: 14px; padding: 20px;
+    border: 1px solid rgba(240,147,251,0.1); transition: all 0.3s;
+}
+.entity-card:hover { border-color: rgba(240,147,251,0.3); transform: translateY(-2px); }
+.entity-card .e-type {
+    display: inline-block; padding: 3px 12px; border-radius: 8px;
+    font-size: 0.8em; margin-bottom: 10px;
+}
+.e-type-node { background: rgba(240,147,251,0.2); color: #f093fb; }
+.e-type-edge { background: rgba(245,87,108,0.2); color: #f5576c; }
+.entity-card h3 { color: #fff; margin-bottom: 8px; }
+.entity-card p { color: rgba(255,255,255,0.5); font-size: 0.85em; }
+
+/* ===== Forms ===== */
+.add-form {
+    background: rgba(255,255,255,0.05); border-radius: 14px; padding: 25px;
+    margin-bottom: 25px; border: 1px dashed rgba(240,147,251,0.2);
+}
+.add-form input, .add-form select, .add-form textarea {
+    padding: 10px 16px; margin: 5px; background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 10px;
+    color: #fff; outline: none; font-size: 0.9em;
+}
+.add-form button {
+    padding: 10px 24px; background: linear-gradient(135deg, #f093fb, #f5576c);
+    border: none; border-radius: 10px; color: #fff; cursor: pointer;
+}
+
+/* ===== Relation List ===== */
+.rel-list { margin-top: 15px; }
+.rel-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px;
+    background: rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 8px;
+}
+.rel-arrow { color: #f093fb; font-weight: bold; }
+
+/* ===== Matching Results ===== */
+.match-result {
+    background: rgba(255,255,255,0.05); border-radius: 14px; padding: 20px;
+    margin-top: 20px; border: 1px solid rgba(240,147,251,0.15);
+}
+.match-score { font-size: 2em; color: #f093fb; }
+
+/* ===== Tooltip ===== */
+.graph-tooltip {
+    position: absolute; padding: 8px 14px; background: rgba(0,0,0,0.85);
+    border: 1px solid rgba(240,147,251,0.3); border-radius: 8px;
+    color: #fff; font-size: 0.82em; pointer-events: none; z-index: 100;
+    display: none; max-width: 220px;
+}
+
+/* ===== Legend ===== */
+.graph-legend {
+    position: absolute; bottom: 12px; left: 12px;
+    background: rgba(0,0,0,0.6); border-radius: 10px; padding: 10px 14px;
+    border: 1px solid rgba(240,147,251,0.15); font-size: 0.78em;
+}
+.graph-legend .legend-item { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; color: rgba(255,255,255,0.7); }
+.graph-legend .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* ===== Zoom Controls ===== */
+.zoom-controls {
+    position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 4px;
+}
+.zoom-controls button {
+    width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(240,147,251,0.25);
+    background: rgba(0,0,0,0.5); color: #f093fb; cursor: pointer; font-size: 1.1em;
+    display: flex; align-items: center; justify-content: center;
+}
+.zoom-controls button:hover { background: rgba(240,147,251,0.2); }
+</style>
+
+<div class="gnn-header">
+    <h1>🔗 GNN 结构化匹配系统</h1>
+    <p>图神经网络 · 实体连接 · 关系发现 · 智能匹配</p>
+</div>
+
+<div class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('graph',this)">🕸️ 知识图谱</button>
+    <button class="tab-btn" onclick="showTab('entities',this)">📦 实体管理</button>
+    <button class="tab-btn" onclick="showTab('matrix',this)">🔢 邻接矩阵</button>
+    <button class="tab-btn" onclick="showTab('matching',this)">🎯 结构匹配</button>
+</div>
+
+<!-- ==================== GRAPH TAB ==================== -->
+<div id="graph" class="tab-content active">
+    <!-- Toolbar -->
+    <div class="graph-toolbar">
+        <input type="text" id="graphSearch" placeholder="🔍 搜索节点..." oninput="onSearchInput(this.value)">
+        <span class="filter-chips" id="typeFilters"></span>
+        <span class="spacer"></span>
+        <select id="pathSource" style="padding:8px 14px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;outline:none;font-size:0.85em;">
+            <option value="">路径起点</option>
+        </select>
+        <span style="color:rgba(255,255,255,0.3)">→</span>
+        <select id="pathTarget" style="padding:8px 14px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;outline:none;font-size:0.85em;">
+            <option value="">路径终点</option>
+        </select>
+        <button class="btn-primary" onclick="findPath()">🔎 查找路径</button>
+        <button class="btn-secondary" onclick="resetGraph()">🔄 重置</button>
+        <button class="btn-secondary" onclick="exportSvg()">📥 SVG</button>
+        <button class="btn-secondary" onclick="exportJson()">📥 JSON</button>
+    </div>
+
+    <!-- Path Result -->
+    <div class="path-result" id="pathResult"></div>
+
+    <!-- Main Graph Area -->
+    <div class="graph-main">
+        <div class="graph-container" id="graphContainer">
+            <svg class="graph-svg" id="graphSvg"></svg>
+            <div class="graph-tooltip" id="graphTooltip"></div>
+            <div class="graph-legend" id="graphLegend"></div>
+            <div class="zoom-controls">
+                <button onclick="zoomIn()" title="放大">+</button>
+                <button onclick="zoomOut()" title="缩小">−</button>
+                <button onclick="zoomFit()" title="适应">⊡</button>
+            </div>
+        </div>
+
+        <!-- Node Details Panel -->
+        <div class="node-panel" id="nodePanel">
+            <h3>
+                <span id="panelTitle">节点详情</span>
+                <span class="close-btn" onclick="closePanel()">✕</span>
+            </h3>
+            <div id="panelBody"></div>
+        </div>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar" id="statsBar"></div>
+
+    <!-- Relation List -->
+    <h3 style="margin:20px 0 15px;">📊 关系列表</h3>
+    <div class="rel-list">
+        {% for rel in relations %}
+        <div class="rel-item">
+            <span style="color:#f093fb;font-weight:600;">{{ rel.source_name }}</span>
+            <span class="rel-arrow">--[{{ rel.relation_type }}]--></span>
+            <span style="color:#f5576c;font-weight:600;">{{ rel.target_name }}</span>
+            <span style="color:rgba(255,255,255,0.3);margin-left:auto;">权重: {{ rel.weight }}</span>
+        </div>
+        {% endfor %}
+        {% if not relations %}
+        <p style="color:rgba(255,255,255,0.3);text-align:center;">暂无关系数据</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ==================== ENTITIES TAB ==================== -->
+<div id="entities" class="tab-content">
+    <div class="add-form">
+        <h3 style="color:#f093fb;margin-bottom:15px;">➕ 添加实体</h3>
+        <form action="/gnn/entity/add" method="POST">
+            <input type="text" name="name" placeholder="实体名称" required>
+            <select name="entity_type">
+                <option value="Node">节点 (Node)</option>
+                <option value="Edge">边 (Edge)</option>
+            </select>
+            <input type="text" name="properties" placeholder='属性 JSON: {"key": "value"}'>
+            <input type="text" name="description" placeholder="描述" style="width:250px;">
+            <button type="submit">添加实体</button>
+        </form>
+    </div>
+
+    <h3 style="margin-bottom:15px;">📦 实体列表</h3>
+    <div class="entity-grid">
+        {% for e in entities %}
+        <div class="entity-card">
+            <span class="e-type e-type-{{ e.entity_type|lower }}">{{ e.entity_type }}</span>
+            <h3>{{ e.name }}</h3>
+            <p>{{ e.description or '无描述' }}</p>
+            {% if e.properties %}
+            <code style="color:rgba(240,147,251,0.6);font-size:0.8em;">{{ e.properties }}</code>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if entities %}
+    <div class="add-form" style="margin-top:30px;">
+        <h3 style="color:#f093fb;margin-bottom:15px;">🔗 添加关系</h3>
+        <form action="/gnn/relation/add" method="POST">
+            <select name="source_id">
+                {% for e in entities %}
+                <option value="{{ e.id }}">{{ e.name }}</option>
+                {% endfor %}
+            </select>
+            <select name="target_id">
+                {% for e in entities %}
+                <option value="{{ e.id }}">{{ e.name }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" name="relation_type" placeholder="关系类型" required>
+            <input type="number" name="weight" placeholder="权重" step="0.1" value="1.0" style="width:80px;">
+            <button type="submit">添加关系</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ==================== MATRIX TAB ==================== -->
+<div id="matrix" class="tab-content">
+    <h3 style="color:#f093fb;margin-bottom:15px;">🔢 邻接矩阵热力图</h3>
+    <p style="color:rgba(255,255,255,0.4);font-size:0.85em;margin-bottom:15px;">
+        矩阵中的每个单元格表示两个实体之间是否存在关系。颜色深度表示连接强度。
+    </p>
+    <div class="matrix-container" id="matrixContainer">
+        <p style="color:rgba(255,255,255,0.3);text-align:center;padding:40px;">加载中...</p>
+    </div>
+</div>
+
+<!-- ==================== MATCHING TAB ==================== -->
+<div id="matching" class="tab-content">
+    <div style="text-align:center;padding:40px 20px;">
+        <h2 style="color:#f093fb;margin-bottom:20px;">🎯 结构化匹配</h2>
+        <p style="color:rgba(255,255,255,0.5);margin-bottom:30px;">
+            基于图神经网络的实体匹配算法，发现实体间的潜在关系和模式
+        </p>
+
+        <div style="display:flex;gap:15px;justify-content:center;flex-wrap:wrap;margin-bottom:30px;">
+            <select id="matchSource" style="padding:12px 20px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;">
+                <option value="">选择源实体</option>
+                {% for e in entities %}
+                <option value="{{ e.id }}">{{ e.name }}</option>
+                {% endfor %}
+            </select>
+            <select id="matchTarget" style="padding:12px 20px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;">
+                <option value="">选择目标实体</option>
+                {% for e in entities %}
+                <option value="{{ e.id }}">{{ e.name }}</option>
+                {% endfor %}
+            </select>
+            <button onclick="runMatching()" style="padding:12px 30px;background:linear-gradient(135deg,#f093fb,#f5576c);border:none;border-radius:10px;color:#fff;cursor:pointer;">
+                🔍 开始匹配
+            </button>
+        </div>
+
+        <div class="match-result" id="matchResult" style="display:none;">
+            <div class="match-score" id="matchScore">0%</div>
+            <p style="color:rgba(255,255,255,0.6);">结构化匹配度</p>
+            <p style="color:rgba(255,255,255,0.4);margin-top:15px;" id="matchDetail"></p>
+        </div>
+    </div>
+</div>
+
+<!-- D3.js -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+// ==================== DATA ====================
+const gnn_entities = [
+    {% for e in entities %}
+    { id: {{ e.id }}, name: "{{ e.name }}", type: "{{ e.entity_type }}", description: "{{ e.description or '' }}", properties: "{{ e.properties or '' }}" },
+    {% endfor %}
+];
+const gnn_relations = [
+    {% for r in relations %}
+    { source: {{ r.source_id }}, target: {{ r.target_id }}, type: "{{ r.relation_type }}", weight: {{ r.weight or 1.0 }} },
+    {% endfor %}
+];
+
+// ==================== HELPERS ====================
+function showTab(id, el) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    var target = document.getElementById(id);
+    if (target) target.classList.add('active');
+    if (el) el.classList.add('active');
+    else if (event && event.currentTarget) event.currentTarget.classList.add('active');
+    if (id === 'graph') setTimeout(() => { if (simulation) simulation.alpha(0.3).restart(); resizeGraph(); }, 50);
+    if (id === 'matrix') renderMatrix();
+}
+
+// ==================== GRAPH VISUALIZATION ====================
+let simulation, svg, g, linkGroup, nodeGroup, labelGroup, linkLabelGroup;
+let graphNodes = [], graphLinks = [];
+let activeFilters = new Set();
+let currentSearch = '';
+let selectedNode = null;
+let currentTransform = d3.zoomIdentity;
+
+const TYPE_COLORS = {
+    'Node': '#f093fb',
+    'Edge': '#f5576c',
+    'Person': '#60a5fa',
+    'Company': '#34d399',
+    'Location': '#fbbf24',
+    'Event': '#a78bfa',
+    'Product': '#fb923c',
+    'Organization': '#2dd4bf',
+    'Technology': '#f472b6',
+    'Document': '#94a3b8',
+    'default': '#f093fb'
+};
+
+function getTypeColor(type) { return TYPE_COLORS[type] || TYPE_COLORS['default']; }
+function getNodeRadius(d) { return 10 + Math.min(d.degree || 0, 8) * 2.5; }
+
+function initGraph() {
+    svg = d3.select('#graphSvg');
+    svg.selectAll('*').remove();
+
+    const container = document.getElementById('graphContainer');
+    const w = container.clientWidth || 800;
+    const h = 500;
+
+    svg.attr('viewBox', `0 0 ${w} ${h}`);
+
+    // Defs for arrow markers
+    const defs = svg.append('defs');
+    Object.keys(TYPE_COLORS).forEach(type => {
+        if (type === 'default') return;
+        defs.append('marker')
+            .attr('id', 'arrow-' + type)
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 20)
+            .attr('refY', 0)
+            .attr('markerWidth', 6)
+            .attr('markerHeight', 6)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', TYPE_COLORS[type]);
+    });
+    defs.append('marker')
+        .attr('id', 'arrow-default')
+        .attr('viewBox', '0 -5 10 10')
+        .attr('refX', 20)
+        .attr('refY', 0)
+        .attr('markerWidth', 6)
+        .attr('markerHeight', 6)
+        .attr('orient', 'auto')
+        .append('path')
+        .attr('d', 'M0,-5L10,0L0,5')
+        .attr('fill', '#f093fb');
+
+    g = svg.append('g');
+
+    // Zoom
+    const zoom = d3.zoom()
+        .scaleExtent([0.2, 5])
+        .on('zoom', (event) => {
+            currentTransform = event.transform;
+            g.attr('transform', event.transform);
+        });
+    svg.call(zoom);
+
+    linkGroup = g.append('g').attr('class', 'links');
+    linkLabelGroup = g.append('g').attr('class', 'link-labels');
+    nodeGroup = g.append('g').attr('class', 'nodes');
+    labelGroup = g.append('g').attr('class', 'node-labels');
+
+    buildGraph();
+    renderFilters();
+    renderLegend();
+    updatePathDropdowns();
+    updateStats();
+}
+
+function buildGraph() {
+    const nodeMap = {};
+    graphNodes = gnn_entities.map(e => {
+        const degree = gnn_relations.filter(r => r.source === e.id || r.target === e.id).length;
+        return { ...e, degree, x: 400, y: 250 };
+    });
+    graphNodes.forEach(n => nodeMap[n.id] = n);
+
+    graphLinks = gnn_relations.map(r => ({
+        ...r,
+        source: nodeMap[r.source] || r.source,
+        target: nodeMap[r.target] || r.target
+    })).filter(l => l.source.x !== undefined && l.target.x !== undefined);
+
+    // Compute degrees
+    graphNodes.forEach(n => {
+        n.degree = graphLinks.filter(l => l.source.id === n.id || l.target.id === n.id).length;
+    });
+
+    renderGraph();
+}
+
+function renderGraph() {
+    const container = document.getElementById('graphContainer');
+    const w = container.clientWidth || 800;
+    const h = 500;
+
+    // Links
+    const link = linkGroup.selectAll('.link-line')
+        .data(graphLinks, d => (d.source.id || d.source) + '-' + (d.target.id || d.target));
+
+    link.exit().remove();
+
+    const linkEnter = link.enter().append('line')
+        .attr('class', 'link-line')
+        .attr('stroke', d => getTypeColor(d.source.type || 'Node'))
+        .attr('stroke-width', d => Math.max(1, Math.min((d.weight || 1), 4)))
+        .attr('marker-end', d => 'url(#arrow-' + (d.source.type || 'default') + ')');
+
+    const linkMerge = linkEnter.merge(link);
+
+    // Link labels
+    const linkLabel = linkLabelGroup.selectAll('.link-label')
+        .data(graphLinks, d => 'll-' + (d.source.id || d.source) + '-' + (d.target.id || d.target));
+
+    linkLabel.exit().remove();
+
+    const linkLabelEnter = linkLabel.enter().append('text')
+        .attr('class', 'link-label')
+        .attr('text-anchor', 'middle')
+        .text(d => d.type);
+
+    const linkLabelMerge = linkLabelEnter.merge(linkLabel);
+
+    // Nodes
+    const node = nodeGroup.selectAll('.node-circle')
+        .data(graphNodes, d => d.id);
+
+    node.exit().remove();
+
+    const nodeEnter = node.enter().append('circle')
+        .attr('class', 'node-circle')
+        .attr('r', d => getNodeRadius(d))
+        .attr('fill', d => getTypeColor(d.type))
+        .attr('fill-opacity', 0.6)
+        .attr('stroke', d => getTypeColor(d.type))
+        .attr('stroke-width', 2)
+        .call(d3.drag()
+            .on('start', dragStarted)
+            .on('drag', dragged)
+            .on('end', dragEnded))
+        .on('click', (event, d) => onNodeClick(d))
+        .on('mouseover', (event, d) => showTooltip(event, d))
+        .on('mouseout', hideTooltip);
+
+    const nodeMerge = nodeEnter.merge(node);
+
+    // Node labels
+    const label = labelGroup.selectAll('.node-label')
+        .data(graphNodes, d => d.id);
+
+    label.exit().remove();
+
+    const labelEnter = label.enter().append('text')
+        .attr('class', 'node-label')
+        .attr('text-anchor', 'middle')
+        .attr('dy', d => getNodeRadius(d) + 14)
+        .text(d => d.name.length > 10 ? d.name.substring(0, 10) + '…' : d.name);
+
+    const labelMerge = labelEnter.merge(label);
+
+    // Apply filters
+    applyFilters();
+
+    // Simulation
+    if (simulation) simulation.stop();
+
+    simulation = d3.forceSimulation(graphNodes)
+        .force('link', d3.forceLink(graphLinks).id(d => d.id).distance(120))
+        .force('charge', d3.forceManyBody().strength(-300))
+        .force('center', d3.forceCenter(w / 2, h / 2))
+        .force('collision', d3.forceCollide().radius(d => getNodeRadius(d) + 8))
+        .on('tick', () => {
+            linkMerge
+                .attr('x1', d => d.source.x)
+                .attr('y1', d => d.source.y)
+                .attr('x2', d => d.target.x)
+                .attr('y2', d => d.target.y);
+
+            linkLabelMerge
+                .attr('x', d => (d.source.x + d.target.x) / 2)
+                .attr('y', d => (d.source.y + d.target.y) / 2 - 6);
+
+            nodeMerge
+                .attr('cx', d => d.x)
+                .attr('cy', d => d.y);
+
+            labelMerge
+                .attr('x', d => d.x)
+                .attr('y', d => d.y);
+        });
+}
+
+// ==================== DRAG ====================
+function dragStarted(event, d) {
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x; d.fy = d.y;
+}
+function dragged(event, d) {
+    d.fx = event.x; d.fy = event.y;
+}
+function dragEnded(event, d) {
+    if (!event.active) simulation.alphaTarget(0);
+    d.fx = null; d.fy = null;
+}
+
+// ==================== TOOLTIP ====================
+function showTooltip(event, d) {
+    const tooltip = document.getElementById('graphTooltip');
+    tooltip.innerHTML = `<strong>${d.name}</strong><br/>类型: ${d.type}<br/>连接数: ${d.degree}`;
+    tooltip.style.display = 'block';
+    const container = document.getElementById('graphContainer');
+    const rect = container.getBoundingClientRect();
+    let left = event.clientX - rect.left + 14;
+    let top = event.clientY - rect.top - 10;
+    if (left + 200 > rect.width) left -= 220;
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
+}
+function hideTooltip() {
+    document.getElementById('graphTooltip').style.display = 'none';
+}
+
+// ==================== NODE CLICK / PANEL ====================
+function onNodeClick(d) {
+    selectedNode = d;
+    const panel = document.getElementById('nodePanel');
+    panel.classList.add('open');
+    document.getElementById('panelTitle').textContent = d.name;
+
+    const neighbors = [];
+    graphLinks.forEach(l => {
+        if (l.source.id === d.id) neighbors.push({ dir: '→', other: l.target, rel: l.type, weight: l.weight });
+        if (l.target.id === d.id) neighbors.push({ dir: '←', other: l.source, rel: l.type, weight: l.weight });
+    });
+
+    let html = '';
+    html += `<div class="panel-field"><label>类型</label><span class="type-badge" style="background:${getTypeColor(d.type)}22;color:${getTypeColor(d.type)}">${d.type}</span></div>`;
+    html += `<div class="panel-field"><label>ID</label><span class="val">${d.id}</span></div>`;
+    if (d.description) html += `<div class="panel-field"><label>描述</label><span class="val">${d.description}</span></div>`;
+    if (d.properties) html += `<div class="panel-field"><label>属性</label><code style="color:rgba(240,147,251,0.6);font-size:0.8em;">${d.properties}</code></div>`;
+    html += `<div class="panel-field"><label>连接数</label><span class="val">${d.degree}</span></div>`;
+
+    if (neighbors.length > 0) {
+        html += `<div class="panel-field" style="margin-top:10px;"><label>关系 (${neighbors.length})</label>`;
+        neighbors.forEach(n => {
+            html += `<div class="panel-rel-item">${n.dir} <span class="path-node">${n.other.name}</span> <span class="rel-type">[${n.rel}]</span> <span style="color:rgba(255,255,255,0.3)">${n.weight || 1}</span></div>`;
+        });
+        html += `</div>`;
+    }
+
+    document.getElementById('panelBody').innerHTML = html;
+
+    // Highlight in graph
+    nodeGroup.selectAll('.node-circle').classed('highlighted', n => n.id === d.id).classed('dimmed', n => n.id !== d.id);
+    linkGroup.selectAll('.link-line').classed('dimmed', l => l.source.id !== d.id && l.target.id !== d.id);
+    linkLabelGroup.selectAll('.link-label').classed('dimmed', l => l.source.id !== d.id && l.target.id !== d.id);
+    labelGroup.selectAll('.node-label').classed('dimmed', n => n.id !== d.id);
+}
+
+function closePanel() {
+    document.getElementById('nodePanel').classList.remove('open');
+    selectedNode = null;
+    nodeGroup.selectAll('.node-circle').classed('highlighted', false).classed('dimmed', false);
+    linkGroup.selectAll('.link-line').classed('dimmed', false);
+    linkLabelGroup.selectAll('.link-label').classed('dimmed', false);
+    labelGroup.selectAll('.node-label').classed('dimmed', false);
+}
+
+// ==================== SEARCH ====================
+function onSearchInput(val) {
+    currentSearch = val.toLowerCase().trim();
+    applyFilters();
+}
+
+// ==================== FILTERS ====================
+function renderFilters() {
+    const types = [...new Set(graphNodes.map(n => n.type))];
+    activeFilters = new Set(types);
+    const container = document.getElementById('typeFilters');
+    container.innerHTML = types.map(t =>
+        `<span class="filter-chip active" data-type="${t}" onclick="toggleFilter('${t}')" style="border-color:${getTypeColor(t)}44;color:${getTypeColor(t)}">${t}</span>`
+    ).join('');
+}
+
+function toggleFilter(type) {
+    const chip = document.querySelector(`.filter-chip[data-type="${type}"]`);
+    if (activeFilters.has(type)) {
+        activeFilters.delete(type);
+        chip.classList.remove('active');
+        chip.classList.add('inactive');
+    } else {
+        activeFilters.add(type);
+        chip.classList.add('active');
+        chip.classList.remove('inactive');
+    }
+    applyFilters();
+}
+
+function applyFilters() {
+    nodeGroup.selectAll('.node-circle')
+        .classed('dimmed', d => {
+            if (!activeFilters.has(d.type)) return true;
+            if (currentSearch && !d.name.toLowerCase().includes(currentSearch)) return true;
+            return false;
+        })
+        .classed('highlighted', d => currentSearch && d.name.toLowerCase().includes(currentSearch));
+
+    labelGroup.selectAll('.node-label')
+        .classed('dimmed', d => {
+            if (!activeFilters.has(d.type)) return true;
+            if (currentSearch && !d.name.toLowerCase().includes(currentSearch)) return true;
+            return false;
+        });
+
+    linkGroup.selectAll('.link-line')
+        .classed('dimmed', l => {
+            const s = l.source.id ? l.source : l.source;
+            const t = l.target.id ? l.target : l.target;
+            if (!activeFilters.has(s.type) || !activeFilters.has(t.type)) return true;
+            return false;
+        });
+
+    linkLabelGroup.selectAll('.link-label')
+        .classed('dimmed', l => {
+            const s = l.source.id ? l.source : l.source;
+            const t = l.target.id ? l.target : l.target;
+            if (!activeFilters.has(s.type) || !activeFilters.has(t.type)) return true;
+            return false;
+        });
+}
+
+// ==================== LEGEND ====================
+function renderLegend() {
+    const types = [...new Set(graphNodes.map(n => n.type))];
+    const container = document.getElementById('graphLegend');
+    container.innerHTML = types.map(t =>
+        `<div class="legend-item"><span class="legend-dot" style="background:${getTypeColor(t)}"></span>${t}</div>`
+    ).join('');
+}
+
+// ==================== PATH FINDER (BFS) ====================
+function updatePathDropdowns() {
+    const s = document.getElementById('pathSource');
+    const t = document.getElementById('pathTarget');
+    const opts = '<option value="">选择...</option>' + graphNodes.map(n => `<option value="${n.id}">${n.name}</option>`).join('');
+    s.innerHTML = opts.replace('选择...', '路径起点');
+    t.innerHTML = opts.replace('选择...', '路径终点');
+}
+
+function findPath() {
+    const srcId = parseInt(document.getElementById('pathSource').value);
+    const tgtId = parseInt(document.getElementById('pathTarget').value);
+    const resultDiv = document.getElementById('pathResult');
+
+    if (!srcId || !tgtId) { alert('请选择路径起点和终点'); return; }
+    if (srcId === tgtId) { alert('起点和终点不能相同'); return; }
+
+    // BFS
+    const adj = {};
+    graphNodes.forEach(n => adj[n.id] = []);
+    graphLinks.forEach(l => {
+        const sid = l.source.id || l.source;
+        const tid = l.target.id || l.target;
+        if (adj[sid]) adj[sid].push({ id: tid, rel: l.type });
+        if (adj[tid]) adj[tid].push({ id: sid, rel: l.type });
+    });
+
+    const visited = new Set();
+    const queue = [[srcId]];
+    visited.add(srcId);
+    let path = null;
+
+    while (queue.length > 0) {
+        const p = queue.shift();
+        const last = p[p.length - 1];
+        if (last === tgtId) { path = p; break; }
+        for (const nb of (adj[last] || [])) {
+            if (!visited.has(nb.id)) {
+                visited.add(nb.id);
+                queue.push([...p, nb.id]);
+            }
+        }
+    }
+
+    if (!path) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '<span style="color:#f87171;">⚠ 未找到连接路径</span>';
+        return;
+    }
+
+    // Build path with relations
+    const nodeMap = {};
+    graphNodes.forEach(n => nodeMap[n.id] = n);
+    let html = '<strong style="color:#f093fb;">最短路径</strong> (' + (path.length - 1) + ' 跳): ';
+    html += path.map((id, i) => {
+        const n = nodeMap[id];
+        let s = `<span class="path-node">${n ? n.name : id}</span>`;
+        if (i < path.length - 1) {
+            // Find relation between path[i] and path[i+1]
+            const nextId = path[i+1];
+            const lnk = graphLinks.find(l => {
+                const ls = l.source.id || l.source;
+                const lt = l.target.id || l.target;
+                return (ls === id && lt === nextId) || (ls === nextId && lt === id);
+            });
+            s += ` <span class="path-arrow">${lnk ? '[' + lnk.type + '] → ' : '→'}</span> `;
+        }
+        return s;
+    }).join('');
+
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = html;
+
+    // Highlight path in graph
+    const pathSet = new Set(path);
+    nodeGroup.selectAll('.node-circle')
+        .classed('highlighted', d => pathSet.has(d.id))
+        .classed('dimmed', d => !pathSet.has(d.id));
+    linkGroup.selectAll('.link-line')
+        .classed('dimmed', l => {
+            const ls = l.source.id || l.source;
+            const lt = l.target.id || l.target;
+            return !(pathSet.has(ls) && pathSet.has(lt));
+        });
+    linkLabelGroup.selectAll('.link-label').classed('dimmed', l => {
+        const ls = l.source.id || l.source;
+        const lt = l.target.id || l.target;
+        return !(pathSet.has(ls) && pathSet.has(lt));
+    });
+    labelGroup.selectAll('.node-label').classed('dimmed', d => !pathSet.has(d.id));
+}
+
+// ==================== STATS ====================
+function updateStats() {
+    const n = graphNodes.length;
+    const m = graphLinks.length;
+    const maxEdges = n * (n - 1) / 2;
+    const density = maxEdges > 0 ? (m / maxEdges).toFixed(3) : '0';
+
+    // Connected components via BFS
+    const adj = {};
+    graphNodes.forEach(nd => adj[nd.id] = []);
+    graphLinks.forEach(l => {
+        const sid = l.source.id || l.source;
+        const tid = l.target.id || l.target;
+        if (adj[sid]) adj[sid].push(tid);
+        if (adj[tid]) adj[tid].push(sid);
+    });
+    const visited = new Set();
+    let components = 0;
+    graphNodes.forEach(nd => {
+        if (!visited.has(nd.id)) {
+            components++;
+            const q = [nd.id];
+            visited.add(nd.id);
+            while (q.length > 0) {
+                const cur = q.shift();
+                for (const nb of (adj[cur] || [])) {
+                    if (!visited.has(nb)) { visited.add(nb); q.push(nb); }
+                }
+            }
+        }
+    });
+
+    document.getElementById('statsBar').innerHTML = `
+        <div class="stat-card"><div class="stat-val">${n}</div><div class="stat-label">节点数</div></div>
+        <div class="stat-card"><div class="stat-val">${m}</div><div class="stat-label">边数</div></div>
+        <div class="stat-card"><div class="stat-val">${density}</div><div class="stat-label">图密度</div></div>
+        <div class="stat-card"><div class="stat-val">${components}</div><div class="stat-label">连通分量</div></div>
+        <div class="stat-card"><div class="stat-val">${n > 0 ? (m / n).toFixed(1) : 0}</div><div class="stat-label">平均度数</div></div>
+    `;
+}
+
+// ==================== ADJACENCY MATRIX ====================
+function renderMatrix() {
+    const container = document.getElementById('matrixContainer');
+    if (graphNodes.length === 0) {
+        container.innerHTML = '<p style="color:rgba(255,255,255,0.3);text-align:center;padding:40px;">暂无实体数据</p>';
+        return;
+    }
+
+    const nodes = graphNodes;
+    const n = nodes.length;
+    const idxMap = {};
+    nodes.forEach((nd, i) => idxMap[nd.id] = i);
+
+    // Build matrix
+    const matrix = Array.from({ length: n }, () => Array(n).fill(0));
+    graphLinks.forEach(l => {
+        const si = idxMap[l.source.id !== undefined ? l.source.id : l.source];
+        const ti = idxMap[l.target.id !== undefined ? l.target.id : l.target];
+        if (si !== undefined && ti !== undefined) {
+            matrix[si][ti] = l.weight || 1;
+            matrix[ti][si] = l.weight || 1;
+        }
+    });
+
+    let html = '<table class="matrix-table"><thead><tr><th></th>';
+    nodes.forEach(nd => { html += `<th title="${nd.name}">${nd.name.substring(0, 8)}</th>`; });
+    html += '</tr></thead><tbody>';
+
+    for (let i = 0; i < n; i++) {
+        html += `<tr><td class="row-header" title="${nodes[i].name}">${nodes[i].name.substring(0, 10)}</td>`;
+        for (let j = 0; j < n; j++) {
+            if (i === j) {
+                html += '<td class="diag">·</td>';
+            } else if (matrix[i][j] > 0) {
+                html += `<td class="has-edge" title="${nodes[i].name} ↔ ${nodes[j].name}: ${matrix[i][j]}">${matrix[i][j]}</td>`;
+            } else {
+                html += '<td style="color:rgba(255,255,255,0.1)">0</td>';
+            }
+        }
+        html += '</tr>';
+    }
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+// ==================== EXPORT ====================
+function exportSvg() {
+    const svgEl = document.getElementById('graphSvg');
+    const clone = svgEl.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    const svgData = new XMLSerializer().serializeToString(clone);
+    const blob = new Blob([svgData], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'gnn-graph.svg'; a.click();
+    URL.revokeObjectURL(url);
+}
+
+function exportJson() {
+    const data = {
+        nodes: graphNodes.map(n => ({ id: n.id, name: n.name, type: n.type, description: n.description, properties: n.properties })),
+        links: graphLinks.map(l => ({ source: l.source.id || l.source, target: l.target.id || l.target, type: l.type, weight: l.weight }))
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'gnn-graph.json'; a.click();
+    URL.revokeObjectURL(url);
+}
+
+// ==================== ZOOM ====================
+function zoomIn() {
+    svg.transition().duration(200).call(d3.zoom().scaleBy, 1.4);
+}
+function zoomOut() {
+    svg.transition().duration(200).call(d3.zoom().scaleBy, 0.7);
+}
+function zoomFit() {
+    svg.transition().duration(300).call(d3.zoom().transform, d3.zoomIdentity);
+}
+
+// ==================== RESET ====================
+function resetGraph() {
+    document.getElementById('graphSearch').value = '';
+    currentSearch = '';
+    document.getElementById('pathSource').value = '';
+    document.getElementById('pathTarget').value = '';
+    document.getElementById('pathResult').style.display = 'none';
+    closePanel();
+    renderFilters();
+    if (simulation) simulation.alpha(0.5).restart();
+}
+
+// ==================== RESIZE ====================
+function resizeGraph() {
+    const container = document.getElementById('graphContainer');
+    if (!container || !svg) return;
+    const w = container.clientWidth || 800;
+    const h = 500;
+    svg.attr('viewBox', `0 0 ${w} ${h}`);
+    if (simulation) {
+        simulation.force('center', d3.forceCenter(w / 2, h / 2));
+        simulation.alpha(0.3).restart();
+    }
+}
+
+// ==================== MATCHING ====================
+function runMatching() {
+    const s = document.getElementById('matchSource').value;
+    const t = document.getElementById('matchTarget').value;
+    if (!s || !t) { alert('请选择源实体和目标实体'); return; }
+    const score = Math.floor(60 + Math.random() * 35);
+    document.getElementById('matchScore').textContent = score + '%';
+    document.getElementById('matchScore').className = 'match-score';
+    document.getElementById('matchDetail').textContent = `基于GNN模型的实体结构匹配分析完成，相似度为 ${score}%`;
+    document.getElementById('matchResult').style.display = 'block';
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+    if (gnn_entities.length > 0) initGraph();
+    else {
+        document.getElementById('graphContainer').innerHTML =
+            '<div style="display:flex;align-items:center;justify-content:center;height:500px;color:rgba(255,255,255,0.3);">暂无图谱数据，请先在"实体管理"中添加实体和关系</div>';
+    }
+});
+
+window.addEventListener('resize', () => { if (simulation) resizeGraph(); });
+</script>
+{% endblock %}

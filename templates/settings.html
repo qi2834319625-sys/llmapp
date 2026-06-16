@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+{% block title %}系统设置{% endblock %}
+{% block extra_css %}
+<style>
+.st-header { text-align:center; padding:30px 20px 10px; }
+.st-header h1 { font-size:2em; background:linear-gradient(135deg,#667eea,#764ba2); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.st-header p { color:rgba(255,255,255,0.5); margin-top:8px; }
+.st-container { max-width:800px; margin:0 auto; padding:20px 30px 60px; }
+.st-section { background:rgba(255,255,255,0.04); border-radius:16px; padding:24px; margin-bottom:20px; border:1px solid rgba(255,255,255,0.08); }
+.st-section h3 { color:#667eea; font-size:1.05em; margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+.st-item { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+.st-item:last-child { border-bottom:none; }
+.st-label { color:rgba(255,255,255,0.8); font-size:0.92em; }
+.st-desc { color:rgba(255,255,255,0.35); font-size:0.78em; margin-top:3px; }
+.st-toggle { position:relative; width:48px; height:26px; }
+.st-toggle input { opacity:0; width:0; height:0; }
+.st-toggle-slider { position:absolute; inset:0; background:rgba(255,255,255,0.15); border-radius:13px; cursor:pointer; transition:0.3s; }
+.st-toggle-slider::before { content:''; position:absolute; width:20px; height:20px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:0.3s; }
+.st-toggle input:checked+.st-toggle-slider { background:linear-gradient(135deg,#667eea,#764ba2); }
+.st-toggle input:checked+.st-toggle-slider::before { transform:translateX(22px); }
+.st-select { padding:8px 16px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:10px; color:#fff; font-size:0.88em; outline:none; }
+.st-input { padding:8px 14px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:10px; color:#fff; font-size:0.88em; outline:none; width:200px; }
+.st-input:focus { border-color:#667eea; }
+.st-btn { padding:10px 28px; background:linear-gradient(135deg,#667eea,#764ba2); border:none; border-radius:20px; color:#fff; font-size:0.9em; cursor:pointer; transition:all 0.3s; }
+.st-btn:hover { transform:translateY(-2px); box-shadow:0 4px 15px rgba(102,126,234,0.3); }
+.st-btn.secondary { background:rgba(255,255,255,0.1); }
+.st-btn.danger { background:rgba(244,67,54,0.3); border:1px solid rgba(244,67,54,0.5); }
+.st-danger { border-color:rgba(244,67,54,0.3); }
+.st-danger h3 { color:#f44336; }
+.st-color-grid { display:flex; gap:8px; flex-wrap:wrap; }
+.st-color-swatch { width:32px; height:32px; border-radius:50%; cursor:pointer; border:3px solid transparent; transition:all 0.2s; }
+.st-color-swatch:hover,.st-color-swatch.active { border-color:#fff; transform:scale(1.15); }
+.st-module-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px; }
+.st-module-card { display:flex; align-items:center; gap:10px; padding:12px; background:rgba(255,255,255,0.03); border-radius:10px; border:1px solid rgba(255,255,255,0.06); }
+.st-module-icon { font-size:1.3em; }
+.st-module-name { color:rgba(255,255,255,0.7); font-size:0.85em; }
+.st-api-row { display:flex; gap:8px; align-items:center; }
+.st-api-row .st-input { flex:1; }
+.st-stat-row { display:flex; gap:20px; flex-wrap:wrap; }
+.st-stat { text-align:center; padding:12px; background:rgba(255,255,255,0.03); border-radius:10px; min-width:100px; }
+.st-stat-val { font-size:1.3em; font-weight:700; color:#667eea; }
+.st-stat-label { font-size:0.75em; color:rgba(255,255,255,0.4); margin-top:2px; }
+.st-tab-nav { display:flex; gap:6px; margin-bottom:20px; flex-wrap:wrap; }
+.st-tab-btn { padding:8px 20px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:20px; color:rgba(255,255,255,0.6); cursor:pointer; font-size:0.88em; transition:all 0.2s; }
+.st-tab-btn:hover,.st-tab-btn.active { background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border-color:transparent; }
+.st-tab-content { display:none; }
+.st-tab-content.active { display:block; }
+.st-pw-field { position:relative; }
+.st-pw-toggle { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:rgba(255,255,255,0.4); cursor:pointer; font-size:1em; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="st-header">
+    <h1>⚙️ 系统设置中心</h1>
+    <p>管理你的个人偏好、数据源、模块和系统选项</p>
+</div>
+
+<div class="st-container">
+    <!-- Tab Navigation -->
+    <div class="st-tab-nav">
+        <button class="st-tab-btn active" onclick="stTab('profile')">👤 个人</button>
+        <button class="st-tab-btn" onclick="stTab('appearance')">🎨 外观</button>
+        <button class="st-tab-btn" onclick="stTab('notifications')">🔔 通知</button>
+        <button class="st-tab-btn" onclick="stTab('modules')">📦 模块</button>
+        <button class="st-tab-btn" onclick="stTab('datasources')">📡 数据源</button>
+        <button class="st-tab-btn" onclick="stTab('api-keys')">🔑 API</button>
+        <button class="st-tab-btn" onclick="stTab('data')">💾 数据</button>
+        <button class="st-tab-btn" onclick="stTab('about')">ℹ️ 关于</button>
+    </div>
+
+    <!-- Tab: Profile -->
+    <div id="st-tab-profile" class="st-tab-content active">
+        <div class="st-section">
+            <h3>👤 个人信息</h3>
+            <div class="st-item">
+                <div><div class="st-label">用户名</div><div class="st-desc">登录账号名称</div></div>
+                <input type="text" class="st-input" value="{{ user }}" disabled>
+            </div>
+            <div class="st-item">
+                <div><div class="st-label">修改密码</div><div class="st-desc">定期更换密码保护账号安全</div></div>
+                <button class="st-btn secondary" onclick="document.getElementById('pwModal').style.display='flex'">修改密码</button>
+            </div>
+        </div>
+        <div class="st-section">
+            <h3>📊 使用统计</h3>
+            <div class="st-stat-row">
+                <div class="st-stat"><div class="st-stat-val" id="stPapers">0</div><div class="st-stat-label">论文总数</div></div>
+                <div class="st-stat"><div class="st-stat-val" id="stMusic">0</div><div class="st-stat-label">生成音乐</div></div>
+                <div class="st-stat"><div class="st-stat-val" id="stStrategies">0</div><div class="st-stat-label">保存策略</div></div>
+                <div class="st-stat"><div class="st-stat-val" id="stBacktests">0</div><div class="st-stat-label">回测次数</div></div>
+                <div class="st-stat"><div class="st-stat-val" id="stNotes">0</div><div class="st-stat-label">笔记数</div></div>
+                <div class="st-stat"><div class="st-stat-val" id="stBookmarks">0</div><div class="st-stat-label">收藏数</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab: Appearance -->
+    <div id="st-tab-appearance" class="st-tab-content">
+        <div class="st-section">
+            <h3>🎨 主题设置</h3>
+            <div class="st-item">
+                <div><div class="st-label">主题模式</div><div class="st-desc">选择界面主题</div></div>
+                <select class="st-select" id="themeSelect" onchange="setTheme(this.value)">
+                    <option value="dark">🌙 深色主题</option>
+                    <option value="light">☀️ 浅色主题</option>
+                </select>
+            </div>
+            <div class="st-item">
+                <div><div class="st-label">强调色</div><div class="st-desc">选择你喜欢的强调色</div></div>
+                <div class="st-color-grid">
+                    {% for c,n in [('667eea','蓝'),('764ba2','紫'),('f093fb','粉'),('38ef7d','绿'),('ffd200','金'),('ff6b6b','红'),('00f5ff','青'),('ff6b00','橙')] %}
+                    <div class="st-color-swatch" style="background:#{{ c }};" onclick="setAccent('{{ c }}')" title="{{ n }}" data-color="{{ c }}"></div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="st-item">
+                <div><div class="st-label">动画效果</div><div class="st-desc">页面过渡和交互动画</div></div>
+                <label class="st-toggle"><input type="checkbox" checked id="animToggle" onchange="document.body.style.animation=this.checked?'':'none'"><span class="st-toggle-slider"></span></label>
+            </div>
+            <div class="st-item">
+                <div><div class="st-label">粒子背景</div><div class="st-desc">Dashboard 粒子动画效果</div></div>
+                <label class="st-toggle"><input type="checkbox" checked id="particleToggle" onchange="toggleParticles(this.checked)"><span class="st-toggle-slider"></span></label>
+            </div>
+            <div class="st-item">
+                <div><div class="st-label">扫描线效果</div><div class="st-desc">CRT 显示器风格叠加</div></div>
+                <label class="st-toggle"><input type="checkbox" id="scanlineToggle" onchange="document.querySelector('.scanlines').style.display=this.checked?'block':'none'"><span class="st-toggle-slider"></span></label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab: Notifications -->
+    <div id="st-tab-notifications" class="st-tab-content">
+        <div class="st-section">
+            <h3>🔔 通知设置</h3>
+            <div class="st-item">
+                <div><div class="st-label">系统通知</div><div class="st-desc">系统更新和新功能提醒</div></div>
+                <label class="st-toggle"><input type="checkbox" checked><span class="st-toggle-slider"></span></label>
+            </div>
+            <div class="st-item">
+                <div><div class="st-label">学习提醒</div><div class="st-desc">每日学习打卡提醒</div></div>
+                <label class="st-toggle"><input type="checkbox" checked><span class="st-toggle-slider"></span></label>
+            </div>
+            <div class="st-item">
+                <div><div class="st-label">考试倒计时</div><div class="st-desc">重要考试前的倒计时提醒</div></div>
+                <label class="st-toggle"><input type="checkbox" checked><span class="st-toggle-slider"></span></label>
+            </div>
+            <div class="st-item">
+                <div><div class="st-label">数据搜集完成</div><div class="st-desc">爬虫完成数据搜集时通知</div></div>
+                <label class="st-toggle"><input type="checkbox" checked><span class="st-toggle-slider"></span></label>
+            </div>
+            <div class="st-item">
+                <div><div class="st-label">浏览器通知</div><div class="st-desc">桌面推送通知</div></div>
+                <button class="st-btn secondary" onclick="requestNotificationPermission()">授权通知</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab: Modules -->
+    <div id="st-tab-modules" class="st-tab-content">
+        <div class="st-section">
+            <h3>📦 模块管理</h3>
+            <p style="color:rgba(255,255,255,0.4);font-size:0.85em;margin-bottom:16px;">控制每个模块的显示/隐藏和排序</p>
+            <div class="st-module-grid" id="moduleGrid">
+                {% for m in [
+                    ('dashboard','📊','控制台'),('investment','💰','投资管理'),('crypto','🔐','密码学论文'),
+                    ('recruitment','💼','求职刷题'),('papers','📚','密钥协商论文'),('ai_music','🎵','AI音乐生成'),
+                    ('strategy_lab','🧪','策略实验室'),('crawler','🕷️','数据搜集'),('couple','💕','情侣空间'),
+                    ('manga','🎭','漫剧创作'),('makeup','💄','美妆指南'),('fashion','👗','时尚穿搭'),
+                    ('cooking','🍳','烹饪食谱'),('study_abroad','✈️','出国留学'),('civil_exam','🏛️','公务员考试'),
+                    ('cet_exam','📝','CET考试'),('gnn','🧠','GNN知识图谱'),('settings','⚙️','系统设置')
+                ] %}
+                <div class="st-module-card">
+                    <span class="st-module-icon">{{ m[1] }}</span>
+                    <span class="st-module-name">{{ m[2] }}</span>
+                    <label class="st-toggle" style="margin-left:auto;"><input type="checkbox" checked data-module="{{ m[0] }}"><span class="st-toggle-slider"></span></label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab: Data Sources -->
+    <div id="st-tab-datasources" class="st-tab-content">
+        <div class="st-section">
+            <h3>📡 数据源配置</h3>
+            <div id="dsList"></div>
+        </div>
+        <div class="st-section">
+            <h3>⏰ 定时任务</h3>
+            <div class="st-item">
+                <div><div class="st-label">自动搜集论文</div><div class="st-desc">每天自动从各数据源搜集最新论文</div></div>
+                <label class="st-toggle"><input type="checkbox" id="autoCrawlToggle"><span class="st-toggle-slider"></span></label>
+            </div>
+            <div class="st-item">
+                <div><div class="st-label">搜集间隔</div><div class="st-desc">自动搜集的时间间隔</div></div>
+                <select class="st-select" id="crawlInterval">
+                    <option value="1800">每30分钟</option>
+                    <option value="3600" selected>每1小时</option>
+                    <option value="7200">每2小时</option>
+                    <option value="86400">每天</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab: API Keys -->
+    <div id="st-tab-api-keys" class="st-tab-content">
+        <div class="st-section">
+            <h3>🔑 API 密钥管理</h3>
+            <p style="color:rgba(255,255,255,0.4);font-size:0.85em;margin-bottom:16px;">管理各外部服务的 API 密钥（仅本地存储，不会上传到服务器）</p>
+            {% for k,n in [('hf_api_key','HuggingFace (MusicGen)'),('stability_api_key','Stable Audio'),('suno_api_key','Suno AI'),('openai_api_key','OpenAI / Agnes')] %}
+            <div class="st-item">
+                <div><div class="st-label">{{ n }}</div><div class="st-desc">用于{{ n.split('(')[0].strip() }}服务</div></div>
+                <div class="st-api-row">
+                    <input type="password" class="st-input" id="key_{{ k }}" placeholder="sk-..." onchange="saveApiKey('{{ k }}',this.value)">
+                    <button class="st-btn secondary" onclick="toggleKeyVisibility('{{ k }}')">👁</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Tab: Data -->
+    <div id="st-tab-data" class="st-tab-content">
+        <div class="st-section">
+            <h3>💾 数据管理</h3>
+            <div class="st-item">
+                <div><div class="st-label">导出全部数据</div><div class="st-desc">导出所有本地存储的数据为 JSON</div></div>
+                <button class="st-btn secondary" onclick="exportData()">📥 导出</button>
+            </div>
+            <div class="st-item">
+                <div><div class="st-label">导入数据</div><div class="st-desc">从 JSON 文件导入数据</div></div>
+                <button class="st-btn secondary" onclick="document.getElementById('importFile').click()">📤 导入</button>
+                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
+            </div>
+            <div class="st-item">
+                <div><div class="st-label">清除缓存</div><div class="st-desc">清除 localStorage 中的缓存数据</div></div>
+                <button class="st-btn secondary" onclick="clearCache()">🗑️ 清除</button>
+            </div>
+        </div>
+        <div class="st-section st-danger">
+            <h3>⚠️ 危险操作</h3>
+            <div class="st-item">
+                <div><div class="st-label">重置所有设置</div><div class="st-desc">恢复所有设置为默认值（不可撤销）</div></div>
+                <button class="st-btn danger" onclick="resetSettings()">重置</button>
+            </div>
+            <div class="st-item">
+                <div><div class="st-label">清除所有数据</div><div class="st-desc">删除所有本地存储的数据（不可恢复）</div></div>
+                <button class="st-btn danger" onclick="clearAllData()">清除全部</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab: About -->
+    <div id="st-tab-about" class="st-tab-content">
+        <div class="st-section">
+            <h3>ℹ️ 关于系统</h3>
+            <div class="st-item"><div><div class="st-label">系统名称</div></div><span style="color:rgba(255,255,255,0.5);font-size:0.88em;">多系统智能门户</span></div>
+            <div class="st-item"><div><div class="st-label">版本</div></div><span style="color:rgba(255,255,255,0.5);font-size:0.88em;">v5.0</span></div>
+            <div class="st-item"><div><div class="st-label">模块数量</div></div><span style="color:rgba(255,255,255,0.5);font-size:0.88em;">18 个模块</span></div>
+            <div class="st-item"><div><div class="st-label">技术栈</div></div><span style="color:rgba(255,255,255,0.5);font-size:0.88em;">FastAPI + Jinja2 + SQLite + Canvas</span></div>
+            <div class="st-item"><div><div class="st-label">数据库大小</div></div><span style="color:rgba(255,255,255,0.5);font-size:0.88em;" id="dbSize">-- MB</span></div>
+        </div>
+        <div class="st-section">
+            <h3>📋 更新日志</h3>
+            <div style="color:rgba(255,255,255,0.6);font-size:0.88em;line-height:2;">
+                <p><strong>v5.0</strong> - 系统设置中心重构，模块管理，API密钥管理</p>
+                <p><strong>v4.0</strong> - 数据搜集中心，密钥协商论文库，AI音乐生成</p>
+                <p><strong>v3.0</strong> - 策略实验室，量化回测引擎，科技感UI框架</p>
+                <p><strong>v2.0</strong> - 18个功能模块，用户系统，数据库</p>
+                <p><strong>v1.0</strong> - 基础门户框架</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Password Modal -->
+<div id="pwModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:2000;justify-content:center;align-items:center;backdrop-filter:blur(4px);">
+    <div style="background:#12122a;border:1px solid rgba(102,126,234,0.3);border-radius:18px;padding:32px;max-width:400px;width:90%;box-shadow:0 0 40px rgba(102,126,234,0.1);">
+        <h3 style="color:#667eea;margin-bottom:20px;">🔒 修改密码</h3>
+        <div style="margin-bottom:12px;">
+            <label style="color:rgba(255,255,255,0.6);font-size:0.85em;display:block;margin-bottom:6px;">当前密码</label>
+            <input type="password" class="st-input" style="width:100%;" id="pwCurrent" placeholder="输入当前密码">
+        </div>
+        <div style="margin-bottom:12px;">
+            <label style="color:rgba(255,255,255,0.6);font-size:0.85em;display:block;margin-bottom:6px;">新密码</label>
+            <input type="password" class="st-input" style="width:100%;" id="pwNew" placeholder="至少6位">
+        </div>
+        <div style="margin-bottom:20px;">
+            <label style="color:rgba(255,255,255,0.6);font-size:0.85em;display:block;margin-bottom:6px;">确认新密码</label>
+            <input type="password" class="st-input" style="width:100%;" id="pwConfirm" placeholder="再次输入新密码">
+        </div>
+        <div style="display:flex;gap:10px;">
+            <button class="st-btn" style="flex:1;" onclick="changePassword()">确认修改</button>
+            <button class="st-btn secondary" style="flex:1;" onclick="document.getElementById('pwModal').style.display='none'">取消</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function stTab(id) {
+    document.querySelectorAll('.st-tab-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelectorAll('.st-tab-content').forEach(function(c){ c.classList.remove('active'); });
+    document.getElementById('st-tab-'+id).classList.add('active');
+    event.target.classList.add('active');
+}
+
+// Load user stats
+fetch('/api/user/stats', {credentials:'include'}).then(function(r){return r.json()}).then(function(d){
+    var el = function(id){ return document.getElementById(id); };
+    if(el('stPapers')) el('stPapers').textContent = d.strategies || 0;
+    if(el('stMusic')) el('stMusic').textContent = d.backtests || 0;
+    if(el('stStrategies')) el('stStrategies').textContent = d.strategies || 0;
+    if(el('stBacktests')) el('stBacktests').textContent = d.backtests || 0;
+    if(el('stNotes')) el('stNotes').textContent = d.notes || 0;
+    if(el('stBookmarks')) el('stBookmarks').textContent = d.bookmarks || 0;
+}).catch(function(){});
+
+// Load data sources
+fetch('/api/crawler/sources', {credentials:'include'}).then(function(r){return r.json()}).then(function(data){
+    var html = '';
+    data.forEach(function(s){
+        html += '<div class="st-item"><div><div class="st-label">'+s.name_zh+'</div><div class="st-desc">'+s.base_url+' · 间隔'+(s.crawl_interval/60)+'分钟</div></div><label class="st-toggle"><input type="checkbox"'+(s.is_active?' checked':'')+' onchange="toggleSource('+s.id+',this.checked)"><span class="st-toggle-slider"></span></label></div>';
+    });
+    document.getElementById('dsList').innerHTML = html;
+}).catch(function(){});
+
+// Load DB size
+fetch('/api/system/health', {credentials:'include'}).then(function(r){return r.json()}).then(function(d){
+    document.getElementById('dbSize').textContent = d.database.size_mb + ' MB';
+}).catch(function(){});
+
+function setTheme(t) { localStorage.setItem('theme', t); showToast('主题已切换: ' + t, 'success'); }
+function setAccent(c) { localStorage.setItem('accent', c); document.documentElement.style.setProperty('--accent', '#'+c); showToast('强调色已更新', 'success'); }
+function toggleParticles(on) { var c = document.getElementById('particle-canvas'); if(c) c.style.display = on ? 'block' : 'none'; }
+function saveApiKey(key, val) { localStorage.setItem('apikey_'+key, val); showToast('API Key 已保存', 'success'); }
+function toggleKeyVisibility(key) { var el = document.getElementById('key_'+key); if(el) el.type = el.type==='password'?'text':'password'; }
+function requestNotificationPermission() { if(!('Notification' in window)){showToast('浏览器不支持通知','error');return;} Notification.requestPermission().then(function(p){showToast(p==='granted'?'✅ 通知已授权':'❌ 授权被拒绝',p==='granted'?'success':'warning');}); }
+function exportData() { var d={}; for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k.startsWith('apikey_'))continue;d[k]=localStorage.getItem(k);} var b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'}); var u=URL.createObjectURL(b); var a=document.createElement('a'); a.href=u; a.download='portal_backup.json'; a.click(); URL.revokeObjectURL(u); showToast('数据已导出','success'); }
+function importData(inp) { var f=inp.files[0]; if(!f)return; var r=new FileReader(); r.onload=function(e){try{var d=JSON.parse(e.target.result);for(var k in d)localStorage.setItem(k,d[k]);showToast('数据已导入，即将刷新','success');setTimeout(function(){location.reload()},1000);}catch(ex){showToast('导入失败: '+ex.message,'error');}}; r.readAsText(f); }
+function clearCache() { if(!confirm('清除所有缓存数据？'))return; var keys=[]; for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k.startsWith('lc_')||k.startsWith('bookmark_'))keys.push(k);} keys.forEach(function(k){localStorage.removeItem(k)}); showToast('缓存已清除','success'); }
+function resetSettings() { if(!confirm('重置所有设置？不可撤销。'))return; localStorage.clear(); showToast('设置已重置','success'); setTimeout(function(){location.reload()},1000); }
+function clearAllData() { if(!confirm('⚠️ 删除所有数据？此操作不可恢复！'))return; localStorage.clear(); showToast('所有数据已清除','success'); setTimeout(function(){location.reload()},1000); }
+function changePassword() { var c=document.getElementById('pwCurrent').value,n=document.getElementById('pwNew').value,cf=document.getElementById('pwConfirm').value; if(!c||!n||!cf){showToast('请填写所有字段','warning');return;} if(n.length<6){showToast('密码至少6位','warning');return;} if(n!==cf){showToast('两次输入不一致','warning');return;} fetch('/api/user/password',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({current:c,new:n})}).then(function(r){return r.json()}).then(function(d){if(d.success){showToast('密码修改成功','success');document.getElementById('pwModal').style.display='none';}else{showToast('修改失败: '+(d.error||''),'error');}}).catch(function(){showToast('请求失败','error');}); }
+function toggleSource(id,on) { fetch('/api/crawler/sources/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({is_active:on?1:0})}).then(function(r){return r.json()}).then(function(){showToast(on?'已启用':'已停用','success');}); }
+</script>
+{% endblock %}

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>👗 服装搭配</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@keyframes bgMove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+body{
+  min-height:100vh;
+  background:linear-gradient(135deg,#0f0a1a 0%,#1a1530 25%,#252040 50%,#1a1530 75%,#0f0a1a 100%);
+  background-size:400% 400%;animation:bgMove 20s ease infinite;
+  font-family:'Segoe UI','Microsoft YaHei',sans-serif;color:#fff;overflow-x:hidden;
+}
+#app{position:relative;z-index:1}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:16px 40px;background:rgba(0,0,0,.3);backdrop-filter:blur(10px);position:fixed;top:0;left:0;right:0;z-index:100}
+.nav .logo{font-size:22px;cursor:pointer;background:linear-gradient(135deg,#a2b6df,#c4c5d6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700}
+.back-btn{padding:8px 20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;color:#fff;font-size:14px;cursor:pointer;transition:all .3s}
+.back-btn:hover{background:rgba(162,182,223,.3)}
+
+.main{padding:90px 40px 40px;max-width:1200px;margin:0 auto}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:24px}
+.menu-item{padding:14px;border-radius:12px;cursor:pointer;text-align:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);transition:all .3s;font-size:14px}
+.menu-item:hover{background:rgba(162,182,223,.15)}
+.menu-item.active{background:linear-gradient(135deg,rgba(162,182,223,.3),rgba(196,197,214,.2));border-color:#a2b6df;font-weight:600}
+
+.section{background:rgba(255,255,255,.05);backdrop-filter:blur(15px);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:28px;margin-bottom:20px;animation:fadeInUp .4s ease}
+.section-title{font-size:22px;margin-bottom:18px;display:flex;align-items:center;gap:10px}
+
+.guide-card{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:22px;margin-bottom:14px;
+  transition:all .3s;animation:fadeInUp .3s ease backwards;
+}
+.guide-card:hover{background:rgba(162,182,223,.08);transform:translateY(-3px)}
+.guide-type{display:inline-block;padding:3px 12px;border-radius:8px;font-size:12px;font-weight:600;margin-bottom:10px}
+.guide-type.guide{background:rgba(162,182,223,.2);color:#a2b6df}
+.guide-type.outfit{background:rgba(255,117,151,.2);color:#ff7597}
+.guide-type.wardrobe{background:rgba(255,211,42,.2);color:#ffd32a}
+.guide-title{font-size:18px;font-weight:600;margin-bottom:10px;color:#c4c5d6}
+.guide-content{color:rgba(255,255,255,.7);font-size:14px;line-height:1.8;white-space:pre-wrap}
+.guide-tags{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.guide-tag{padding:2px 10px;background:rgba(255,255,255,.08);border-radius:10px;font-size:12px;color:rgba(255,255,255,.5)}
+
+/* Outfit showcase */
+.outfit-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.outfit-card{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;overflow:hidden;transition:all .3s;
+  animation:fadeInUp .3s ease backwards;
+}
+.outfit-card:hover{transform:translateY(-5px)}
+.outfit-img{height:160px;display:flex;align-items:center;justify-content:center;font-size:64px;background:rgba(255,255,255,.03)}
+.outfit-info{padding:16px}
+.outfit-info h4{font-size:16px;margin-bottom:6px;color:#c4c5d6}
+.outfit-info p{font-size:13px;color:rgba(255,255,255,.5);line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="nav">
+    <div class="logo" @click="goHome">👗 服装搭配</div>
+    <button class="back-btn" @click="goHome">← 返回主页</button>
+  </div>
+
+  <div class="main">
+    <div class="menu-grid">
+      <div class="menu-item" :class="{active:sub==='all'}" @click="sub='all'">👗 全部内容</div>
+      <div class="menu-item" :class="{active:sub==='guide'}" @click="sub='guide'">📋 穿搭指南</div>
+      <div class="menu-item" :class="{active:sub==='outfit'}" @click="sub='outfit'">👔 搭配灵感</div>
+      <div class="menu-item" :class="{active:sub==='wardrobe'}" @click="sub='wardrobe'">🗄️ 衣橱管理</div>
+      <div class="menu-item" :class="{active:sub==='color'}" @click="sub='color'">🎨 色彩搭配</div>
+      <div class="menu-item" :class="{active:sub==='season'}" @click="sub='season'">🌸 四季穿搭</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">👗 {{ subTitle }}</div>
+      <div v-for="(item,i) in displayItems" :key="i" class="guide-card" :style="'animation-delay:'+(i*0.05)+'s'">
+        <span class="guide-type" :class="item.resource_type">{{ typeName(item.resource_type) }}</span>
+        <div class="guide-title">{{ item.title }}</div>
+        <div class="guide-content">{{ item.content }}</div>
+        <div class="guide-tags" v-if="item.tags">
+          <span class="guide-tag" v-for="t in item.tags.split(',')" :key="t.trim()">{{ t.trim() }}</span>
+        </div>
+      </div>
+      <div v-if="!displayItems.length" style="text-align:center;padding:40px;color:rgba(255,255,255,.3)">暂无相关内容</div>
+    </div>
+
+    <!-- Outfit showcase -->
+    <div class="section" v-if="sub==='all'||sub==='outfit'">
+      <div class="section-title">✨ 穿搭灵感</div>
+      <div class="outfit-grid">
+        <div class="outfit-card"><div class="outfit-img">👔</div><div class="outfit-info"><h4>商务正装</h4><p>深色西装+白衬衫+皮鞋，展现专业形象</p></div></div>
+        <div class="outfit-card"><div class="outfit-img">🧥</div><div class="outfit-info"><h4>休闲周末</h4><p>牛仔外套+白T+帆布鞋，轻松自在</p></div></div>
+        <div class="outfit-card"><div class="outfit-img">👗</div><div class="outfit-info"><h4>甜美约会</h4><p>碎花连衣裙+开衫+玛丽珍鞋</p></div></div>
+        <div class="outfit-card"><div class="outfit-img">🎽</div><div class="outfit-info"><h4>运动风</h4><p>卫衣+束腿裤+运动鞋，活力满满</p></div></div>
+        <div class="outfit-card"><div class="outfit-img">🧣</div><div class="outfit-info"><h4>秋冬温暖</h4><p>大衣+高领毛衣+围巾+短靴</p></div></div>
+        <div class="outfit-card"><div class="outfit-img">👒</div><div class="outfit-info"><h4>度假风</h4><p>草帽+亚麻衬衫+阔腿裤+凉鞋</p></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const {createApp}=Vue;
+createApp({
+  data(){
+    return{
+      sub:'all',
+      items:[],
+    }
+  },
+  computed:{
+    subTitle(){
+      return{all:'全部内容',guide:'穿搭指南',outfit:'搭配灵感',wardrobe:'衣橱管理',color:'色彩搭配',season:'四季穿搭'}[this.sub]||'内容';
+    },
+    displayItems(){
+      if(this.sub==='all') return this.items;
+      if(this.sub==='guide') return this.items.filter(i=>i.resource_type==='guide');
+      if(this.sub==='outfit') return this.items.filter(i=>i.resource_type==='outfit');
+      if(this.sub==='wardrobe') return this.items.filter(i=>i.resource_type==='wardrobe');
+      if(this.sub==='color') return this.items.filter(i=>(i.tags||'').includes('Color'));
+      if(this.sub==='season') return this.items.filter(i=>(i.tags||'').includes('Season'));
+      return this.items;
+    }
+  },
+  methods:{
+    goHome(){window.location.href='/main'},
+    typeName(t){return{guide:'指南',outfit:'搭配',wardrobe:'衣橱'}[t]||t},
+    async loadData(){
+      const r=await fetch('/api/fashion',{headers:{'Authorization':'Bearer '+token}});
+      if(r.ok) this.items=await r.json();
+    },
+  },
+  mounted(){this.loadData()}
+}).mount('#app');
+
+const token=localStorage.getItem('token')||'';
+if(!token) window.location.href='/';
+</script>
+</body>
+</html>

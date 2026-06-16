@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database & uploads (runtime data)
+*.db
+data/
+uploads/
+
+# Secrets
+.env
+.api_keys.json
+.agnes_key
+
+# PyInstaller
+*.spec
+build/
+
+# Large binary (desktop executable) - 170MB, rebuild from source
+desktop/PortalDesktop
+dist/
+
+# Temp files
+*.log
+*.tmp
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node (if any)
+node_modules/

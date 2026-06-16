@@ -1,0 +1,492 @@
+{% extends "base.html" %}
+{% block title %}出国留学{% endblock %}
+{% block content %}
+<style>
+.sa-header { text-align: center; padding: 30px 20px 10px; }
+.sa-header h1 { font-size: 2.2em; background: linear-gradient(135deg, #89f7fe, #66a6ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.sa-header p { color: rgba(255,255,255,0.5); margin-top: 8px; }
+.tab-nav { display: flex; justify-content: center; gap: 10px; margin: 15px 0; flex-wrap: wrap; }
+.tab-btn { padding: 10px 24px; border-radius: 20px; border: 1px solid rgba(137,247,254,0.3); background: rgba(137,247,254,0.1); color: #66a6ff; cursor: pointer; font-size: 0.95em; transition: all 0.3s; }
+.tab-btn:hover, .tab-btn.active { background: linear-gradient(135deg, #89f7fe, #66a6ff); color: #fff; border-color: transparent; }
+.tab-content { display: none; padding: 10px 30px 60px; }
+.tab-content.active { display: block; }
+.filters { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
+.filters a { padding: 8px 20px; border-radius: 20px; text-decoration: none; background: rgba(137,247,254,0.1); color: #66a6ff; border: 1px solid rgba(137,247,254,0.2); transition: all 0.3s; font-size: 0.9em; }
+.filters a:hover, .filters a.active { background: linear-gradient(135deg, #89f7fe, #66a6ff); color: #fff; }
+.program-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px; }
+.program-card { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 25px; border: 1px solid rgba(137,247,254,0.1); transition: all 0.3s; }
+.program-card:hover { border-color: rgba(137,247,254,0.3); transform: translateY(-3px); }
+.program-card .p-country { display: inline-block; padding: 3px 14px; border-radius: 8px; background: rgba(137,247,254,0.15); color: #89f7fe; font-size: 0.85em; margin-bottom: 10px; }
+.program-card h3 { color: #fff; margin-bottom: 6px; font-size: 1.1em; }
+.program-card .p-uni { color: #66a6ff; font-size: 0.9em; margin-bottom: 12px; }
+.program-card .p-req { color: rgba(255,255,255,0.5); font-size: 0.85em; margin-bottom: 8px; }
+.program-card .p-deadline { display: inline-block; padding: 2px 10px; border-radius: 6px; background: rgba(255,152,0,0.15); color: #ff9800; font-size: 0.8em; }
+.program-card .p-notes { color: rgba(255,255,255,0.35); font-size: 0.8em; margin-top: 8px; }
+/* Country comparison */
+.compare-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+.country-card { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 25px; border: 1px solid rgba(137,247,254,0.1); text-align: center; transition: all 0.3s; cursor: pointer; }
+.country-card:hover { border-color: rgba(137,247,254,0.3); transform: translateY(-3px); }
+.country-card.selected { border-color: #89f7fe; background: rgba(137,247,254,0.08); }
+.country-card .flag { font-size: 3em; margin-bottom: 10px; }
+.country-card h3 { color: #fff; margin-bottom: 10px; }
+.country-card .metric { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85em; }
+.country-card .metric span:first-child { color: rgba(255,255,255,0.5); }
+.country-card .metric span:last-child { color: #89f7fe; }
+.country-card .visa-badge { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 0.75em; margin-top: 8px; }
+.visa-easy { background: rgba(76,175,80,0.15); color: #4caf50; }
+.visa-medium { background: rgba(255,152,0,0.15); color: #ff9800; }
+.visa-hard { background: rgba(244,67,54,0.15); color: #f44336; }
+/* Calculator */
+.calc-form { max-width: 500px; margin: 0 auto; background: rgba(255,255,255,0.05); border-radius: 16px; padding: 30px; border: 1px solid rgba(137,247,254,0.1); }
+.calc-form label { display: block; color: rgba(255,255,255,0.7); margin-bottom: 8px; margin-top: 15px; font-size: 0.9em; }
+.calc-form input, .calc-form select { width: 100%; padding: 12px 16px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: #fff; font-size: 1em; outline: none; }
+.calc-form button { width: 100%; padding: 14px; margin-top: 20px; background: linear-gradient(135deg, #89f7fe, #66a6ff); border: none; border-radius: 10px; color: #fff; font-size: 1em; cursor: pointer; }
+.calc-result { margin-top: 20px; padding: 20px; background: rgba(137,247,254,0.08); border-radius: 12px; display: none; }
+/* Timeline */
+.timeline-container { max-width: 800px; margin: 0 auto; position: relative; padding: 20px 0; }
+.timeline-container::before { content: ''; position: absolute; left: 30px; top: 0; bottom: 0; width: 3px; background: linear-gradient(to bottom, #89f7fe, #66a6ff); border-radius: 3px; }
+.timeline-item { position: relative; padding: 15px 20px 15px 65px; margin-bottom: 10px; }
+.timeline-item .tl-dot { position: absolute; left: 23px; top: 22px; width: 18px; height: 18px; border-radius: 50%; background: #66a6ff; border: 3px solid rgba(137,247,254,0.3); z-index: 1; }
+.timeline-item .tl-dot.done { background: #4caf50; }
+.timeline-item .tl-dot.active { background: #ff9800; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,152,0,0.4); } 50% { box-shadow: 0 0 0 10px rgba(255,152,0,0); } }
+.timeline-item .tl-card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 18px; border: 1px solid rgba(137,247,254,0.1); transition: all 0.3s; }
+.timeline-item .tl-card:hover { border-color: rgba(137,247,254,0.3); }
+.timeline-item .tl-card h4 { color: #89f7fe; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
+.timeline-item .tl-card h4 .tl-check { cursor: pointer; font-size: 1.2em; }
+.timeline-item .tl-card p { color: rgba(255,255,255,0.5); font-size: 0.85em; line-height: 1.6; }
+.timeline-item .tl-card .tl-date { display: inline-block; margin-top: 8px; padding: 2px 10px; border-radius: 6px; background: rgba(102,166,255,0.15); color: #66a6ff; font-size: 0.75em; }
+/* Scholarship Finder */
+.scholarship-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+.scholarship-card { background: rgba(255,255,255,0.05); border-radius: 14px; padding: 22px; border: 1px solid rgba(137,247,254,0.1); transition: all 0.3s; }
+.scholarship-card:hover { border-color: rgba(137,247,254,0.3); transform: translateY(-2px); }
+.scholarship-card .sch-tag { display: inline-block; padding: 3px 12px; border-radius: 6px; font-size: 0.75em; margin-bottom: 10px; }
+.sch-full { background: rgba(76,175,80,0.15); color: #4caf50; }
+.sch-partial { background: rgba(255,152,0,0.15); color: #ff9800; }
+.sch-card h4 { color: #fff; margin-bottom: 8px; font-size: 1em; }
+.scholarship-card .sch-amount { color: #89f7fe; font-size: 1.1em; font-weight: 600; margin-bottom: 8px; }
+.scholarship-card .sch-deadline { color: rgba(255,152,0,0.8); font-size: 0.85em; }
+/* Tips section */
+.tips-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.tip-card-sa { background: rgba(255,255,255,0.05); border-radius: 14px; padding: 22px; border: 1px solid rgba(137,247,254,0.1); transition: all 0.3s; }
+.tip-card-sa:hover { border-color: rgba(137,247,254,0.3); }
+.tip-card-sa .tip-icon { font-size: 2em; margin-bottom: 10px; }
+.tip-card-sa h4 { color: #fff; margin-bottom: 8px; font-size: 1em; }
+.tip-card-sa p { color: rgba(255,255,255,0.5); font-size: 0.85em; line-height: 1.7; }
+/* Resources */
+.resource-list { display: flex; flex-direction: column; gap: 15px; }
+.resource-item { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; border: 1px solid rgba(137,247,254,0.1); display: flex; align-items: center; gap: 15px; transition: all 0.3s; cursor: pointer; }
+.resource-item:hover { border-color: rgba(137,247,254,0.3); transform: translateX(5px); }
+.resource-item .res-icon { font-size: 2em; min-width: 50px; text-align: center; }
+.resource-item .res-info h4 { color: #fff; font-size: 1em; margin-bottom: 4px; }
+.resource-item .res-info p { color: rgba(255,255,255,0.5); font-size: 0.85em; }
+.resource-item .res-arrow { margin-left: auto; color: #66a6ff; font-size: 1.5em; }
+/* Comparison bar */
+.compare-bar { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,30,0.95); backdrop-filter: blur(10px); border-top: 1px solid rgba(137,247,254,0.2); padding: 15px 30px; z-index: 100; }
+.compare-bar.active { display: flex; align-items: center; gap: 15px; justify-content: center; flex-wrap: wrap; }
+.compare-bar .cmp-item { background: rgba(137,247,254,0.15); color: #89f7fe; padding: 5px 15px; border-radius: 8px; font-size: 0.9em; }
+.compare-bar .cmp-btn { padding: 8px 24px; background: linear-gradient(135deg, #89f7fe, #66a6ff); border: none; border-radius: 20px; color: #fff; cursor: pointer; font-size: 0.9em; }
+.compare-bar .cmp-clear { background: rgba(255,255,255,0.1); }
+/* Progress bar for cost breakdown */
+.cost-breakdown-bar { display: flex; height: 24px; border-radius: 12px; overflow: hidden; margin-top: 12px; }
+.cost-bar-tuition { background: linear-gradient(135deg, #89f7fe, #66a6ff); }
+.cost-bar-living { background: linear-gradient(135deg, #66a6ff, #4caf50); }
+.cost-bar-legend { display: flex; gap: 20px; margin-top: 8px; font-size: 0.8em; color: rgba(255,255,255,0.5); }
+.cost-bar-legend span::before { content: ''; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
+.cost-bar-legend .l-tuition::before { background: linear-gradient(135deg, #89f7fe, #66a6ff); }
+.cost-bar-legend .l-living::before { background: linear-gradient(135deg, #66a6ff, #4caf50); }
+</style>
+
+<div class="sa-header">
+    <h1>✈️ 出国留学</h1>
+    <p>全球名校申请指南 · 选校对比 · 费用计算 · 申请时间线</p>
+</div>
+
+<div class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('programs',this)">🎓 Programs</button>
+    <button class="tab-btn" onclick="showTab('countries',this)">🌍 Countries</button>
+    <button class="tab-btn" onclick="showTab('tips',this)">💡 Tips</button>
+    <button class="tab-btn" onclick="showTab('resources',this)">📚 Resources</button>
+</div>
+
+<!-- ==================== PROGRAMS TAB ==================== -->
+<div id="programs" class="tab-content active">
+    <div class="filters">
+        <a href="/study-abroad" class="{{ 'active' if not filter_country else '' }}">All</a>
+        {% for c in countries %}
+        <a href="/study-abroad?country={{ c.country }}" class="{{ 'active' if filter_country == c.country else '' }}">{{ c.country }}</a>
+        {% endfor %}
+    </div>
+    <div class="program-grid">
+        {% for p in programs %}
+        <div class="program-card">
+            <span class="p-country">{{ p.country }}</span>
+            <h3>{{ p.program }}</h3>
+            <div class="p-uni">🏫 {{ p.university }}</div>
+            <div class="p-req">📋 Requirements: {{ p.requirements }}</div>
+            <span class="p-deadline">📅 Deadline: {{ p.deadline }}</span>
+            {% if p.notes %}<div class="p-notes">💡 {{ p.notes }}</div>{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ==================== COUNTRIES TAB ==================== -->
+<div id="countries" class="tab-content">
+    <h3 style="color:#89f7fe;text-align:center;margin-bottom:10px;">🌍 Compare Destinations</h3>
+    <p style="text-align:center;color:rgba(255,255,255,0.4);margin-bottom:25px;font-size:0.9em;">Click cards to select for comparison (up to 4)</p>
+    <div class="compare-grid" id="countryGrid">
+        {% set country_data = [
+            ('USA','🇺🇸','$40K-60K/yr','Top 30','F-1','Medium'),
+            ('UK','🇬🇧','£20K-35K/yr','Top 10','Student Visa','Medium'),
+            ('Canada','🇨🇦','CAD 20K-35K/yr','Top 15','Study Permit','Medium'),
+            ('Australia','🇦🇺','AUD 25K-40K/yr','Top 10','Student Visa','Easy'),
+            ('Germany','🇩🇪','€0-300/yr','Top 20','Student Visa','Easy'),
+            ('Singapore','🇸🇬','SGD 20K-35K/yr','Top 5','Student Pass','Hard'),
+            ('Japan','🇯🇵','¥500K-800K/yr','Top 15','留学签证','Medium'),
+            ('Switzerland','🇨🇭','CHF 1K-3K/yr','Top 10','Student Visa','Hard')
+        ] %}
+        {% for country,flag,tuition,ranking,visa,living in country_data %}
+        <div class="country-card" data-country="{{ country }}" onclick="toggleCountrySelect(this)">
+            <div class="flag">{{ flag }}</div>
+            <h3>{{ country }}</h3>
+            <div class="metric"><span>Tuition</span><span>{{ tuition }}</span></div>
+            <div class="metric"><span>Ranking</span><span>{{ ranking }}</span></div>
+            <div class="metric"><span>Cost of Living</span><span>{{ living }}</span></div>
+            <span class="visa-badge visa-{{ visa|lower }}">Visa: {{ visa }}</span>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Side-by-side comparison table -->
+    <div id="compareTable" style="display:none;margin-top:30px;background:rgba(255,255,255,0.03);border-radius:16px;padding:25px;border:1px solid rgba(137,247,254,0.1);">
+        <h4 style="color:#89f7fe;margin-bottom:20px;text-align:center;">📊 Detailed Comparison</h4>
+        <div style="overflow-x:auto;">
+            <table id="compareTableInner" style="width:100%;border-collapse:collapse;">
+                <thead><tr id="compareHead"></tr></thead>
+                <tbody id="compareBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Cost Calculator -->
+    <div style="margin-top:40px;">
+        <h3 style="color:#89f7fe;text-align:center;margin-bottom:25px;">🧮 Cost Calculator</h3>
+        <div class="calc-form">
+            <label>Target Country</label>
+            <select id="calcCountry">
+                <option value="usa">USA</option>
+                <option value="uk">UK</option>
+                <option value="canada">Canada</option>
+                <option value="australia">Australia</option>
+                <option value="germany">Germany</option>
+                <option value="singapore">Singapore</option>
+                <option value="japan">Japan</option>
+                <option value="switzerland">Switzerland</option>
+            </select>
+            <label>Duration (Years)</label>
+            <select id="calcYears">
+                <option value="1">1 Year</option>
+                <option value="2" selected>2 Years</option>
+                <option value="3">3 Years</option>
+                <option value="4">4 Years</option>
+            </select>
+            <label>Degree Type</label>
+            <select id="calcDegree">
+                <option value="master">Master's</option>
+                <option value="phd">PhD</option>
+                <option value="undergrad">Undergraduate</option>
+            </select>
+            <button onclick="calcCost()">Calculate Total Cost</button>
+            <div class="calc-result" id="calcResult"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== TIPS TAB ==================== -->
+<div id="tips" class="tab-content">
+    <!-- Application Timeline -->
+    <h3 style="color:#89f7fe;text-align:center;margin-bottom:25px;">📅 Application Timeline Tracker</h3>
+    <div class="timeline-container">
+        {% set timeline_data = [
+            ('Research & Shortlist','12-18 months before','Research universities, programs, and requirements. Create a shortlist of 5-10 schools.',true),
+            ('Standardized Tests','10-12 months before','Take IELTS/TOEFL, GRE/GMAT as required. Aim for scores above program minimums.',true),
+            ('Prepare Documents','8-10 months before','Gather transcripts, letters of recommendation, resume/CV, and start drafting your SOP.',false),
+            ('Write Personal Statement','6-8 months before','Draft and revise your Statement of Purpose. Get feedback from mentors and peers.',false),
+            ('Submit Applications','4-6 months before','Complete online applications, upload documents, and pay application deadlines.',false),
+            ('Apply for Scholarships','4-6 months before','Research and apply for scholarships, fellowships, and assistantships.',false),
+            ('Receive Offers','2-4 months after applying','Review admission offers, compare financial aid packages.',false),
+            ('Visa Application','1-2 months after acceptance','Apply for student visa, prepare financial documents, attend visa interview.',false),
+            ('Pre-departure','2-4 weeks before','Book flights, arrange housing, attend orientation sessions.',false)
+        ] %}
+        {% for step,date,desc,done in timeline_data %}
+        <div class="timeline-item">
+            <div class="tl-dot {{ 'done' if done else ('active' if loop.index == 3 else '') }}"></div>
+            <div class="tl-card">
+                <h4><span class="tl-check" onclick="toggleTimeline(this)">{{ '✅' if done else '⬜' }}</span> {{ step }}</h4>
+                <p>{{ desc }}</p>
+                <span class="tl-date">📅 {{ date }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Student Life Tips -->
+    <div style="margin-top:40px;">
+        <h3 style="color:#89f7fe;text-align:center;margin-bottom:25px;">🏠 Student Life Tips</h3>
+        <div class="tips-grid">
+            {% set tips_data = [
+    ('💰','Budgeting','Open a local bank account immediately. Use student discounts everywhere. Cook at home to save money. Track expenses with a budgeting app.'),
+    ('🏠','Housing','Apply for on-campus housing early. Research neighborhoods before renting. Check lease terms carefully. Consider homestays for cultural immersion.'),
+    ('🤝','Social Life','Join student clubs and organizations. Attend orientation events. Connect with other international students. Don\'t be afraid to step out of your comfort zone.'),
+    ('📱','Essential Apps','Download local transit apps, Google Maps, WhatsApp, and your university app. Set up a VPN for home country access.'),
+    ('🏥','Health & Safety','Get health insurance immediately. Register with your embassy. Know emergency numbers. Keep copies of important documents.'),
+    ('📖','Academic Success','Attend office hours regularly. Form study groups. Use the library and writing center. Don\'t hesitate to ask for help.')
+] %}
+            {% for icon,title,content in tips_data %}
+            <div class="tip-card-sa">
+                <div class="tip-icon">{{ icon }}</div>
+                <h4>{{ title }}</h4>
+                <p>{{ content }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- ==================== RESOURCES TAB ==================== -->
+<div id="resources" class="tab-content">
+    <!-- Scholarship Finder -->
+    <h3 style="color:#89f7fe;text-align:center;margin-bottom:25px;">🎓 Scholarship Finder</h3>
+    <div class="scholarship-grid">
+        {% set scholarship_data = [
+    ('Fulbright Scholarship','Full tuition + stipend','Full','Oct 2024','USA'),
+    ('Chevening Scholarship','Full funding','Full','Nov 2024','UK'),
+    ('Vanier CGS','CAD 50K/year','Full','Nov 2024','Canada'),
+    ('Australia Awards','Full tuition + living','Full','Apr 2025','Australia'),
+    ('DAAD Scholarship','€850-1200/month','Partial','Oct 2024','Germany'),
+    ('Singapore Graduate Award','SGD 3.5K/month','Partial','Jan 2025','Singapore'),
+    ('MEXT Scholarship','Full + stipend','Full','Apr 2025','Japan'),
+    ('ETH Excellence Scholarship','CHF 12K/semester','Partial','Dec 2024','Switzerland')
+] %}
+        {% for name,amount,type,deadline,country in scholarship_data %}
+        <div class="scholarship-card">
+            <span class="sch-tag sch-{{ type|lower }}">{{ type }}</span>
+            <h4>{{ name }}</h4>
+            <div class="sch-amount">{{ amount }}</div>
+            <div class="sch-deadline">📅 Deadline: {{ deadline }}</div>
+            <div style="color:rgba(255,255,255,0.4);font-size:0.8em;margin-top:5px;">{{ country }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- IELTS/TOEFL Resources -->
+    <div style="margin-top:40px;">
+        <h3 style="color:#89f7fe;text-align:center;margin-bottom:25px;">📝 IELTS / TOEFL Prep Resources</h3>
+        <div class="resource-list">
+            {% set resource_data = [
+    ('📘','Official Cambridge IELTS Books','15 practice tests with answers. The gold standard for IELTS preparation.'),
+    ('🎧','IELTS Liz (ielts-liz.com)','Free video lessons covering all four sections. Excellent for self-study.'),
+    ('📱','IELTS Prep App','British Council\'s official app with practice tests, vocabulary, and tips.'),
+    ('🎯','TOEFL Practice Online','ETS official practice tests that simulate the real exam experience.'),
+    ('📺','Magoosh TOEFL/IELTS','Video lessons and practice questions with score predictor.'),
+    ('✍️','Writing Correction Services','Get your essays scored and reviewed by certified examiners.'),
+    ('🗣️','Speaking Practice Partners','Find language exchange partners for speaking practice on Tandem or HelloTalk.'),
+    ('📊','Score Calculator','Estimate your band score from practice test results.')
+] %}
+            {% for icon,title,desc in resource_data %}
+            <div class="resource-item" onclick="showResourceDetail('{{ title }}')">
+                <div class="res-icon">{{ icon }}</div>
+                <div class="res-info">
+                    <h4>{{ title }}</h4>
+                    <p>{{ desc }}</p>
+                </div>
+                <div class="res-arrow">→</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div style="margin-top:40px;">
+        <h3 style="color:#89f7fe;text-align:center;margin-bottom:25px;">🔗 Quick Links</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:15px;">
+            {% set link_data = [
+    ('QS World Rankings','topuniversities.com','University rankings by subject'),
+    ('Times Higher Education','timeshighereducation.com','World university rankings'),
+    ('Common App','commonapp.org','US undergraduate applications'),
+    ('UCAS','ucas.com','UK university applications'),
+    ('StudyPortals','studyportals.com','Find programs worldwide'),
+    ('Scholarship Portal','scholarshipportal.com','Search scholarships globally')
+] %}
+            {% for name,url,desc in link_data %}
+            <a href="https://{{ url }}" target="_blank" style="text-decoration:none;background:rgba(255,255,255,0.05);border-radius:12px;padding:18px;border:1px solid rgba(137,247,254,0.1);transition:all 0.3s;display:block;" onmouseover="this.style.borderColor='rgba(137,247,254,0.3)'" onmouseout="this.style.borderColor='rgba(137,247,254,0.1)'">
+                <div style="color:#89f7fe;font-weight:600;margin-bottom:4px;">{{ name }}</div>
+                <div style="color:rgba(255,255,255,0.4);font-size:0.8em;">{{ desc }}</div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Comparison floating bar -->
+<div class="compare-bar" id="compareBar">
+    <span style="color:rgba(255,255,255,0.6);">Comparing:</span>
+    <span id="compareItems"></span>
+    <button class="cmp-btn" onclick="showCompareTable()">Compare</button>
+    <button class="cmp-btn cmp-clear" onclick="clearCompare()">Clear</button>
+</div>
+
+<script>
+function showTab(id, el) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    var target = document.getElementById(id);
+    if (target) target.classList.add('active');
+    if (el) el.classList.add('active');
+    else if (event && event.target) event.target.classList.add('active');
+}
+
+// Country comparison
+let selectedCountries = [];
+const countryDetails = {
+    'USA': { tuition: '$40,000-60,000', living: '$15,000-25,000', ranking: 'Top 30', visa: 'F-1', work: 'OPT 3yr STEM', language: 'English' },
+    'UK': { tuition: '£20,000-35,000', living: '£12,000-18,000', ranking: 'Top 10', visa: 'Student Visa', work: 'Graduate Route 2yr', language: 'English' },
+    'Canada': { tuition: 'CAD 20,000-35,000', living: 'CAD 12,000-18,000', ranking: 'Top 15', visa: 'Study Permit', work: 'PGWP up to 3yr', language: 'English/French' },
+    'Australia': { tuition: 'AUD 25,000-40,000', living: 'AUD 15,000-22,000', ranking: 'Top 10', visa: 'Student Visa (500)', work: 'TSS 2-4yr', language: 'English' },
+    'Germany': { tuition: '€0-300/semester', living: '€8,000-12,000', ranking: 'Top 20', visa: 'Student Visa', work: '18mo job seeker', language: 'German/English' },
+    'Singapore': { tuition: 'SGD 20,000-35,000', living: 'SGD 10,000-15,000', ranking: 'Top 5', visa: 'Student Pass', work: 'EP required', language: 'English' },
+    'Japan': { tuition: '¥500,000-800,000', living: '¥800,000-1,200,000', ranking: 'Top 15', visa: '留学签证', work: 'Engineer/Specialist', language: 'Japanese/English' },
+    'Switzerland': { tuition: 'CHF 1,000-3,000', living: 'CHF 18,000-25,000', ranking: 'Top 10', visa: 'Student Visa', work: '6mo job search', language: 'German/French' }
+};
+
+function toggleCountrySelect(el) {
+    const country = el.dataset.country;
+    if (el.classList.contains('selected')) {
+        el.classList.remove('selected');
+        selectedCountries = selectedCountries.filter(c => c !== country);
+    } else {
+        if (selectedCountries.length >= 4) {
+            alert('You can compare up to 4 countries at a time');
+            return;
+        }
+        el.classList.add('selected');
+        selectedCountries.push(country);
+    }
+    updateCompareBar();
+}
+
+function updateCompareBar() {
+    const bar = document.getElementById('compareBar');
+    const items = document.getElementById('compareItems');
+    if (selectedCountries.length < 2) {
+        bar.classList.remove('active');
+        return;
+    }
+    bar.classList.add('active');
+    items.innerHTML = selectedCountries.map(c => `<span class="cmp-item">${c} <span style="cursor:pointer;margin-left:5px;" onclick="removeCountry('${c}')">✕</span></span>`).join('');
+}
+
+function removeCountry(c) {
+    selectedCountries = selectedCountries.filter(x => x !== c);
+    document.querySelectorAll('.country-card').forEach(el => {
+        if (el.dataset.country === c) el.classList.remove('selected');
+    });
+    updateCompareBar();
+    document.getElementById('compareTable').style.display = 'none';
+}
+
+function clearCompare() {
+    selectedCountries = [];
+    document.querySelectorAll('.country-card').forEach(el => el.classList.remove('selected'));
+    updateCompareBar();
+    document.getElementById('compareTable').style.display = 'none';
+}
+
+function showCompareTable() {
+    if (selectedCountries.length < 2) return;
+    const table = document.getElementById('compareTable');
+    const head = document.getElementById('compareHead');
+    const body = document.getElementById('compareBody');
+    const metrics = ['tuition', 'living', 'ranking', 'visa', 'work', 'language'];
+    const labels = ['Tuition', 'Living Cost', 'Ranking', 'Visa Type', 'Work Rights', 'Language'];
+    head.innerHTML = '<th style="padding:10px;color:#89f7fe;text-align:left;border-bottom:1px solid rgba(137,247,254,0.2);">Metric</th>' +
+        selectedCountries.map(c => `<th style="padding:10px;color:#89f7fe;text-align:center;border-bottom:1px solid rgba(137,247,254,0.2);">${c}</th>`).join('');
+    body.innerHTML = metrics.map((m, i) => `<tr><td style="padding:10px;color:rgba(255,255,255,0.6);border-bottom:1px solid rgba(255,255,255,0.05);">${labels[i]}</td>` +
+        selectedCountries.map(c => `<td style="padding:10px;color:#fff;text-align:center;border-bottom:1px solid rgba(255,255,255,0.05);">${countryDetails[c][m]}</td>`).join('') + '</tr>').join('');
+    table.style.display = 'block';
+    table.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Timeline toggle
+function toggleTimeline(el) {
+    if (el.textContent === '⬜') {
+        el.textContent = '✅';
+        el.closest('.timeline-item').querySelector('.tl-dot').classList.add('done');
+    } else {
+        el.textContent = '⬜';
+        el.closest('.timeline-item').querySelector('.tl-dot').classList.remove('done');
+    }
+    saveTimelineState();
+}
+
+function saveTimelineState() {
+    const states = [];
+    document.querySelectorAll('.tl-check').forEach(el => {
+        states.push(el.textContent === '✅' ? 1 : 0);
+    });
+    localStorage.setItem('sa_timeline', JSON.stringify(states));
+}
+
+function loadTimelineState() {
+    const saved = localStorage.getItem('sa_timeline');
+    if (!saved) return;
+    const states = JSON.parse(saved);
+    document.querySelectorAll('.tl-check').forEach((el, i) => {
+        if (states[i]) {
+            el.textContent = '✅';
+            el.closest('.timeline-item').querySelector('.tl-dot').classList.add('done');
+        }
+    });
+}
+loadTimelineState();
+
+// Cost calculator
+const costData = {
+    usa: { tuition: 50000, living: 20000, label: 'USA' },
+    uk: { tuition: 28000, living: 15000, label: 'UK' },
+    canada: { tuition: 27000, living: 15000, label: 'Canada' },
+    australia: { tuition: 32000, living: 18000, label: 'Australia' },
+    germany: { tuition: 3000, living: 10000, label: 'Germany' },
+    singapore: { tuition: 27000, living: 12000, label: 'Singapore' },
+    japan: { tuition: 6500, living: 10000, label: 'Japan' },
+    switzerland: { tuition: 2000, living: 21000, label: 'Switzerland' },
+};
+const degreeMultiplier = { master: 1, phd: 0.7, undergrad: 1.2 };
+
+function calcCost() {
+    const c = costData[document.getElementById('calcCountry').value];
+    const years = parseInt(document.getElementById('calcYears').value);
+    const degree = document.getElementById('calcDegree').value;
+    const mult = degreeMultiplier[degree];
+    const tuitionTotal = Math.round(c.tuition * years * mult);
+    const livingTotal = Math.round(c.living * years);
+    const total = tuitionTotal + livingTotal;
+    const tuitionPct = Math.round(tuitionTotal / total * 100);
+    const livingPct = 100 - tuitionPct;
+    document.getElementById('calcResult').innerHTML =
+        `<h4 style="color:#89f7fe;margin-bottom:10px;">${c.label} — ${years} Year${years>1?'s':''} (${degree.charAt(0).toUpperCase()+degree.slice(1)})</h4>` +
+        `<p style="color:rgba(255,255,255,0.7);">Tuition: $${c.tuition.toLocaleString()}/yr × ${years}yr = <strong>$${tuitionTotal.toLocaleString()}</strong></p>` +
+        `<p style="color:rgba(255,255,255,0.7);">Living: $${c.living.toLocaleString()}/yr × ${years}yr = <strong>$${livingTotal.toLocaleString()}</strong></p>` +
+        `<div class="cost-breakdown-bar"><div class="cost-bar-tuition" style="width:${tuitionPct}%;"></div><div class="cost-bar-living" style="width:${livingPct}%;"></div></div>` +
+        `<div class="cost-bar-legend"><span class="l-tuition">Tuition ${tuitionPct}%</span><span class="l-living">Living ${livingPct}%</span></div>` +
+        `<p style="color:#89f7fe;font-size:1.3em;margin-top:12px;">Total Estimated: <strong>$${total.toLocaleString()}</strong></p>` +
+        `<p style="color:rgba(255,255,255,0.4);font-size:0.8em;margin-top:10px;">*Estimates only. Actual costs vary by city, university, and lifestyle.</p>`;
+    document.getElementById('calcResult').style.display = 'block';
+}
+
+function showResourceDetail(title) {
+    alert('Resource: ' + title + '\n\nIn production, this would open a detailed view or external link.');
+}
+</script>
+{% endblock %}

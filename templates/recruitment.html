@@ -1,0 +1,1151 @@
+{% extends "base.html" %}
+{% block title %}大模型秋招系统{% endblock %}
+{% block content %}
+<style>
+.recruit-header { text-align: center; padding: 30px 20px 10px; }
+.recruit-header h1 {
+    font-size: 2.2em;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.recruit-header p { color: rgba(255,255,255,0.5); margin-top: 8px; }
+.stats-bar {
+    display: flex; justify-content: center; gap: 30px;
+    padding: 15px 20px; margin: 0 30px 20px;
+    background: rgba(102,126,234,0.08); border-radius: 12px;
+}
+.stats-bar .stat { text-align: center; }
+.stats-bar .stat-num { font-size: 1.5em; font-weight: 700; color: #667eea; }
+.stats-bar .stat-label { font-size: 0.8em; color: rgba(255,255,255,0.4); }
+.tab-nav {
+    display: flex; justify-content: center; gap: 10px;
+    margin: 15px 0; flex-wrap: wrap;
+}
+.tab-btn {
+    padding: 10px 24px; border-radius: 20px; border: 1px solid rgba(102,126,234,0.3);
+    background: rgba(102,126,234,0.1); color: #667eea; cursor: pointer;
+    font-size: 0.95em; transition: all 0.3s;
+}
+.tab-btn:hover, .tab-btn.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff; border-color: transparent;
+}
+.tab-content { display: none; padding: 20px 30px 60px; }
+.tab-content.active { display: block; }
+.filters {
+    display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;
+    align-items: center; padding: 20px; background: rgba(255,255,255,0.03);
+    border-radius: 12px;
+}
+.filters select, .filters input {
+    padding: 10px 16px; background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 10px;
+    color: #fff; outline: none; font-size: 0.9em;
+}
+.filters button {
+    padding: 10px 24px; background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none; border-radius: 10px; color: #fff; cursor: pointer;
+}
+.q-card {
+    background: rgba(255,255,255,0.05); border-radius: 14px; padding: 22px;
+    margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.08);
+    transition: all 0.3s; cursor: pointer; position: relative;
+}
+.q-card:hover { border-color: rgba(102,126,234,0.3); background: rgba(255,255,255,0.08); }
+.q-card .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.q-card .q-title { font-size: 1.15em; font-weight: 600; }
+.q-card .q-meta { display: flex; gap: 10px; align-items: center; }
+.q-card .badge { padding: 3px 12px; border-radius: 10px; font-size: 0.8em; }
+.badge-easy { background: rgba(76,175,80,0.2); color: #4caf50; }
+.badge-medium { background: rgba(255,152,0,0.2); color: #ff9800; }
+.badge-hard { background: rgba(244,67,54,0.2); color: #f44336; }
+.badge-cat { background: rgba(102,126,234,0.2); color: #667eea; }
+.q-card .q-desc { color: rgba(255,255,255,0.5); font-size: 0.9em; margin-bottom: 12px; line-height: 1.6; }
+.q-card .q-solution {
+    display: none; background: rgba(102,126,234,0.08); border-radius: 10px;
+    padding: 15px; margin-top: 10px; color: rgba(255,255,255,0.7); line-height: 1.7;
+}
+.q-card .q-solution.show { display: block; }
+.q-card .q-link { color: #667eea; text-decoration: none; font-size: 0.85em; }
+.q-card .q-link:hover { text-decoration: underline; }
+.repo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 15px; }
+.repo-card {
+    background: rgba(255,255,255,0.05); border-radius: 14px; padding: 20px;
+    border: 1px solid rgba(255,255,255,0.08); transition: all 0.3s;
+}
+.repo-card:hover { border-color: rgba(102,126,234,0.3); transform: translateY(-2px); }
+.repo-card h3 { color: #667eea; margin-bottom: 8px; }
+.repo-card h3 a { color: inherit; text-decoration: none; }
+.repo-card p { color: rgba(255,255,255,0.5); font-size: 0.85em; margin-bottom: 10px; }
+.repo-card .repo-meta { display: flex; gap: 15px; font-size: 0.85em; color: rgba(255,255,255,0.4); }
+.repo-card .repo-meta span { display: flex; align-items: center; gap: 4px; }
+.yt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+.yt-card {
+    background: rgba(255,255,255,0.05); border-radius: 14px; padding: 20px;
+    border: 1px solid rgba(255,255,255,0.08); transition: all 0.3s;
+}
+.yt-card:hover { border-color: rgba(255,0,0,0.3); }
+.yt-card h3 { margin-bottom: 8px; }
+.yt-card h3 a { color: #ff4444; text-decoration: none; font-size: 0.95em; }
+.yt-card p { color: rgba(255,255,255,0.5); font-size: 0.85em; }
+.yt-card .channel { color: rgba(255,255,255,0.3); font-size: 0.8em; margin-top: 8px; }
+
+/* === NEW: Daily Question === */
+.daily-question {
+    margin: 0 30px 20px; padding: 24px 28px;
+    background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(118,75,162,0.15));
+    border: 1px solid rgba(102,126,234,0.3); border-radius: 16px;
+    position: relative; overflow: hidden;
+}
+.daily-question::before {
+    content: ''; position: absolute; top: -40%; right: -10%;
+    width: 200px; height: 200px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(102,126,234,0.1), transparent);
+}
+.daily-question .dq-label {
+    font-size: 0.8em; font-weight: 700; letter-spacing: 2px;
+    color: #667eea; text-transform: uppercase; margin-bottom: 10px;
+}
+.daily-question .dq-title { font-size: 1.3em; font-weight: 700; margin-bottom: 8px; }
+.daily-question .dq-desc { color: rgba(255,255,255,0.5); font-size: 0.9em; line-height: 1.6; margin-bottom: 14px; }
+.daily-question .dq-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.daily-question .dq-link {
+    padding: 8px 20px; background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 20px; color: #fff; text-decoration: none; font-size: 0.9em;
+    transition: opacity 0.3s;
+}
+.daily-question .dq-link:hover { opacity: 0.85; }
+
+/* === NEW: Study Progress Tracker === */
+.progress-section {
+    margin: 0 30px 20px; padding: 22px 26px;
+    background: rgba(255,255,255,0.03); border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+.progress-section h3 { font-size: 1.05em; margin-bottom: 16px; color: rgba(255,255,255,0.85); }
+.progress-row { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.progress-row:last-child { margin-bottom: 0; }
+.progress-label { width: 60px; font-size: 0.85em; font-weight: 600; text-align: right; }
+.progress-label.easy { color: #4caf50; }
+.progress-label.medium { color: #ff9800; }
+.progress-label.hard { color: #f44336; }
+.progress-bar-bg {
+    flex: 1; height: 14px; background: rgba(255,255,255,0.08);
+    border-radius: 7px; overflow: hidden; position: relative;
+}
+.progress-bar-fill {
+    height: 100%; border-radius: 7px; transition: width 1s ease;
+}
+.progress-bar-fill.easy { background: linear-gradient(90deg, #4caf50, #66bb6a); }
+.progress-bar-fill.medium { background: linear-gradient(90deg, #ff9800, #ffb74d); }
+.progress-bar-fill.hard { background: linear-gradient(90deg, #f44336, #ef5350); }
+.progress-pct { width: 48px; font-size: 0.85em; color: rgba(255,255,255,0.6); text-align: right; }
+
+/* === NEW: Difficulty Distribution Chart === */
+.chart-section {
+    margin: 0 30px 20px; padding: 22px 26px;
+    background: rgba(255,255,255,0.03); border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+.chart-section h3 { font-size: 1.05em; margin-bottom: 16px; color: rgba(255,255,255,0.85); }
+.chart-container { display: flex; align-items: flex-end; gap: 18px; padding: 10px 0; min-height: 140px; }
+.chart-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.chart-bar-outer { width: 100%; max-width: 50px; height: 120px; display: flex; align-items: flex-end; justify-content: center; }
+.chart-bar-inner {
+    width: 100%; border-radius: 6px 6px 0 0; transition: height 1s ease;
+    min-height: 4px;
+}
+.chart-bar-inner.easy { background: linear-gradient(180deg, #66bb6a, #4caf50); }
+.chart-bar-inner.medium { background: linear-gradient(180deg, #ffb74d, #ff9800); }
+.chart-bar-inner.hard { background: linear-gradient(180deg, #ef5350, #f44336); }
+.chart-count { font-size: 1.1em; font-weight: 700; color: rgba(255,255,255,0.9); }
+.chart-label { font-size: 0.78em; color: rgba(255,255,255,0.45); }
+
+/* === NEW: Quick Filter Pills === */
+.filter-pills {
+    display: flex; gap: 8px; margin: 0 30px 15px; flex-wrap: wrap; align-items: center;
+}
+.filter-pills .pill-label { font-size: 0.85em; color: rgba(255,255,255,0.4); margin-right: 4px; }
+.filter-pill {
+    padding: 6px 16px; border-radius: 16px; font-size: 0.82em; cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.6); transition: all 0.3s; user-select: none;
+}
+.filter-pill:hover { border-color: rgba(102,126,234,0.4); background: rgba(102,126,234,0.12); }
+.filter-pill.active {
+    background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
+    border-color: transparent;
+}
+.filter-pill.bookmark-pill.active { background: linear-gradient(135deg, #f59e0b, #d97706); }
+
+/* === NEW: Question Statistics === */
+.question-stats {
+    display: flex; justify-content: center; gap: 24px;
+    padding: 12px 20px; margin: 0 30px 20px;
+    background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.15);
+    border-radius: 12px; flex-wrap: wrap;
+}
+.qs-item { display: flex; align-items: center; gap: 8px; }
+.qs-icon { font-size: 1.1em; }
+.qs-val { font-size: 1.1em; font-weight: 700; color: #f59e0b; }
+.qs-key { font-size: 0.78em; color: rgba(255,255,255,0.4); }
+
+/* === NEW: Mock Interview Timer === */
+.timer-widget {
+    margin: 0 30px 20px; padding: 22px 26px;
+    background: rgba(255,255,255,0.03); border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+.timer-widget h3 { font-size: 1.05em; margin-bottom: 14px; color: rgba(255,255,255,0.85); }
+.timer-display {
+    font-size: 2.8em; font-weight: 700; font-variant-numeric: tabular-nums;
+    text-align: center; color: #667eea; letter-spacing: 4px; padding: 10px 0;
+    transition: color 0.3s;
+}
+.timer-display.warning { color: #ff9800; }
+.timer-display.danger { color: #f44336; }
+.timer-controls { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+.timer-btn {
+    padding: 8px 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.06); color: #fff; cursor: pointer;
+    font-size: 0.88em; transition: all 0.3s;
+}
+.timer-btn:hover { background: rgba(102,126,234,0.2); border-color: rgba(102,126,234,0.3); }
+.timer-btn.primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-color: transparent;
+}
+.timer-presets { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+.timer-preset {
+    padding: 4px 12px; border-radius: 10px; font-size: 0.78em; cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.1); background: transparent;
+    color: rgba(255,255,255,0.45); transition: all 0.3s;
+}
+.timer-preset:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.2); }
+
+/* === NEW: Bookmark Button === */
+.bookmark-btn {
+    background: none; border: none; cursor: pointer; font-size: 1.1em;
+    padding: 2px 6px; transition: transform 0.2s; opacity: 0.4;
+    line-height: 1;
+}
+.bookmark-btn:hover { transform: scale(1.2); opacity: 0.8; }
+.bookmark-btn.bookmarked { opacity: 1; }
+.q-card.bookmarked-card { border-color: rgba(245,158,11,0.25); }
+
+/* === NEW: Total Stats Enhancement === */
+.stats-bar .stat-num#solvedCount { color: #4caf50; }
+.stats-bar .stat-num#streakCount { color: #f59e0b; }
+.stats-bar .stat-num#accuracyCount { color: #2196f3; }
+
+/* ===== Interview Tracking ===== */
+.interview-tracker {
+    padding: 20px 0 10px;
+}
+.it-toolbar {
+    display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;
+}
+.it-toolbar input, .it-toolbar select {
+    padding: 8px 14px; background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 10px;
+    color: #fff; outline: none; font-size: 0.88em;
+}
+.it-toolbar input::placeholder { color: rgba(255,255,255,0.3); }
+.it-toolbar input { flex: 1; min-width: 120px; }
+.it-toolbar button {
+    padding: 8px 20px; border-radius: 10px; border: none; cursor: pointer;
+    background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
+    font-size: 0.88em; white-space: nowrap;
+}
+
+/* Stage badges */
+.badge-stage {
+    padding: 3px 12px; border-radius: 10px; font-size: 0.78em; font-weight: 600;
+}
+.badge-applied { background: rgba(102,126,234,0.2); color: #667eea; }
+.badge-phone { background: rgba(139,92,246,0.2); color: #a78bfa; }
+.badge-onsite { background: rgba(245,158,11,0.2); color: #f59e0b; }
+.badge-offer { background: rgba(76,175,80,0.2); color: #4caf50; }
+.badge-rejected { background: rgba(244,67,54,0.2); color: #f44336; }
+
+/* Interview Pipeline Panel */
+.it-pipeline {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px; margin-bottom: 24px;
+}
+.it-card {
+    background: rgba(255,255,255,0.05); border-radius: 12px; padding: 16px;
+    border: 1px solid rgba(255,255,255,0.08); transition: all 0.3s;
+    position: relative;
+}
+.it-card:hover { border-color: rgba(102,126,234,0.3); background: rgba(255,255,255,0.08); }
+.it-card .it-company { font-size: 1.05em; font-weight: 700; margin-bottom: 4px; }
+.it-card .it-role { font-size: 0.85em; color: rgba(255,255,255,0.5); margin-bottom: 10px; }
+.it-card .it-date { font-size: 0.82em; color: rgba(255,255,255,0.4); margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+.it-card .it-actions { display: flex; gap: 8px; margin-top: 10px; align-items: center; flex-wrap: wrap; }
+.it-card .it-actions select {
+    padding: 4px 10px; background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
+    color: #fff; font-size: 0.78em;
+}
+.it-card .it-del {
+    background: none; border: none; color: rgba(244,67,54,0.5);
+    cursor: pointer; font-size: 1em; padding: 2px 6px; margin-left: auto;
+}
+.it-card .it-del:hover { color: #f44336; }
+.it-empty { color: rgba(255,255,255,0.3); text-align: center; padding: 40px 20px; font-size: 0.9em; }
+
+/* Funnel Chart */
+.it-funnel-section {
+    background: rgba(255,255,255,0.03); border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.06); padding: 22px 26px; margin-bottom: 20px;
+}
+.it-funnel-section h3 { font-size: 1.05em; margin-bottom: 16px; color: rgba(255,255,255,0.85); }
+.it-funnel { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.it-funnel-row { display: flex; align-items: center; gap: 12px; width: 100%; max-width: 480px; }
+.it-funnel-bar {
+    height: 32px; border-radius: 4px; display: flex; align-items: center;
+    justify-content: center; font-size: 0.82em; font-weight: 700; color: #fff;
+    min-width: 28px; transition: width 0.8s ease;
+}
+.it-funnel-bar.applied { background: linear-gradient(90deg, #667eea, #764ba2); }
+.it-funnel-bar.phone { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+.it-funnel-bar.onsite { background: linear-gradient(90deg, #f59e0b, #d97706); }
+.it-funnel-bar.offer { background: linear-gradient(90deg, #4caf50, #66bb6a); }
+.it-funnel-bar.rejected { background: linear-gradient(90deg, #f44336, #ef5350); }
+.it-funnel-label { font-size: 0.78em; color: rgba(255,255,255,0.5); width: 80px; text-align: right; flex-shrink: 0; }
+.it-funnel-pct { font-size: 0.72em; color: rgba(255,255,255,0.35); width: 40px; text-align: right; flex-shrink: 0; }
+
+/* Calendar View */
+.it-cal-section {
+    background: rgba(255,255,255,0.03); border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.06); padding: 22px 26px;
+}
+.it-cal-section h3 { font-size: 1.05em; margin-bottom: 16px; color: rgba(255,255,255,0.85); }
+.it-cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.it-cal-header button {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+    color: #fff; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 0.85em;
+}
+.it-cal-header button:hover { background: rgba(102,126,234,0.2); }
+.it-cal-month { font-size: 1em; font-weight: 600; }
+.it-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.it-cal-dow { text-align: center; font-size: 0.72em; color: rgba(255,255,255,0.3); padding: 4px 0; font-weight: 600; }
+.it-cal-day {
+    text-align: center; padding: 8px 4px; font-size: 0.82em; border-radius: 8px;
+    color: rgba(255,255,255,0.6); min-height: 36px; cursor: default;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+}
+.it-cal-day.other-month { color: rgba(255,255,255,0.15); }
+.it-cal-day.today { border: 1px solid rgba(102,126,234,0.5); }
+.it-cal-day.has-interview { background: rgba(102,126,234,0.15); color: #fff; cursor: pointer; }
+.it-cal-day.has-interview:hover { background: rgba(102,126,234,0.3); }
+.it-cal-dot { width: 5px; height: 5px; border-radius: 50%; background: #667eea; }
+.it-cal-tooltip {
+    display: none; background: rgba(30,30,50,0.95); border: 1px solid rgba(102,126,234,0.3);
+    border-radius: 10px; padding: 12px 16px; position: absolute; z-index: 100;
+    max-width: 260px; font-size: 0.8em; line-height: 1.6; pointer-events: none;
+}
+.it-cal-tooltip.visible { display: block; }
+</style>
+
+<div class="recruit-header">
+    <h1>💼 大模型秋招系统</h1>
+    <p>LeetCode Hot 100 · GitHub Trending · YouTube Resources</p>
+</div>
+
+<!-- 1. Daily Question -->
+<div class="daily-question" id="dailyQuestionBox">
+    <div class="dq-label">⭐ Question of the Day</div>
+    <div class="dq-title" id="dqTitle">Loading...</div>
+    <div class="dq-desc" id="dqDesc">Practicing daily is the key to mastering algorithms.</div>
+    <div class="dq-actions">
+        <a href="#" class="dq-link" id="dqLink" target="_blank">🔗 Try it now →</a>
+        <span class="badge badge-easy" id="dqBadge">Easy</span>
+        <span class="badge badge-cat" id="dqCat">Array</span>
+    </div>
+</div>
+
+<!-- 5. Quick Filter Pills -->
+<div class="filter-pills">
+    <span class="pill-label">Quick Filters:</span>
+    <span class="filter-pill" onclick="quickFilter('all', this)">All</span>
+    <span class="filter-pill" onclick="quickFilter('Easy', this)">🟢 Easy</span>
+    <span class="filter-pill" onclick="quickFilter('Medium', this)">🟡 Medium</span>
+    <span class="filter-pill" onclick="quickFilter('Hard', this)">🔴 Hard</span>
+    <span class="filter-pill bookmark-pill" onclick="toggleBookmarkFilter(this)">🔖 My Bookmarks</span>
+</div>
+
+<!-- 4. Difficulty Distribution Chart -->
+<div class="chart-section">
+    <h3>📊 Difficulty Distribution</h3>
+    <div class="chart-container" id="difficultyChart">
+        <div class="chart-group">
+            <div class="chart-bar-outer"><div class="chart-bar-inner easy" id="chartEasyBar" style="height:0%"></div></div>
+            <div class="chart-count" id="chartEasyCount">0</div>
+            <div class="chart-label">Easy</div>
+        </div>
+        <div class="chart-group">
+            <div class="chart-bar-outer"><div class="chart-bar-inner medium" id="chartMediumBar" style="height:0%"></div></div>
+            <div class="chart-count" id="chartMediumCount">0</div>
+            <div class="chart-label">Medium</div>
+        </div>
+        <div class="chart-group">
+            <div class="chart-bar-outer"><div class="chart-bar-inner hard" id="chartHardBar" style="height:0%"></div></div>
+            <div class="chart-count" id="chartHardCount">0</div>
+            <div class="chart-label">Hard</div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. Study Progress Tracker -->
+<div class="progress-section">
+    <h3>📈 Study Progress</h3>
+    <div class="progress-row">
+        <span class="progress-label easy">Easy</span>
+        <div class="progress-bar-bg"><div class="progress-bar-fill easy" id="progEasy" style="width:0%"></div></div>
+        <span class="progress-pct" id="progEasyPct">0%</span>
+    </div>
+    <div class="progress-row">
+        <span class="progress-label medium">Medium</span>
+        <div class="progress-bar-bg"><div class="progress-bar-fill medium" id="progMedium" style="width:0%"></div></div>
+        <span class="progress-pct" id="progMediumPct">0%</span>
+    </div>
+    <div class="progress-row">
+        <span class="progress-label hard">Hard</span>
+        <div class="progress-bar-bg"><div class="progress-bar-fill hard" id="progHard" style="width:0%"></div></div>
+        <span class="progress-pct" id="progHardPct">0%</span>
+    </div>
+</div>
+
+<!-- 6. Question Statistics -->
+<div class="question-stats">
+    <div class="qs-item"><span class="qs-icon">✅</span><div><div class="qs-val" id="qsSolved">0</div><div class="qs-key">Solved</div></div></div>
+    <div class="qs-item"><span class="qs-icon">🔥</span><div><div class="qs-val" id="qsStreak">0</div><div class="qs-key">Day Streak</div></div></div>
+    <div class="qs-item"><span class="qs-icon">🎯</span><div><div class="qs-val" id="qsAccuracy">0%</div><div class="qs-key">Accuracy</div></div></div>
+</div>
+
+<!-- 7. Mock Interview Timer -->
+<div class="timer-widget">
+    <h3>⏱️ Mock Interview Timer</h3>
+    <div class="timer-display" id="timerDisplay">45:00</div>
+    <div class="timer-controls">
+        <button class="timer-btn primary" onclick="timerStart()">▶ Start</button>
+        <button class="timer-btn" onclick="timerPause()">⏸ Pause</button>
+        <button class="timer-btn" onclick="timerReset()">↺ Reset</button>
+    </div>
+    <div class="timer-presets">
+        <span class="timer-preset" onclick="timerSet(15)">15 min</span>
+        <span class="timer-preset" onclick="timerSet(30)">30 min</span>
+        <span class="timer-preset" onclick="timerSet(45)">45 min</span>
+        <span class="timer-preset" onclick="timerSet(60)">60 min</span>
+        <span class="timer-preset" onclick="timerSet(90)">90 min</span>
+    </div>
+</div>
+
+<!-- Enhanced Stats Bar (kept original + new stats) -->
+<div class="stats-bar">
+    <div class="stat"><div class="stat-num" id="solvedCount">0</div><div class="stat-label">已解决</div></div>
+    <div class="stat"><div class="stat-num" id="streakCount">0</div><div class="stat-label">连续天数</div></div>
+    <div class="stat"><div class="stat-num" id="accuracyCount">0%</div><div class="stat-label">正确率</div></div>
+    <div class="stat"><div class="stat-num" id="lcCount">0</div><div class="stat-label">LeetCode题</div></div>
+    <div class="stat"><div class="stat-num" id="ghCount">0</div><div class="stat-label">GitHub仓库</div></div>
+    <div class="stat"><div class="stat-num" id="ytCount">0</div><div class="stat-label">YouTube资源</div></div>
+</div>
+
+<div class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('leetcode',this)">📝 LeetCode Hot 100</button>
+    <button class="tab-btn" onclick="showTab('github',this)">🐙 GitHub Trending</button>
+    <button class="tab-btn" onclick="showTab('youtube',this)">📺 YouTube资源</button>
+    <button class="tab-btn" onclick="showTab('interview',this)">🎯 面试追踪</button>
+</div>
+
+<div id="leetcode" class="tab-content active">
+    <form class="filters" method="GET" action="/recruitment">
+        <select name="category" id="filterCategory">
+            <option value="">所有分类</option>
+            {% for c in categories %}
+            <option value="{{ c.category }}" {% if filter_category == c.category %}selected{% endif %}>{{ c.category }}</option>
+            {% endfor %}
+        </select>
+        <select name="difficulty" id="filterDifficulty">
+            <option value="">所有难度</option>
+            {% for d in difficulties %}
+            <option value="{{ d.difficulty }}" {% if filter_difficulty == d.difficulty %}selected{% endif %}>{{ d.difficulty }}</option>
+            {% endfor %}
+        </select>
+        <input type="text" name="search" placeholder="搜索题目..." value="{{ search }}" id="filterSearch">
+        <button type="submit">🔍 搜索</button>
+        <a href="/recruitment" style="color:rgba(255,255,255,0.5);text-decoration:none;margin-left:10px;">重置</a>
+    </form>
+    {% for q in questions %}
+    <div class="q-card" data-id="{{ q.id|default(loop.index) }}" data-difficulty="{{ q.difficulty }}" data-category="{{ q.category }}" onclick="toggleSolution(this)">
+        <button class="bookmark-btn" onclick="event.stopPropagation(); toggleBookmark(this)" title="Bookmark">☆</button>
+        <div class="q-header">
+            <span class="q-title">{{ q.title }}</span>
+            <div class="q-meta">
+                <span class="badge badge-{{ q.difficulty|lower }}">{{ q.difficulty }}</span>
+                <span class="badge badge-cat">{{ q.category }}</span>
+            </div>
+        </div>
+        <div class="q-desc">{{ q.description[:200] }}{% if q.description|length > 200 %}...{% endif %}</div>
+        <div class="q-solution">
+            <strong style="color:#667eea;">💡 解题思路与社区题解：</strong><br>
+            {{ q.solution }}
+            {% if q.reference_url %}
+            <br><br><a class="q-link" href="{{ q.reference_url }}" target="_blank" onclick="event.stopPropagation()">🔗 查看原题与评论区 →</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div id="github" class="tab-content">
+    <h2 style="margin-bottom:20px;">🐙 GitHub 热门技术仓库</h2>
+    <div class="repo-grid">
+        {% for repo in repos %}
+        <div class="repo-card">
+            <h3><a href="{{ repo.url }}" target="_blank">{{ repo.name }}</a></h3>
+            <p>{{ repo.description }}</p>
+            <div class="repo-meta">
+                <span>⭐ {{ "{:,}".format(repo.stars) }}</span>
+                <span>🔤 {{ repo.language }}</span>
+                <span>📁 {{ repo.category }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="youtube" class="tab-content">
+    <h2 style="margin-bottom:20px;">📺 YouTube 学习资源</h2>
+    <div class="yt-grid">
+        {% for yt in youtube %}
+        <div class="yt-card">
+            <h3><a href="{{ yt.url }}" target="_blank">{{ yt.title }}</a></h3>
+            <p>{{ yt.description }}</p>
+            <div class="channel">📺 {{ yt.channel }} · {{ yt.category }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Interview Tracking Tab -->
+<div id="interview" class="tab-content">
+    <div class="interview-tracker">
+        <!-- Add Interview Form -->
+        <div class="it-toolbar">
+            <input type="text" id="itCompany" placeholder="公司名称 (e.g. 字节跳动)">
+            <input type="text" id="itRole" placeholder="岗位 (e.g. 后端工程师)">
+            <input type="date" id="itDate">
+            <select id="itStage">
+                <option value="Applied">已投递</option>
+                <option value="Phone">电话面试</option>
+                <option value="Onsite">现场面试</option>
+                <option value="Offer">已拿Offer</option>
+                <option value="Rejected">已拒绝</option>
+            </select>
+            <button onclick="addInterview()">➕ 添加</button>
+        </div>
+
+        <!-- Pipeline Cards -->
+        <div class="it-pipeline" id="itPipeline">
+            <div class="it-empty" id="itEmpty">暂无面试记录，添加你的第一场面试吧 🚀</div>
+        </div>
+
+        <!-- Funnel Chart -->
+        <div class="it-funnel-section">
+            <h3>📊 面试进度漏斗</h3>
+            <div class="it-funnel" id="itFunnel">
+                <div class="it-funnel-row">
+                    <span class="it-funnel-label">已投递</span>
+                    <div class="it-funnel-bar applied" id="funnelApplied" style="width:0%">0</div>
+                    <span class="it-funnel-pct" id="funnelAppliedPct"></span>
+                </div>
+                <div class="it-funnel-row">
+                    <span class="it-funnel-label">电话面试</span>
+                    <div class="it-funnel-bar phone" id="funnelPhone" style="width:0%">0</div>
+                    <span class="it-funnel-pct" id="funnelPhonePct"></span>
+                </div>
+                <div class="it-funnel-row">
+                    <span class="it-funnel-label">现场面试</span>
+                    <div class="it-funnel-bar onsite" id="funnelOnsite" style="width:0%">0</div>
+                    <span class="it-funnel-pct" id="funnelOnsitePct"></span>
+                </div>
+                <div class="it-funnel-row">
+                    <span class="it-funnel-label">已拿Offer</span>
+                    <div class="it-funnel-bar offer" id="funnelOffer" style="width:0%">0</div>
+                    <span class="it-funnel-pct" id="funnelOfferPct"></span>
+                </div>
+                <div class="it-funnel-row">
+                    <span class="it-funnel-label">已拒绝</span>
+                    <div class="it-funnel-bar rejected" id="funnelRejected" style="width:0%">0</div>
+                    <span class="it-funnel-pct" id="funnelRejectedPct"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar View -->
+        <div class="it-cal-section">
+            <h3>📅 面试日历</h3>
+            <div class="it-cal-header">
+                <button onclick="calPrev()">◀ 上月</button>
+                <span class="it-cal-month" id="calMonthLabel"></span>
+                <button onclick="calNext()">下月 ▶</button>
+            </div>
+            <div class="it-cal-grid" id="calGrid">
+                <div class="it-cal-dow">日</div>
+                <div class="it-cal-dow">一</div>
+                <div class="it-cal-dow">二</div>
+                <div class="it-cal-dow">三</div>
+                <div class="it-cal-dow">四</div>
+                <div class="it-cal-dow">五</div>
+                <div class="it-cal-dow">六</div>
+            </div>
+            <div class="it-cal-tooltip" id="calTooltip"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== EXISTING: Tab Navigation =====
+function showTab(tab, el) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+    if (el) el.classList.add('active');
+    else if (event && event.target) event.target.classList.add('active');
+}
+
+// ===== EXISTING: Toggle Solution =====
+function toggleSolution(card) {
+    const sol = card.querySelector('.q-solution');
+    if (sol) sol.classList.toggle('show');
+}
+
+// ===== NEW 1: Daily Question =====
+function getQuestions() {
+    const cards = document.querySelectorAll('.q-card');
+    const qs = [];
+    cards.forEach(card => {
+        const titleEl = card.querySelector('.q-title');
+        const descEl = card.querySelector('.q-desc');
+        const id = card.dataset.id || '';
+        const diff = card.dataset.difficulty || '';
+        const cat = card.dataset.category || '';
+        if (titleEl) {
+            qs.push({
+                title: titleEl.textContent.trim(),
+                desc: descEl ? descEl.textContent.tr.trim() : '',
+                difficulty: diff,
+                category: cat,
+                id: id,
+                url: 'https://leetcode.com/problems/' + titleEl.textContent.trim().toLowerCase().replace(/\s+/g, '-')
+            });
+        }
+    });
+    return qs;
+}
+
+function pickDailyQuestion() {
+    const today = new Date();
+    const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+    const qs = getQuestions();
+    if (qs.length === 0) return null;
+    // Seeded daily pick
+    let h = seed;
+    h = ((h * 2654435761) ^ (h >>> 16)) >>> 0;
+    return qs[h % qs.length];
+}
+
+function showDailyQuestion() {
+    const q = pickDailyQuestion();
+    if (!q) return;
+    document.getElementById('dqTitle').textContent = q.title;
+    document.getElementById('dqDesc').textContent = q.desc.substring(0, 180) + (q.desc.length > 180 ? '...' : '');
+    const badge = document.getElementById('dqBadge');
+    badge.textContent = q.difficulty;
+    badge.className = 'badge badge-' + q.difficulty.toLowerCase();
+    const cat = document.getElementById('dqCat');
+    cat.textContent = q.category;
+    const link = document.getElementById('dqLink');
+    link.href = q.url;
+}
+
+// ===== NEW 2: Study Progress Tracker =====
+function updateProgress() {
+    const cards = document.querySelectorAll('.q-card');
+    const total = cards.length;
+    if (total === 0) return;
+
+    // Load progress from localStorage
+    const saved = JSON.parse(localStorage.getItem('lc_progress') || '{}');
+    let easyTotal = 0, mediumTotal = 0, hardTotal = 0;
+    let easyDone = 0, mediumDone = 0, hardDone = 0;
+
+    cards.forEach(card => {
+        const diff = (card.dataset.difficulty || '').toLowerCase();
+        const id = card.dataset.id || '';
+        if (diff === 'easy') { easyTotal++; if (saved[id]) easyDone++; }
+        else if (diff === 'medium') { mediumTotal++; if (saved[id]) mediumDone++; }
+        else if (diff === 'hard') { hardTotal++; if (saved[id]) hardDone++; }
+    });
+
+    const mockEasy = easyTotal > 0 ? Math.round((easyDone / easyTotal) * 100) : 65;
+    const mockMedium = mediumTotal > 0 ? Math.round((mediumDone / mediumTotal) * 100) : 42;
+    const mockHard = hardTotal > 0 ? Math.round((hardDone / hardTotal) * 100) : 18;
+
+    document.getElementById('progEasy').style.width = mockEasy + '%';
+    document.getElementById('progEasyPct').textContent = mockEasy + '%';
+    document.getElementById('progMedium').style.width = mockMedium + '%';
+    document.getElementById('progMediumPct').textContent = mockMedium + '%';
+    document.getElementById('progHard').style.width = mockHard + '%';
+    document.getElementById('progHardPct').textContent = mockHard + '%';
+}
+
+// ===== NEW 3: Bookmarks =====
+function getBookmarks() {
+    return JSON.parse(localStorage.getItem('lc_bookmarks') || '[]');
+}
+
+function saveBookmarks(bm) {
+    localStorage.setItem('lc_bookmarks', JSON.stringify(bm));
+}
+
+function toggleBookmark(btn) {
+    const card = btn.closest('.q-card');
+    const id = card.dataset.id || '';
+    const bookmarks = getBookmarks();
+    const idx = bookmarks.indexOf(id);
+    if (idx === -1) {
+        bookmarks.push(id);
+        btn.textContent = '★';
+        btn.classList.add('bookmarked');
+        card.classList.add('bookmarked-card');
+    } else {
+        bookmarks.splice(idx, 1);
+        btn.textContent = '☆';
+        btn.classList.remove('bookmarked');
+        card.classList.remove('bookmarked-card');
+    }
+    saveBookmarks(bookmarks);
+}
+
+function initBookmarks() {
+    const bookmarks = getBookmarks();
+    document.querySelectorAll('.q-card').forEach(card => {
+        const id = card.dataset.id || '';
+        const btn = card.querySelector('.bookmark-btn');
+        if (bookmarks.includes(id)) {
+            if (btn) {
+                btn.textContent = '★';
+                btn.classList.add('bookmarked');
+            }
+            card.classList.add('bookmarked-card');
+        }
+    });
+}
+
+let bookmarkFilterActive = false;
+function toggleBookmarkFilter(pill) {
+    bookmarkFilterActive = !bookmarkFilterActive;
+    pill.classList.toggle('active', bookmarkFilterActive);
+    if (bookmarkFilterActive) {
+        const bookmarks = getBookmarks();
+        document.querySelectorAll('.q-card').forEach(card => {
+            const id = card.dataset.id || '';
+            card.style.display = bookmarks.includes(id) ? '' : 'none';
+        });
+    } else {
+        document.querySelectorAll('.q-card').forEach(card => card.style.display = '');
+    }
+}
+
+// ===== NEW 4: Difficulty Distribution Chart =====
+function updateDifficultyChart() {
+    const cards = document.querySelectorAll('.q-card');
+    let easy = 0, medium = 0, hard = 0;
+    cards.forEach(card => {
+        const d = (card.dataset.difficulty || '').toLowerCase();
+        if (d === 'easy') easy++;
+        else if (d === 'medium') medium++;
+        else if (d === 'hard') hard++;
+    });
+    const total = Math.max(easy + medium + hard, 1);
+    const maxH = 100;
+    const eH = (easy / total) * maxH;
+    const mH = (medium / total) * maxH;
+    const hH = (hard / total) * maxH;
+
+    document.getElementById('chartEasyBar').style.height = eH + '%';
+    document.getElementById('chartMediumBar').style.height = mH + '%';
+    document.getElementById('chartHardBar').style.height = hH + '%';
+    document.getElementById('chartEasyCount').textContent = easy;
+    document.getElementById('chartMediumCount').textContent = medium;
+    document.getElementById('chartHardCount').textContent = hard;
+}
+
+// ===== NEW 5: Quick Filter Pills =====
+function quickFilter(diff, pill) {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    if (pill) pill.classList.add('active');
+
+    // Sync with native select
+    const sel = document.getElementById('filterDifficulty');
+    if (sel) sel.value = diff === 'all' ? '' : diff;
+
+    // Apply filter
+    document.querySelectorAll('.q-card').forEach(card => {
+        if (diff === 'all') {
+            card.style.display = '';
+        } else {
+            card.style.display = (card.dataset.difficulty === diff) ? '' : 'none';
+        }
+    });
+}
+
+// ===== NEW 6: Question Statistics =====
+function updateQuestionStats() {
+    // Load from localStorage or use defaults
+    const saved = JSON.parse(localStorage.getItem('lc_stats') || '{}');
+    const solved = saved.solved || 0;
+    const streak = saved.streak || 0;
+    const accuracy = saved.accuracy || 0;
+
+    document.getElementById('qsSolved').textContent = solved;
+    document.getElementById('qsStreak').textContent = streak;
+    document.getElementById('qsAccuracy').textContent = accuracy + '%';
+
+    const totalCards = document.querySelectorAll('.q-card').length;
+    const mockSolved = solved || Math.max(1, Math.floor(totalCards * 0.3));
+    const mockStreak = streak || Math.floor(Math.random() * 30) + 1;
+    const mockAccuracy = accuracy || Math.floor(Math.random() * 20) + 75;
+
+    // Save mock stats
+    if (!saved.solved) {
+        localStorage.setItem('lc_stats', JSON.stringify({
+            solved: mockSolved,
+            streak: mockStreak,
+            accuracy: mockAccuracy
+        }));
+    }
+
+    document.getElementById('solvedCount').textContent = mockSolved;
+    document.getElementById('streakCount').textContent = mockStreak;
+    document.getElementById('accuracyCount').textContent = mockAccuracy + '%';
+}
+
+// ===== NEW 7: Mock Interview Timer =====
+let timerTotal = 45 * 60;
+let timerRemaining = timerTotal;
+let timerInterval = null;
+let timerRunning = false;
+
+function formatTime(secs) {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+function updateTimerDisplay() {
+    const el = document.getElementById('timerDisplay');
+    el.textContent = formatTime(timerRemaining);
+    el.classList.remove('warning', 'danger');
+    if (timerRemaining <= 60) el.classList.add('danger');
+    else if (timerRemaining <= 5 * 60) el.classList.add('warning');
+}
+
+function timerStart() {
+    if (timerRunning) return;
+    timerRunning = true;
+    timerInterval = setInterval(() => {
+        if (timerRemaining <= 0) {
+            timerPause();
+            updateTimerDisplay();
+            return;
+        }
+        timerRemaining--;
+        updateTimerDisplay();
+    }, 1000);
+}
+
+function timerPause() {
+    timerRunning = false;
+    clearInterval(timerInterval);
+}
+
+function timerReset() {
+    timerPause();
+    timerRemaining = timerTotal;
+    updateTimerDisplay();
+}
+
+function timerSet(minutes) {
+    timerPause();
+    timerTotal = minutes * 60;
+    timerRemaining = timerTotal;
+    updateTimerDisplay();
+}
+
+// ===== NEW 8: Interview Tracking =====
+const STAGE_LABELS = {
+    'Applied': '已投递',
+    'Phone': '电话面试',
+    'Onsite': '现场面试',
+    'Offer': '已拿Offer',
+    'Rejected': '已拒绝'
+};
+const STAGE_ORDER = ['Applied', 'Phone', 'Onsite', 'Offer', 'Rejected'];
+
+function getInterviews() {
+    return JSON.parse(localStorage.getItem('lc_interviews') || '[]');
+}
+
+function saveInterviews(items) {
+    localStorage.setItem('lc_interviews', JSON.stringify(items));
+}
+
+function addInterview() {
+    const company = document.getElementById('itCompany').value.trim();
+    const role = document.getElementById('itRole').value.trim();
+    const date = document.getElementById('itDate').value;
+    const stage = document.getElementById('itStage').value;
+
+    if (!company) { alert('请输入公司名称'); return; }
+
+    const interviews = getInterviews();
+    interviews.push({
+        id: Date.now(),
+        company: company,
+        role: role || '未指定岗位',
+        date: date || '',
+        stage: stage
+    });
+    saveInterviews(interviews);
+
+    // Clear inputs
+    document.getElementById('itCompany').value = '';
+    document.getElementById('itRole').value = '';
+    document.getElementById('itDate').value = '';
+
+    renderInterviews();
+    renderFunnel();
+    renderCalendar();
+}
+
+function deleteInterview(id) {
+    let interviews = getInterviews();
+    interviews = interviews.filter(i => i.id !== id);
+    saveInterviews(interviews);
+    renderInterviews();
+    renderFunnel();
+    renderCalendar();
+}
+
+function changeStage(id, newStage) {
+    const interviews = getInterviews();
+    const item = interviews.find(i => i.id === id);
+    if (item) {
+        item.stage = newStage;
+        saveInterviews(interviews);
+        renderInterviews();
+        renderFunnel();
+    }
+}
+
+function renderInterviews() {
+    const interviews = getInterviews();
+    const container = document.getElementById('itPipeline');
+    const empty = document.getElementById('itEmpty');
+
+    if (interviews.length === 0) {
+        container.innerHTML = '<div class="it-empty" id="itEmpty">暂无面试记录，添加你的第一场面试吧 🚀</div>';
+        return;
+    }
+
+    // Sort: by date descending, then by stage order
+    const stageWeight = { 'Applied': 0, 'Phone': 1, 'Onsite': 2, 'Offer': 3, 'Rejected': 4 };
+    interviews.sort((a, b) => {
+        if (a.date && b.date) return b.date.localeCompare(a.date);
+        if (a.date) return -1;
+        if (b.date) return 1;
+        return (stageWeight[a.stage] || 0) - (stageWeight[b.stage] || 0);
+    });
+
+    container.innerHTML = interviews.map(it => {
+        const stageClass = it.stage.toLowerCase();
+        const dateStr = it.date ? it.date : '未安排时间';
+        const stageOptions = STAGE_ORDER.map(s =>
+            `<option value="${s}" ${it.stage === s ? 'selected' : ''}>${STAGE_LABELS[s]}</option>`
+        ).join('');
+        return `
+        <div class="it-card">
+            <div class="it-company">${escapeHtml(it.company)}</div>
+            <div class="it-role">${escapeHtml(it.role)}</div>
+            <div class="it-date">📅 ${dateStr}</div>
+            <div class="it-actions">
+                <span class="badge-stage badge-${stageClass}">${STAGE_LABELS[it.stage] || it.stage}</span>
+                <select onchange="changeStage(${it.id}, this.value)">${stageOptions}</select>
+                <button class="it-del" onclick="deleteInterview(${it.id})" title="删除">✕</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderFunnel() {
+    const interviews = getInterviews();
+    const total = interviews.length;
+    if (total === 0) {
+        STAGE_ORDER.forEach(s => {
+            const bar = document.getElementById('funnel' + s);
+            if (bar) { bar.style.width = '0%'; bar.textContent = '0'; }
+            const pct = document.getElementById('funnel' + s + 'Pct');
+            if (pct) pct.textContent = '';
+        });
+        return;
+    }
+
+    const counts = {};
+    STAGE_ORDER.forEach(s => counts[s] = 0);
+    interviews.forEach(it => { if (counts[it.stage] !== undefined) counts[it.stage]++; });
+
+    const maxCount = Math.max(...Object.values(counts), 1);
+    STAGE_ORDER.forEach(s => {
+        const bar = document.getElementById('funnel' + s);
+        const pct = document.getElementById('funnel' + s + 'Pct');
+        if (!bar) return;
+        const pctVal = Math.round((counts[s] / total) * 100);
+        const barWidth = Math.max(8, Math.round((counts[s] / maxCount) * 100));
+        bar.style.width = barWidth + '%';
+        bar.textContent = counts[s];
+        if (pct) pct.textContent = pctVal + '%';
+    });
+}
+
+// ===== Calendar =====
+let calYear, calMonth;
+
+function renderCalendar() {
+    const now = new Date();
+    if (calYear === undefined) { calYear = now.getFullYear(); calMonth = now.getMonth(); }
+
+    const monthNames = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+    document.getElementById('calMonthLabel').textContent = calYear + '年 ' + monthNames[calMonth];
+
+    const interviews = getInterviews();
+    const interviewDates = {};
+    interviews.forEach(it => {
+        if (it.date) {
+            const d = new Date(it.date + 'T00:00:00');
+            const key = d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+            if (!interviewDates[key]) interviewDates[key] = [];
+            interviewDates[key].push(it);
+        }
+    });
+
+    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    const today = new Date();
+    const todayKey = today.getFullYear() + '-' + today.getMonth() + '-' + today.getDate();
+
+    let html = '';
+    // Day-of-week headers already in HTML, just add day cells
+    // Empty cells before the 1st
+    for (let i = 0; i < firstDay; i++) {
+        const prevMonthDays = new Date(calYear, calMonth, 0).getDate();
+        const dayNum = prevMonthDays - firstDay + 1 + i;
+        html += `<div class="it-cal-day other-month">${dayNum}</div>`;
+    }
+    // Days of the month
+    for (let d = 1; d <= daysInMonth; d++) {
+        const key = calYear + '-' + calMonth + '-' + d;
+        const hasInterview = interviewDates[key];
+        const isToday = (key === todayKey);
+        let cls = 'it-cal-day';
+        if (isToday) cls += ' today';
+        if (hasInterview) cls += ' has-interview';
+
+        let inner = String(d);
+        if (hasInterview) {
+            inner += `<div class="it-cal-dot"></div>`;
+        }
+        html += `<div class="${cls}" data-key="${key}" onmouseenter="showCalTooltip(event, '${key}')" onmouseleave="hideCalTooltip()">${inner}</div>`;
+    }
+    // Fill remaining cells
+    const totalCells = firstDay + daysInMonth;
+    const remaining = (7 - (totalCells % 7)) % 7;
+    for (let i = 1; i <= remaining; i++) {
+        html += `<div class="it-cal-day other-month">${i}</div>`;
+    }
+
+    const grid = document.getElementById('calGrid');
+    // Keep the dow headers, replace day cells
+    const dowHeaders = Array.from(grid.querySelectorAll('.it-cal-dow')).map(el => el.outerHTML).join('');
+    grid.innerHTML = dowHeaders + html;
+}
+
+function calPrev() {
+    calMonth--;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+}
+
+function calNext() {
+    calMonth++;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
+}
+
+function showCalTooltip(event, key) {
+    const interviews = getInterviews();
+    const items = interviews.filter(it => {
+        if (!it.date) return false;
+        const d = new Date(it.date + 'T00:00:00');
+        const k = d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+        return k === key;
+    });
+    if (items.length === 0) return;
+
+    const tooltip = document.getElementById('calTooltip');
+    tooltip.innerHTML = items.map(it =>
+        `<div><strong>${escapeHtml(it.company)}</strong> · ${escapeHtml(it.role)}<br><span style="color:rgba(255,255,255,0.5)">${STAGE_LABELS[it.stage] || it.stage}</span></div>`
+    ).join('<hr style="border-color:rgba(255,255,255,0.1);margin:6px 0">');
+
+    const rect = event.target.getBoundingClientRect();
+    tooltip.style.left = rect.left + 'px';
+    tooltip.style.top = (rect.bottom + 6) + 'px';
+    tooltip.classList.add('visible');
+}
+
+function hideCalTooltip() {
+    document.getElementById('calTooltip').classList.remove('visible');
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// ===== NEW: Update stats bar counts =====
+function updateStatsBar() {
+    document.getElementById('lcCount').textContent = document.querySelectorAll('.q-card').length;
+    document.getElementById('ghCount').textContent = document.querySelectorAll('.repo-card').length;
+    document.getElementById('ytCount').textContent = document.querySelectorAll('.yt-card').length;
+}
+
+// ===== Init Everything =====
+document.addEventListener('DOMContentLoaded', function() {
+    showDailyQuestion();
+    updateProgress();
+    initBookmarks();
+    updateDifficultyChart();
+    updateQuestionStats();
+    updateStatsBar();
+    updateTimerDisplay();
+    renderInterviews();
+    renderFunnel();
+    renderCalendar();
+});
+</script>
+{% endblock %}

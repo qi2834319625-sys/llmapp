@@ -1,0 +1,593 @@
+{% extends "base.html" %}
+{% block title %}策略实验室{% endblock %}
+{% block content %}
+<style>
+.sl-header { text-align:center; padding:30px 20px 10px; }
+.sl-header h1 { font-size:2em; background:linear-gradient(135deg,#f7971e,#ffd200); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.sl-header p { color:rgba(255,255,255,0.5); margin-top:8px; }
+.sl-container { max-width:1400px; margin:0 auto; padding:20px 30px 60px; }
+.sl-layout { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+@media(max-width:900px) { .sl-layout { grid-template-columns:1fr; } }
+
+/* Editor Panel */
+.sl-editor-panel { background:rgba(255,255,255,0.04); border-radius:16px; padding:20px; border:1px solid rgba(247,151,30,0.15); }
+.sl-editor-panel h3 { color:#ffd200; margin-bottom:12px; font-size:1.05em; }
+.sl-editor-wrap { position:relative; }
+.sl-editor {
+  width:100%; height:420px; background:#0d1117; border:1px solid rgba(247,151,30,0.2);
+  border-radius:10px; color:#e6edf3; font-family:'Fira Code','Consolas',monospace;
+  font-size:13px; line-height:1.6; padding:16px; resize:vertical; outline:none;
+  tab-size:2;
+}
+.sl-editor:focus { border-color:#f7971e; }
+.sl-editor::placeholder { color:rgba(255,255,255,0.25); }
+
+/* Config Panel */
+.sl-config-panel { background:rgba(255,255,255,0.04); border-radius:16px; padding:20px; border:1px solid rgba(247,151,30,0.15); }
+.sl-config-panel h3 { color:#ffd200; margin-bottom:12px; font-size:1.05em; }
+.sl-config-row { display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+.sl-config-group { display:flex; flex-direction:column; gap:4px; flex:1; min-width:120px; }
+.sl-config-group label { color:rgba(255,255,255,0.5); font-size:0.8em; }
+.sl-config-group input, .sl-config-group select {
+  padding:8px 12px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15);
+  border-radius:8px; color:#fff; font-size:0.88em; outline:none;
+}
+.sl-config-group input:focus { border-color:#f7971e; }
+
+/* Symbol Tags */
+.sl-symbol-tags { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+.sl-sym-tag {
+  padding:4px 12px; background:rgba(247,151,30,0.15); border:1px solid rgba(247,151,30,0.3);
+  border-radius:20px; color:#ffd200; font-size:0.82em; cursor:pointer; transition:all 0.2s;
+}
+.sl-sym-tag:hover { background:rgba(247,151,30,0.3); }
+.sl-sym-tag.active { background:#f7971e; color:#1a1a2e; font-weight:600; }
+
+/* Run Button */
+.sl-run-btn {
+  width:100%; padding:14px; background:linear-gradient(135deg,#f7971e,#ffd200);
+  border:none; border-radius:12px; color:#1a1a2e; font-size:1.05em; font-weight:700;
+  cursor:pointer; transition:all 0.3s; margin-top:10px;
+}
+.sl-run-btn:hover { transform:translateY(-2px); box-shadow:0 4px 20px rgba(247,151,30,0.3); }
+.sl-run-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+/* Results Panel */
+.sl-results-panel { grid-column:1/-1; background:rgba(255,255,255,0.04); border-radius:16px; padding:24px; border:1px solid rgba(247,151,30,0.15); display:none; }
+.sl-results-panel.show { display:block; }
+.sl-results-panel h3 { color:#ffd200; margin-bottom:16px; }
+
+/* Metrics */
+.sl-metrics-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:20px; }
+.sl-metric-card { background:rgba(255,255,255,0.04); border-radius:10px; padding:16px; text-align:center; border:1px solid rgba(255,255,255,0.06); }
+.sl-metric-card .m-label { color:rgba(255,255,255,0.4); font-size:0.75em; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px; }
+.sl-metric-card .m-value { font-size:1.5em; font-weight:700; }
+.sl-metric-card .m-sub { font-size:0.72em; color:rgba(255,255,255,0.3); margin-top:2px; }
+
+/* Chart */
+.sl-chart-wrap { background:rgba(0,0,0,0.2); border-radius:10px; padding:16px; margin-bottom:20px; }
+.sl-chart-wrap canvas { width:100%; height:300px; }
+
+/* Trades Table */
+.sl-trades-wrap { max-height:300px; overflow-y:auto; margin-top:16px; }
+.sl-trades-table { width:100%; border-collapse:collapse; }
+.sl-trades-table th { background:rgba(247,151,30,0.15); color:#ffd200; padding:10px 14px; text-align:left; font-size:0.85em; position:sticky; top:0; }
+.sl-trades-table td { padding:8px 14px; border-bottom:1px solid rgba(255,255,255,0.04); font-size:0.85em; color:rgba(255,255,255,0.7); }
+.sl-trades-table tr:hover { background:rgba(255,255,255,0.03); }
+.trade-buy { color:#4caf50; }
+.trade-sell { color:#f44336; }
+
+/* Logs */
+.sl-logs { background:#0d1117; border-radius:8px; padding:12px; max-height:150px; overflow-y:auto; font-family:monospace; font-size:0.82em; color:rgba(255,255,255,0.6); margin-top:12px; }
+.sl-log-line { padding:2px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+
+/* Template Selector */
+.sl-templates { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.sl-template-btn {
+  padding:6px 14px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
+  border-radius:20px; color:rgba(255,255,255,0.6); font-size:0.8em; cursor:pointer; transition:all 0.2s;
+}
+.sl-template-btn:hover { background:rgba(247,151,30,0.2); color:#ffd200; border-color:#f7971e; }
+
+/* Status */
+.sl-status { padding:10px 16px; border-radius:8px; margin-top:12px; font-size:0.88em; display:none; }
+.sl-status.show { display:block; }
+.sl-status.running { background:rgba(33,150,243,0.15); border:1px solid rgba(33,150,243,0.3); color:#64b5f6; }
+.sl-status.success { background:rgba(76,175,80,0.15); border:1px solid rgba(76,175,80,0.3); color:#81c784; }
+.sl-status.error { background:rgba(244,67,54,0.15); border:1px solid rgba(244,67,54,0.3); color:#e57373; }
+
+/* Help */
+.sl-help { background:rgba(255,255,255,0.03); border-radius:10px; padding:16px; margin-top:12px; }
+.sl-help h4 { color:rgba(255,255,255,0.7); font-size:0.9em; margin-bottom:8px; }
+.sl-help code { background:rgba(247,151,30,0.15); color:#ffd200; padding:2px 6px; border-radius:4px; font-size:0.82em; }
+.sl-help p { color:rgba(255,255,255,0.4); font-size:0.82em; line-height:1.6; margin-bottom:6px; }
+</style>
+
+<div class="sl-header">
+    <h1>🧪 策略实验室</h1>
+    <p>编写自定义投资策略 · 回测验证 · 优化参数</p>
+</div>
+
+<div class="sl-container">
+  <div class="sl-layout">
+    <!-- Left: Code Editor -->
+    <div class="sl-editor-panel">
+      <h3>📝 策略代码 (Python)</h3>
+      
+      <div class="sl-templates">
+        <div class="sl-template-btn" onclick="loadTemplate('sma_crossover')">📊 均线交叉</div>
+        <div class="sl-template-btn" onclick="loadTemplate('rsi_mean_reversion')">🔄 RSI 均值回归</div>
+        <div class="sl-template-btn" onclick="loadTemplate('momentum')">🚀 动量策略</div>
+        <div class="sl-template-btn" onclick="loadTemplate('buy_hold')">💎 买入持有</div>
+        <div class="sl-template-btn" onclick="loadTemplate('grid_trading')">📐 网格交易</div>
+      </div>
+      
+      <div class="sl-editor-wrap">
+        <textarea class="sl-editor" id="strategyCode" placeholder="# 在此编写你的交易策略
+# 可用函数: get_price(), buy(), sell(), sma(), ema(), rsi(), log()
+# 变量: symbols, num_days, initial_capital, cash, holdings
+
+for i in range(num_days):
+    for sym in symbols:
+        price = get_price(sym, i)
+        if price is None:
+            continue
+        
+        # 示例: 简单均线交叉策略
+        fast = sma(sym, 5, i)
+        slow = sma(sym, 20, i)
+        
+        if fast is None or slow is None:
+            continue
+        
+        # 金叉买入
+        if fast > slow and holdings[sym] == 0:
+            amount = cash * 0.3  # 用30%资金买入
+            qty = buy(sym, amount, i)
+            if qty > 0:
+                log(f'Day {i}: 买入 {sym} {qty}股 @ {price:.2f}')
+        
+        # 死叉卖出
+        elif fast < slow and holdings[sym] > 0:
+            proceeds = sell(sym, holdings[sym], i)
+            if proceeds > 0:
+                log(f'Day {i}: 卖出 {sym} @ {price:.2f}, 获得 {proceeds:.0f}')"></textarea>
+      </div>
+      
+      <div class="sl-help">
+        <h4>📖 可用函数</h4>
+        <p><code>get_price(symbol, day_idx)</code> - 获取某股票在某天的价格</p>
+        <p><code>get_prices(symbol)</code> - 获取某股票全部价格序列</p>
+        <p><code>buy(symbol, amount, day_idx)</code> - 用指定金额买入，返回买入股数</p>
+        <p><code>sell(symbol, qty, day_idx)</code> - 卖出指定股数，返回获得现金</p>
+        <p><code>sma(symbol, period, day_idx)</code> - 简单移动平均</p>
+        <p><code>ema(symbol, period, day_idx)</code> - 指数移动平均</p>
+        <p><code>rsi(symbol, period, day_idx)</code> - 相对强弱指标</p>
+        <p><code>log(msg)</code> - 输出日志</p>
+        <p style="margin-top:8px;color:rgba(255,255,255,0.3);">变量: <code>symbols</code>(股票列表), <code>num_days</code>(交易日数), <code>initial_capital</code>(初始资金), <code>cash</code>(现金), <code>holdings</code>(持仓)</p>
+      </div>
+    </div>
+    
+    <!-- Right: Config & Run -->
+    <div class="sl-config-panel">
+      <h3>⚙️ 回测配置</h3>
+      
+      <div class="sl-config-group" style="margin-bottom:12px;">
+        <label>交易标的 (点击添加)</label>
+        <div class="sl-symbol-tags" id="symbolTags">
+          <span class="sl-sym-tag active" onclick="toggleSym(this,'AAPL')">AAPL</span>
+          <span class="sl-sym-tag active" onclick="toggleSym(this,'MSFT')">MSFT</span>
+          <span class="sl-sym-tag" onclick="toggleSym(this,'GOOGL')">GOOGL</span>
+          <span class="sl-sym-tag" onclick="toggleSym(this,'NVDA')">NVDA</span>
+          <span class="sl-sym-tag" onclick="toggleSym(this,'TSLA')">TSLA</span>
+          <span class="sl-sym-tag" onclick="toggleSym(this,'AMZN')">AMZN</span>
+          <span class="sl-sym-tag" onclick="toggleSym(this,'BTC-USD')">BTC</span>
+          <span class="sl-sym-tag" onclick="toggleSym(this,'SPY')">SPY</span>
+        </div>
+      </div>
+      
+      <div class="sl-config-row">
+        <div class="sl-config-group">
+          <label>初始资金</label>
+          <input type="number" id="slCapital" value="100000" step="10000" min="1000">
+        </div>
+        <div class="sl-config-group">
+          <label>开始日期</label>
+          <input type="date" id="slStartDate" value="2024-01-01">
+        </div>
+        <div class="sl-config-group">
+          <label>结束日期</label>
+          <input type="date" id="slEndDate" value="2024-12-31">
+        </div>
+      </div>
+      
+      <button class="sl-run-btn" id="slRunBtn" onclick="runStrategy()">
+        🚀 运行策略回测
+      </button>
+      
+      <div class="sl-status" id="slStatus"></div>
+    </div>
+    
+    <!-- Results (full width) -->
+    <div class="sl-results-panel" id="slResults">
+      <h3>📊 回测结果</h3>
+      
+      <div class="sl-metrics-grid">
+        <div class="sl-metric-card">
+          <div class="m-label">总收益率</div>
+          <div class="m-value" id="slTotalReturn">--</div>
+        </div>
+        <div class="sl-metric-card">
+          <div class="m-label">年化收益率</div>
+          <div class="m-value" id="slAnnualReturn">--</div>
+        </div>
+        <div class="sl-metric-card">
+          <div class="m-label">最大回撤</div>
+          <div class="m-value" id="slMaxDD">--</div>
+        </div>
+        <div class="sl-metric-card">
+          <div class="m-label">夏普比率</div>
+          <div class="m-value" id="slSharpe">--</div>
+        </div>
+        <div class="sl-metric-card">
+          <div class="m-label">交易次数</div>
+          <div class="m-value" id="slNumTrades">--</div>
+        </div>
+        <div class="sl-metric-card">
+          <div class="m-label">最终资金</div>
+          <div class="m-value" id="slFinalValue">--</div>
+        </div>
+      </div>
+      
+      <div class="sl-chart-wrap">
+        <canvas id="slChart"></canvas>
+      </div>
+      
+      <h4 style="color:rgba(255,255,255,0.6);margin:16px 0 8px;">📋 交易记录</h4>
+      <div class="sl-trades-wrap">
+        <table class="sl-trades-table" id="slTradesTable">
+          <thead><tr><th>日期</th><th>操作</th><th>标的</th><th>股数</th><th>价格</th><th>金额</th></tr></thead>
+          <tbody id="slTradesBody"></tbody>
+        </table>
+      </div>
+      
+      <h4 style="color:rgba(255,255,255,0.6);margin:16px 0 8px;">📝 策略日志</h4>
+      <div class="sl-logs" id="slLogs"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Symbol Toggle =====
+var selectedSymbols = ['AAPL','MSFT'];
+function toggleSym(el, sym) {
+    el.classList.toggle('active');
+    var idx = selectedSymbols.indexOf(sym);
+    if(idx >= 0) selectedSymbols.splice(idx, 1);
+    else selectedSymbols.push(sym);
+}
+
+// ===== Templates =====
+var templates = {
+sma_crossover: `# 📊 双均线交叉策略
+# 短期均线上穿长期均线 → 买入
+# 短期均线下穿长期均线 → 卖出
+
+fast_period = 5   # 快速均线周期
+slow_period = 20  # 慢速均线周期
+
+for i in range(num_days):
+    for sym in symbols:
+        price = get_price(sym, i)
+        if price is None:
+            continue
+        
+        fast = sma(sym, fast_period, i)
+        slow = sma(sym, slow_period, i)
+        
+        if fast is None or slow is None:
+            continue
+        
+        # 金叉买入 (用20%资金)
+        if fast > slow and holdings[sym] == 0:
+            amount = cash * 0.2
+            qty = buy(sym, amount, i)
+            if qty > 0:
+                log(f'Day {i}: BUY {sym} {qty}股 @ {price:.2f}')
+        
+        # 死叉卖出 (全部卖出)
+        elif fast < slow and holdings[sym] > 0:
+            proceeds = sell(sym, holdings[sym], i)
+            if proceeds > 0:
+                log(f'Day {i}: SELL {sym} all @ {price:.2f}, +${proceeds:.0f}')
+`,
+
+rsi_mean_reversion: `# 🔄 RSI 均值回归策略
+# RSI < 30 → 超卖买入
+# RSI > 70 → 超买卖出
+
+rsi_period = 14
+oversold = 30
+overbought = 70
+
+for i in range(num_days):
+    for sym in symbols:
+        price = get_price(sym, i)
+        if price is None:
+            continue
+        
+        r = rsi(sym, rsi_period, i)
+        if r is None:
+            continue
+        
+        # 超卖买入
+        if r < oversold and holdings[sym] == 0:
+            amount = cash * 0.25
+            qty = buy(sym, amount, i)
+            if qty > 0:
+                log(f'Day {i}: BUY {sym} {qty}股 @ {price:.2f} (RSI={r:.1f})')
+        
+        # 超买卖出
+        elif r > overbought and holdings[sym] > 0:
+            proceeds = sell(sym, holdings[sym], i)
+            if proceeds > 0:
+                log(f'Day {i}: SELL {sym} all @ {price:.2f} (RSI={r:.1f})')
+`,
+
+momentum: `# 🚀 动量策略
+# 过去N天涨幅超过阈值 → 追涨买入
+# 过去N天下跌超过阈值 → 止损卖出
+
+lookback = 10
+buy_threshold = 0.05   # 5%涨幅追入
+sell_threshold = -0.03  # 3%跌幅止损
+
+for i in range(num_days):
+    for sym in symbols:
+        price = get_price(sym, i)
+        if price is None or i < lookback:
+            continue
+        
+        past_price = get_price(sym, i - lookback)
+        if past_price is None or past_price == 0:
+            continue
+        
+        momentum = (price - past_price) / past_price
+        
+        # 追涨买入
+        if momentum > buy_threshold and holdings[sym] == 0:
+            amount = cash * 0.3
+            qty = buy(sym, amount, i)
+            if qty > 0:
+                log(f'Day {i}: BUY {sym} {qty}股 @ {price:.2f} (动量={momentum:.1%})')
+        
+        # 止损卖出
+        elif momentum < sell_threshold and holdings[sym] > 0:
+            proceeds = sell(sym, holdings[sym], i)
+            if proceeds > 0:
+                log(f'Day {i}: SELL {sym} all @ {price:.2f} (动量={momentum:.1%})')
+`,
+
+buy_hold: `# 💎 买入持有策略 (基准)
+# 第一天等权买入所有标的，之后不再交易
+
+if num_days > 0:
+    for sym in symbols:
+        price = get_price(sym, 0)
+        if price and price > 0:
+            amount = initial_capital / len(symbols)
+            qty = buy(sym, amount, 0)
+            if qty > 0:
+                log(f'Day 0: BUY {sym} {qty}股 @ {price:.2f}')
+    
+    # 持有不动，记录最终价值
+    final_val = get_portfolio_value(num_days - 1)
+    log(f'Final portfolio value: {final_val:.0f}')
+`,
+
+grid_trading: `# 📐 网格交易策略
+# 设定价格网格，低买高卖
+
+grid_pct = 0.03  # 3%网格间距
+trade_amount = 5000  # 每次交易金额
+
+# 记录每个标的的参考价格
+ref_prices = {}
+for sym in symbols:
+    p = get_price(sym, 0)
+    if p:
+        ref_prices[sym] = p
+
+for i in range(1, num_days):
+    for sym in symbols:
+        price = get_price(sym, i)
+        if price is None or sym not in ref_prices:
+            continue
+        
+        ref = ref_prices[sym]
+        change = (price - ref) / ref
+        
+        # 价格下跌超过网格间距 → 买入
+        if change <= -grid_pct and cash >= trade_amount:
+            qty = buy(sym, trade_amount, i)
+            if qty > 0:
+                ref_prices[sym] = price  # 更新参考价格
+                log(f'Day {i}: BUY {sym} {qty}股 @ {price:.2f} (网格触发)')
+        
+        # 价格上涨超过网格间距 → 卖出
+        elif change >= grid_pct and holdings[sym] > 0:
+            sell_qty = min(holdings[sym], int(trade_amount / price))
+            if sell_qty > 0:
+                proceeds = sell(sym, sell_qty, i)
+                if proceeds > 0:
+                    ref_prices[sym] = price
+                    log(f'Day {i}: SELL {sym} {sell_qty}股 @ {price:.2f} (网格触发)')
+`
+};
+
+function loadTemplate(name) {
+    var code = templates[name] || '';
+    document.getElementById('strategyCode').value = code;
+    showToast('已加载模板: ' + name, 'success');
+}
+
+// ===== Run Strategy =====
+function runStrategy() {
+    var code = document.getElementById('strategyCode').value.trim();
+    if(!code) { showToast('请先编写策略代码', 'warning'); return; }
+    if(selectedSymbols.length === 0) { showToast('请至少选择一个交易标的', 'warning'); return; }
+    
+    var btn = document.getElementById('slRunBtn');
+    var status = document.getElementById('slStatus');
+    var results = document.getElementById('slResults');
+    
+    btn.disabled = true;
+    btn.textContent = '⏳ 回测中...';
+    status.className = 'sl-status show running';
+    status.textContent = '🔄 正在运行策略回测，请稍候...';
+    results.classList.remove('show');
+    
+    fetch('/api/strategy/run', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            code: code,
+            symbols: selectedSymbols,
+            start_date: document.getElementById('slStartDate').value,
+            end_date: document.getElementById('slEndDate').value,
+            initial_capital: parseInt(document.getElementById('slCapital').value) || 100000,
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        btn.disabled = false;
+        btn.textContent = '🚀 运行策略回测';
+        
+        if(data.error) {
+            status.className = 'sl-status show error';
+            status.textContent = '❌ ' + data.error;
+            if(data.logs && data.logs.length > 0) {
+                document.getElementById('slLogs').innerHTML = data.logs.map(function(l){ return '<div class="sl-log-line">' + l + '</div>'; }).join('');
+            }
+            showToast('策略执行失败', 'error');
+            return;
+        }
+        
+        status.className = 'sl-status show success';
+        status.textContent = '✅ 回测完成！总收益: ' + data.total_return + '%';
+        
+        // Show results
+        results.classList.add('show');
+        
+        // Metrics
+        document.getElementById('slTotalReturn').textContent = (data.total_return >= 0 ? '+' : '') + data.total_return + '%';
+        document.getElementById('slTotalReturn').style.color = data.total_return >= 0 ? '#4caf50' : '#f44336';
+        document.getElementById('slAnnualReturn').textContent = (data.annualized_return >= 0 ? '+' : '') + data.annualized_return + '%';
+        document.getElementById('slAnnualReturn').style.color = data.annualized_return >= 0 ? '#4caf50' : '#f44336';
+        document.getElementById('slMaxDD').textContent = data.max_drawdown + '%';
+        document.getElementById('slMaxDD').style.color = '#f44336';
+        document.getElementById('slSharpe').textContent = data.sharpe_ratio;
+        document.getElementById('slSharpe').style.color = data.sharpe_ratio >= 1 ? '#4caf50' : data.sharpe_ratio >= 0 ? '#ffd200' : '#f44336';
+        document.getElementById('slNumTrades').textContent = data.num_trades;
+        document.getElementById('slFinalValue').textContent = '¥' + Math.round(data.final_value).toLocaleString();
+        
+        // Chart
+        if(data.portfolio_history && data.portfolio_history.length > 1) {
+            drawSLChart(data.portfolio_history, data.initial_capital);
+        }
+        
+        // Trades
+        var tbody = document.getElementById('slTradesBody');
+        if(data.trades && data.trades.length > 0) {
+            tbody.innerHTML = data.trades.map(function(t) {
+                var cls = t.action === 'BUY' ? 'trade-buy' : 'trade-sell';
+                var amt = t.cost || t.proceeds || '';
+                return '<tr><td>' + t.date + '</td><td class="' + cls + '">' + t.action + '</td><td>' + t.symbol + '</td><td>' + t.qty + '</td><td>' + t.price + '</td><td>' + amt + '</td></tr>';
+            }).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,0.3);padding:15px;">无交易记录</td></tr>';
+        }
+        
+        // Logs
+        if(data.logs && data.logs.length > 0) {
+            document.getElementById('slLogs').innerHTML = data.logs.map(function(l){ return '<div class="sl-log-line">' + l + '</div>'; }).join('');
+        } else {
+            document.getElementById('slLogs').innerHTML = '<div class="sl-log-line" style="color:rgba(255,255,255,0.3);">无日志输出</div>';
+        }
+        
+        showToast('回测完成！总收益: ' + data.total_return + '%', 'success');
+        results.scrollIntoView({behavior:'smooth'});
+    })
+    .catch(function(e) {
+        btn.disabled = false;
+        btn.textContent = '🚀 运行策略回测';
+        status.className = 'sl-status show error';
+        status.textContent = '❌ 请求失败: ' + e.message;
+        showToast('请求失败', 'error');
+    });
+}
+
+function drawSLChart(history, initialCapital) {
+    var canvas = document.getElementById('slChart');
+    if(!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var w = canvas.width = canvas.parentElement.clientWidth - 32;
+    var h = canvas.height = 300;
+    ctx.clearRect(0, 0, w, h);
+    
+    var values = history.map(function(p){return p.value;});
+    var min = Math.min.apply(null, values) * 0.95;
+    var max = Math.max.apply(null, values) * 1.05;
+    var range = max - min;
+    if(range === 0) range = 1;
+    
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    for(var i=0;i<5;i++) {
+        var y = (i/4)*(h-40)+20;
+        ctx.beginPath(); ctx.moveTo(50,y); ctx.lineTo(w-20,y); ctx.stroke();
+        var val = max - (i/4)*range;
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.font = '10px sans-serif';
+        ctx.fillText('¥'+Math.round(val).toLocaleString(), 5, y+4);
+    }
+    
+    // Line
+    ctx.beginPath();
+    history.forEach(function(p, i) {
+        var x = 50 + (i/(history.length-1))*(w-70);
+        var y = h-20 - ((p.value-min)/range)*(h-40);
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.strokeStyle = '#ffd200';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    
+    // Fill
+    ctx.lineTo(w-20, h-20);
+    ctx.lineTo(50, h-20);
+    ctx.closePath();
+    var grad = ctx.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0,'rgba(247,151,30,0.25)');
+    grad.addColorStop(1,'rgba(247,151,30,0.02)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+    
+    // Benchmark line (initial capital)
+    var by = h-20 - ((initialCapital-min)/range)*(h-40);
+    ctx.beginPath(); ctx.moveTo(50,by); ctx.lineTo(w-20,by);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5,5]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Date labels
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '10px sans-serif';
+    ctx.fillText(history[0].date, 50, h-5);
+    ctx.fillText(history[history.length-1].date, w-80, h-5);
+}
+</script>
+{% endblock %}

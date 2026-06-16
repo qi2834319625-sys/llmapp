@@ -1,0 +1,427 @@
+{% extends "base.html" %}
+{% block title %}AI 音乐生成{% endblock %}
+{% block extra_css %}
+<style>
+.am-header { text-align:center; padding:30px 20px 10px; }
+.am-header h1 { font-size:2em; background:linear-gradient(135deg,#ff00e5,#b026ff,#00f5ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.am-header p { color:rgba(255,255,255,0.5); margin-top:8px; }
+.am-container { max-width:1200px; margin:0 auto; padding:20px 30px 60px; }
+
+/* Engine Selector */
+.am-engine-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:24px; }
+.am-engine-card {
+  padding:16px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px; cursor:pointer; transition:all 0.3s; text-align:center;
+}
+.am-engine-card:hover { border-color:rgba(176,38,255,0.4); transform:translateY(-2px); }
+.am-engine-card.active { border-color:#b026ff; background:rgba(176,38,255,0.1); box-shadow:0 0 15px rgba(176,38,255,0.2); }
+.am-engine-icon { font-size:2em; margin-bottom:8px; }
+.am-engine-name { color:#fff; font-weight:600; font-size:0.95em; }
+.am-engine-desc { color:rgba(255,255,255,0.4); font-size:0.75em; margin-top:4px; }
+
+/* Prompt Area */
+.am-prompt-section { background:rgba(255,255,255,0.04); border-radius:16px; padding:24px; margin-bottom:20px; border:1px solid rgba(255,255,255,0.08); }
+.am-prompt-section h3 { color:#b026ff; margin-bottom:12px; font-size:1.05em; }
+.am-textarea {
+  width:100%; min-height:100px; padding:14px; background:rgba(0,0,0,0.3);
+  border:1px solid rgba(255,255,255,0.1); border-radius:10px; color:#fff;
+  font-size:0.95em; resize:vertical; outline:none; transition:all 0.3s;
+}
+.am-textarea:focus { border-color:#b026ff; box-shadow:0 0 10px rgba(176,38,255,0.2); }
+
+/* Params Grid */
+.am-params-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:20px; }
+.am-param-group { background:rgba(255,255,255,0.03); border-radius:10px; padding:16px; border:1px solid rgba(255,255,255,0.06); }
+.am-param-group label { color:rgba(255,255,255,0.6); font-size:0.82em; display:block; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px; }
+.am-param-group select, .am-param-group input[type="text"] {
+  width:100%; padding:8px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+  border-radius:8px; color:#fff; font-size:0.88em; outline:none;
+}
+.am-param-group select:focus { border-color:#b026ff; }
+
+/* Slider */
+.am-slider-wrap { display:flex; align-items:center; gap:12px; }
+.am-slider { flex:1; -webkit-appearance:none; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; outline:none; }
+.am-slider::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; background:#b026ff; border-radius:50%; cursor:pointer; box-shadow:0 0 8px rgba(176,38,255,0.5); }
+.am-slider-val { color:#b026ff; font-weight:600; font-size:0.9em; min-width:40px; text-align:right; }
+
+/* Melody Piano */
+.am-piano { display:flex; gap:2px; margin-top:8px; overflow-x:auto; padding-bottom:8px; }
+.am-key {
+  min-width:32px; height:60px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.1);
+  border-radius:4px; cursor:pointer; display:flex; align-items:flex-end; justify-content:center;
+  padding-bottom:4px; font-size:0.7em; color:rgba(255,255,255,0.4); transition:all 0.15s;
+}
+.am-key:hover { background:rgba(176,38,255,0.2); }
+.am-key.active { background:rgba(176,38,255,0.4); color:#fff; border-color:#b026ff; }
+.am-key.black { background:rgba(0,0,0,0.4); min-width:24px; height:40px; margin:0 -12px; z-index:1; }
+
+/* Generate Button */
+.am-generate-btn {
+  width:100%; padding:16px; background:linear-gradient(135deg,#b026ff,#ff00e5);
+  border:none; border-radius:12px; color:#fff; font-size:1.1em; font-weight:700;
+  cursor:pointer; transition:all 0.3s; margin-bottom:20px; text-transform:uppercase; letter-spacing:1px;
+}
+.am-generate-btn:hover { transform:translateY(-2px); box-shadow:0 4px 25px rgba(176,38,255,0.4); }
+.am-generate-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+/* Player */
+.am-player { background:rgba(255,255,255,0.04); border-radius:16px; padding:24px; margin-bottom:20px; border:1px solid rgba(255,255,255,0.08); display:none; }
+.am-player.show { display:block; }
+.am-player-title { color:#fff; font-weight:600; margin-bottom:12px; }
+.am-player audio { width:100%; margin-bottom:12px; }
+.am-player-actions { display:flex; gap:10px; }
+.am-player-actions a, .am-player-actions button {
+  padding:8px 20px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15);
+  border-radius:20px; color:#fff; font-size:0.85em; cursor:pointer; text-decoration:none; transition:all 0.2s;
+}
+.am-player-actions a:hover, .am-player-actions button:hover { background:rgba(176,38,255,0.2); border-color:#b026ff; }
+
+/* Library */
+.am-library { background:rgba(255,255,255,0.04); border-radius:16px; padding:24px; border:1px solid rgba(255,255,255,0.08); }
+.am-library h3 { color:#b026ff; margin-bottom:16px; }
+.am-library-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; }
+.am-track-card {
+  background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06);
+  border-radius:10px; padding:14px; transition:all 0.2s;
+}
+.am-track-card:hover { border-color:rgba(176,38,255,0.3); }
+.am-track-title { color:#fff; font-weight:600; font-size:0.9em; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.am-track-meta { color:rgba(255,255,255,0.4); font-size:0.78em; margin-bottom:8px; }
+.am-track-audio { width:100%; height:32px; margin-bottom:8px; }
+.am-track-actions { display:flex; gap:6px; }
+.am-track-actions a, .am-track-actions button {
+  padding:4px 10px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+  border-radius:12px; color:rgba(255,255,255,0.6); font-size:0.75em; cursor:pointer; text-decoration:none;
+}
+.am-track-actions a:hover { background:rgba(176,38,255,0.2); color:#fff; }
+.am-track-actions button.delete:hover { background:rgba(244,67,54,0.2); color:#f44336; }
+
+/* Loading */
+.am-loading { text-align:center; padding:40px; display:none; }
+.am-loading.show { display:block; }
+.am-loading-spinner {
+  width:40px; height:40px; border:3px solid rgba(176,38,255,0.2); border-top-color:#b026ff;
+  border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 16px;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="am-header">
+    <h1>🎵 AI 音乐生成工作室</h1>
+    <p>选择 AI 引擎 · 调节旋律参数 · 生成专属音乐</p>
+</div>
+
+<div class="am-container">
+    <!-- Engine Selector -->
+    <div class="am-engine-grid">
+        <div class="am-engine-card active" onclick="selectEngine(this,'musicgen')">
+            <div class="am-engine-icon">🎹</div>
+            <div class="am-engine-name">MusicGen</div>
+            <div class="am-engine-desc">Meta · 免费 · 纯音乐</div>
+        </div>
+        <div class="am-engine-card" onclick="selectEngine(this,'stable_audio')">
+            <div class="am-engine-icon">🎧</div>
+            <div class="am-engine-name">Stable Audio</div>
+            <div class="am-engine-desc">Stability AI · 高品质</div>
+        </div>
+        <div class="am-engine-card" onclick="selectEngine(this,'suno')">
+            <div class="am-engine-icon">🎤</div>
+            <div class="am-engine-name">Suno</div>
+            <div class="am-engine-desc">带歌词 · 完整歌曲</div>
+        </div>
+        <div class="am-engine-card" onclick="selectEngine(this,'udio')">
+            <div class="am-engine-icon">🎼</div>
+            <div class="am-engine-name">Udio</div>
+            <div class="am-engine-desc">音质最佳 · 专业级</div>
+        </div>
+    </div>
+    
+    <!-- Prompt -->
+    <div class="am-prompt-section">
+        <h3>📝 音乐描述</h3>
+        <textarea class="am-textarea" id="amPrompt" placeholder="描述你想要的音乐...&#10;例如：一首轻快的电子舞曲，带有合成器旋律和强烈的节拍，适合运动时使用"></textarea>
+    </div>
+    
+    <!-- Params -->
+    <div class="am-params-grid">
+        <div class="am-param-group">
+            <label>🎭 风格</label>
+            <select id="amGenre">
+                <option value="">任意</option>
+                <option value="pop">流行 Pop</option>
+                <option value="electronic">电子 Electronic</option>
+                <option value="rock">摇滚 Rock</option>
+                <option value="jazz">爵士 Jazz</option>
+                <option value="classical">古典 Classical</option>
+                <option value="hip-hop">嘻哈 Hip-Hop</option>
+                <option value="ambient">氛围 Ambient</option>
+                <option value="lo-fi">Lo-Fi</option>
+                <option value="cinematic">电影配乐 Cinematic</option>
+                <option value="folk">民谣 Folk</option>
+                <option value="r&b">R&B</option>
+                <option value="metal">金属 Metal</option>
+            </select>
+        </div>
+        <div class="am-param-group">
+            <label>😊 情绪</label>
+            <select id="amMood">
+                <option value="">任意</option>
+                <option value="happy">欢快 Happy</option>
+                <option value="sad">忧伤 Sad</option>
+                <option value="energetic">活力 Energetic</option>
+                <option value="calm">平静 Calm</option>
+                <option value="epic">史诗 Epic</option>
+                <option value="romantic">浪漫 Romantic</option>
+                <option value="dark">暗黑 Dark</option>
+                <option value="uplifting">振奋 Uplifting</option>
+            </select>
+        </div>
+        <div class="am-param-group">
+            <label>🎸 乐器</label>
+            <select id="amInstrument" onchange="toggleInstrument(this)">
+                <option value="">任意</option>
+                <option value="piano">钢琴 Piano</option>
+                <option value="guitar">吉他 Guitar</option>
+                <option value="synthesizer">合成器 Synth</option>
+                <option value="drums">鼓 Drums</option>
+                <option value="bass">贝斯 Bass</option>
+                <option value="strings">弦乐 Strings</option>
+                <option value="flute">长笛 Flute</option>
+                <option value="saxophone">萨克斯 Sax</option>
+            </select>
+        </div>
+        <div class="am-param-group">
+            <label>⏱️ 时长: <span id="amDurVal">30</span>秒</label>
+            <div class="am-slider-wrap">
+                <input type="range" class="am-slider" id="amDuration" min="10" max="120" value="30" step="5" oninput="document.getElementById('amDurVal').textContent=this.value">
+            </div>
+        </div>
+        <div class="am-param-group">
+            <label>🎵 调性</label>
+            <select id="amKey">
+                <option value="C">C 大调</option>
+                <option value="D">D 大调</option>
+                <option value="E">E 大调</option>
+                <option value="F">F 大调</option>
+                <option value="G">G 大调</option>
+                <option value="A">A 大调</option>
+                <option value="B">B 大调</option>
+                <option value="Am">A 小调</option>
+                <option value="Em">E 小调</option>
+                <option value="Dm">D 小调</option>
+            </select>
+        </div>
+        <div class="am-param-group">
+            <label>⚡ 速度: <span id="amTempoVal">120</span> BPM</label>
+            <div class="am-slider-wrap">
+                <input type="range" class="am-slider" id="amTempo" min="60" max="200" value="120" step="5" oninput="document.getElementById('amTempoVal').textContent=this.value">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Melody Piano -->
+    <div class="am-param-group" style="margin-bottom:20px;">
+        <label>🎹 自定义旋律 (点击琴键添加音符)</label>
+        <div class="am-piano" id="amPiano">
+            <!-- Generated by JS -->
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+            <button class="glow-btn" style="padding:4px 12px;font-size:0.75em;" onclick="clearMelody()">清除</button>
+            <button class="glow-btn" style="padding:4px 12px;font-size:0.75em;" onclick="playMelody()">试听</button>
+            <span style="color:rgba(255,255,255,0.3);font-size:0.78em;">已选 <span id="melodyCount">0</span> 个音符</span>
+        </div>
+    </div>
+    
+    <!-- Generate Button -->
+    <button class="am-generate-btn" id="amGenerateBtn" onclick="generateMusic()">
+        🎵 生成音乐
+    </button>
+    
+    <!-- Loading -->
+    <div class="am-loading" id="amLoading">
+        <div class="am-loading-spinner"></div>
+        <p style="color:rgba(255,255,255,0.6);">AI 正在创作你的音乐，请稍候...</p>
+    </div>
+    
+    <!-- Player -->
+    <div class="am-player" id="amPlayer">
+        <div class="am-player-title" id="amPlayerTitle">🎵 生成的音乐</div>
+        <audio id="amAudio" controls></audio>
+        <div class="am-player-actions">
+            <a id="amDownloadBtn" href="#" download>⬇️ 下载</a>
+            <button onclick="document.getElementById('amPlayer').classList.remove('show')">关闭</button>
+        </div>
+    </div>
+    
+    <!-- Library -->
+    <div class="am-library">
+        <h3>🎼 我的音乐库</h3>
+        <div class="am-library-grid" id="amLibrary">
+            <p style="color:rgba(255,255,255,0.3);grid-column:1/-1;text-align:center;padding:20px;">暂无生成记录，开始创作你的第一首 AI 音乐吧！</p>
+        </div>
+    </div>
+</div>
+
+<script>
+var selectedEngine = 'musicgen';
+var selectedInstruments = [];
+var melodyNotes = [];
+
+function selectEngine(el, engine) {
+    document.querySelectorAll('.am-engine-card').forEach(function(c){ c.classList.remove('active'); });
+    el.classList.add('active');
+    selectedEngine = engine;
+}
+
+function toggleInstrument(sel) {
+    var val = sel.value;
+    if(val && selectedInstruments.indexOf(val) < 0) {
+        selectedInstruments.push(val);
+    }
+}
+
+// Piano
+var notes = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+var noteNames = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+(function(){
+    var piano = document.getElementById('amPiano');
+    for(var oct=4; oct<=5; oct++) {
+        for(var i=0; i<notes.length; i++) {
+            var note = notes[i] + oct;
+            var isBlack = notes[i].includes('#');
+            var key = document.createElement('div');
+            key.className = 'am-key' + (isBlack ? ' black' : '');
+            key.textContent = note;
+            key.dataset.note = note;
+            key.onclick = function() {
+                this.classList.toggle('active');
+                var n = this.dataset.note;
+                var idx = melodyNotes.indexOf(n);
+                if(idx >= 0) melodyNotes.splice(idx, 1);
+                else melodyNotes.push(n);
+                document.getElementById('melodyCount').textContent = melodyNotes.length;
+            };
+            piano.appendChild(key);
+        }
+    }
+})();
+
+function clearMelody() {
+    melodyNotes = [];
+    document.querySelectorAll('.am-key.active').forEach(function(k){ k.classList.remove('active'); });
+    document.getElementById('melodyCount').textContent = 0;
+}
+
+function playMelody() {
+    if(melodyNotes.length === 0) { showToast('请先选择音符', 'warning'); return; }
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    var freqs = melodyNotes.map(function(n) {
+        var idx = noteNames.indexOf(n.replace(/\d/,''));
+        var oct = parseInt(n.replace(/\D/g,''));
+        return 440 * Math.pow(2, (idx - 9 + (oct - 4) * 12) / 12);
+    });
+    freqs.forEach(function(freq, i) {
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.value = 0.3;
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5 * (i + 1));
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + 0.5 * i);
+        osc.stop(ctx.currentTime + 0.5 * (i + 1));
+    });
+}
+
+function generateMusic() {
+    var prompt = document.getElementById('amPrompt').value.trim();
+    if(!prompt) { showToast('请输入音乐描述', 'warning'); return; }
+    
+    var btn = document.getElementById('amGenerateBtn');
+    var loading = document.getElementById('amLoading');
+    var player = document.getElementById('amPlayer');
+    
+    btn.disabled = true;
+    loading.classList.add('show');
+    player.classList.remove('show');
+    
+    fetch('/api/ai-music/generate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            prompt: prompt,
+            engine: selectedEngine,
+            duration: parseInt(document.getElementById('amDuration').value),
+            genre: document.getElementById('amGenre').value,
+            mood: document.getElementById('amMood').value,
+            tempo: parseInt(document.getElementById('amTempo').value),
+            instruments: selectedInstruments,
+            melody_notes: melodyNotes,
+            key: document.getElementById('amKey').value,
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        btn.disabled = false;
+        loading.classList.remove('show');
+        
+        if(data.status === 'completed') {
+            var audio = document.getElementById('amAudio');
+            audio.src = data.url + '?t=' + Date.now();
+            document.getElementById('amPlayerTitle').textContent = '🎵 ' + prompt.substring(0, 30) + (prompt.length > 30 ? '...' : '');
+            document.getElementById('amDownloadBtn').href = data.url;
+            player.classList.add('show');
+            showToast('音乐生成成功！', 'success');
+            loadLibrary();
+        } else if(data.status === 'no_api_key') {
+            showToast('需要配置 API Key: ' + data.error, 'warning');
+        } else if(data.error) {
+            showToast('生成失败: ' + data.error.substring(0, 100), 'error');
+        } else {
+            showToast('状态: ' + data.status, 'info');
+        }
+    })
+    .catch(function(e) {
+        btn.disabled = false;
+        loading.classList.remove('show');
+        showToast('请求失败: ' + e.message, 'error');
+    });
+}
+
+function loadLibrary() {
+    fetch('/api/ai-music/library', {credentials: 'include'})
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var grid = document.getElementById('amLibrary');
+        if(data.length === 0) {
+            grid.innerHTML = '<p style="color:rgba(255,255,255,0.3);grid-column:1/-1;text-align:center;padding:20px;">暂无生成记录</p>';
+            return;
+        }
+        grid.innerHTML = data.map(function(t) {
+            return '<div class="am-track-card">' +
+                '<div class="am-track-title">' + (t.prompt || 'AI音乐').substring(0, 40) + '</div>' +
+                '<div class="am-track-meta">' + t.engine + ' · ' + t.duration + 's · ' + (t.genre||'无风格') + ' · ' + t.created_at + '</div>' +
+                '<audio class="am-track-audio" controls src="/static/audio/generated/' + t.filename + '"></audio>' +
+                '<div class="am-track-actions">' +
+                    '<a href="/static/audio/generated/' + t.filename + '" download>下载</a>' +
+                    '<button class="delete" onclick="deleteTrack(' + t.id + ')">删除</button>' +
+                '</div></div>';
+        }).join('');
+    });
+}
+
+function deleteTrack(id) {
+    if(!confirm('确定删除这首音乐？')) return;
+    fetch('/api/ai-music/' + id, {method: 'DELETE', credentials: 'include'})
+    .then(function(r) { return r.json(); })
+    .then(function() { loadLibrary(); showToast('已删除', 'success'); });
+}
+
+// Load library on page load
+loadLibrary();
+</script>
+{% endblock %}

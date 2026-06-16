@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🍳 美食厨房</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@keyframes bgMove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+body{
+  min-height:100vh;
+  background:linear-gradient(135deg,#1a1205 0%,#2d1f0a 25%,#3d2a0d 50%,#2d1f0a 75%,#1a1205 100%);
+  background-size:400% 400%;animation:bgMove 20s ease infinite;
+  font-family:'Segoe UI','Microsoft YaHei',sans-serif;color:#fff;overflow-x:hidden;
+}
+#app{position:relative;z-index:1}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:16px 40px;background:rgba(0,0,0,.3);backdrop-filter:blur(10px);position:fixed;top:0;left:0;right:0;z-index:100}
+.nav .logo{font-size:22px;cursor:pointer;background:linear-gradient(135deg,#ffce54,#ffeed5);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700}
+.back-btn{padding:8px 20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;color:#fff;font-size:14px;cursor:pointer;transition:all .3s}
+.back-btn:hover{background:rgba(255,206,84,.3)}
+
+.main{padding:90px 40px 40px;max-width:1200px;margin:0 auto}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:24px}
+.menu-item{padding:14px;border-radius:12px;cursor:pointer;text-align:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);transition:all .3s;font-size:14px}
+.menu-item:hover{background:rgba(255,206,84,.15)}
+.menu-item.active{background:linear-gradient(135deg,rgba(255,206,84,.3),rgba(255,238,173,.2));border-color:#ffce54;font-weight:600}
+
+.section{background:rgba(255,255,255,.05);backdrop-filter:blur(15px);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:28px;margin-bottom:20px;animation:fadeInUp .4s ease}
+.section-title{font-size:22px;margin-bottom:18px;display:flex;align-items:center;gap:10px}
+
+.recipe-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.recipe-card{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:22px;transition:all .3s;
+  animation:fadeInUp .3s ease backwards;
+}
+.recipe-card:hover{background:rgba(255,206,84,.08);transform:translateY(-3px)}
+.recipe-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.recipe-title{font-size:18px;font-weight:600;color:#ffce54}
+.recipe-badge{padding:3px 10px;border-radius:8px;font-size:12px;font-weight:600}
+.recipe-badge.easy{background:rgba(46,213,115,.2);color:#2ed573}
+.recipe-badge.medium{background:rgba(255,165,2,.2);color:#ffa502}
+.recipe-badge.hard{background:rgba(255,71,87,.2);color:#ff4757}
+.recipe-meta{display:flex;gap:12px;font-size:13px;color:rgba(255,255,255,.5);margin-bottom:10px}
+.recipe-tags{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.recipe-tag{padding:2px 10px;background:rgba(255,255,255,.08);border-radius:10px;font-size:12px;color:rgba(255,255,255,.5)}
+.recipe-content{color:rgba(255,255,255,.7);font-size:14px;line-height:1.8;white-space:pre-wrap}
+.view-btn{margin-top:12px;padding:8px 20px;background:rgba(255,206,84,.2);border:1px solid rgba(255,206,84,.4);border-radius:10px;color:#ffce54;font-size:14px;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="nav">
+    <div class="logo" @click="goHome">🍳 美食厨房</div>
+    <button class="back-btn" @click="goHome">← 返回主页</button>
+  </div>
+
+  <div class="main">
+    <div class="menu-grid">
+      <div class="menu-item" :class="{active:sub==='all'}" @click="sub='all'">🍳 全部菜谱</div>
+      <div class="menu-item" :class="{active:sub==='chinese'}" @click="sub='chinese'">🥢 中式料理</div>
+      <div class="menu-item" :class="{active:sub==='western'}" @click="sub='western'">🍝 西式料理</div>
+      <div class="menu-item" :class="{active:sub==='japanese'}" @click="sub='japanese'">🍣 日式料理</div>
+      <div class="menu-item" :class="{active:sub==='korean'}" @click="sub='korean'">🥘 韩式料理</div>
+      <div class="menu-item" :class="{active:sub==='dessert'}" @click="sub='dessert'">🍰 甜点烘焙</div>
+      <div class="menu-item" :class="{active:sub==='easy'}" @click="sub='easy'">⚡ 快手菜</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">🍳 {{ subTitle }} <span style="font-size:14px;color:rgba(255,255,255,.4);font-weight:400">({{ displayRecipes.length }}道)</span></div>
+      <div class="recipe-grid">
+        <div class="recipe-card" v-for="(r,i) in displayRecipes" :key="i" :style="'animation-delay:'+(i*0.05)+'s'">
+          <div class="recipe-header">
+            <span class="recipe-title">{{ r.title }}</span>
+            <span class="recipe-badge" :class="r.difficulty">{{ r.difficulty }}</span>
+          </div>
+          <div class="recipe-meta">
+            <span>⏱️ {{ r.cook_time || '未知' }}</span>
+            <span v-if="r.tags">{{ r.tags }}</span>
+          </div>
+          <div class="recipe-tags">
+            <span class="recipe-tag" v-for="t in (r.tags||'').split(',')" :key="t.trim()">{{ t.trim() }}</span>
+          </div>
+          <div v-if="r.show" class="recipe-content">{{ r.content }}</div>
+          <button class="view-btn" @click="r.show=!r.show">{{ r.show?'收起':'查看做法' }}</button>
+        </div>
+      </div>
+      <div v-if="!displayRecipes.length" style="text-align:center;padding:40px;color:rgba(255,255,255,.3)">暂无相关菜谱</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const {createApp}=Vue;
+createApp({
+  data(){
+    return{
+      sub:'all',
+      recipes:[],
+    }
+  },
+  computed:{
+    subTitle(){
+      return{all:'全部菜谱',chinese:'中式料理',western:'西式料理',japanese:'日式料理',korean:'韩式料理',dessert:'甜点烘焙',easy:'快手菜'}[this.sub]||'菜谱';
+    },
+    displayRecipes(){
+      if(this.sub==='all') return this.recipes;
+      if(this.sub==='easy') return this.recipes.filter(r=>r.difficulty==='easy');
+      return this.recipes.filter(r=>(r.tags||'') .toLowerCase().includes(this.sub));
+    }
+  },
+  methods:{
+    goHome(){window.location.href='/main'},
+    async loadData(){
+      const r=await fetch('/api/cooking',{headers:{'Authorization':'Bearer '+token}});
+      if(r.ok){
+        const data=await r.json();
+        this.recipes=data.map(r=>({...r,show:false}));
+      }
+    },
+  },
+  mounted(){this.loadData()}
+}).mount('#app');
+
+const token=localStorage.getItem('token')||'';
+if(!token) window.location.href='/';
+</script>
+</body>
+</html>

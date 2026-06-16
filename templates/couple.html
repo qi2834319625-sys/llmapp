@@ -1,0 +1,2040 @@
+{% extends "base.html" %}
+{% block title %}情侣空间 - 我们的爱{% endblock %}
+{% block content %}
+<style>
+/* ===== ROOT VARIABLES ===== */
+:root {
+    --pink-light: #ffc2d4;
+    --pink: #ff6b9d;
+    --pink-dark: #c44569;
+    --rose: #e84393;
+    --rose-deep: #a29bfe;
+    --bg-glass: rgba(255,255,255,0.05);
+    --bg-glass-hover: rgba(255,255,255,0.08);
+    --border-pink: rgba(255,107,157,0.2);
+    --text-dim: rgba(255,255,255,0.5);
+    --text-mid: rgba(255,255,255,0.7);
+}
+
+/* ===== GLOBAL ===== */
+* { box-sizing: border-box; }
+
+/* ===== FLOATING HEARTS ANIMATION ===== */
+@keyframes floatUp {
+    0% { transform: translateY(100vh) scale(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 0.6; }
+    100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+}
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+@keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    14% { transform: scale(1.15); }
+    28% { transform: scale(1); }
+    42% { transform: scale(1.15); }
+    56% { transform: scale(1); }
+}
+@keyframes sparkle {
+    0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1) rotate(180deg); }
+}
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-40px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(40px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+@keyframes countUp {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: scale(1); }
+}
+@keyframes quoteRotate {
+    0% { opacity: 0; transform: translateY(20px); }
+    10% { opacity: 1; transform: translateY(0); }
+    90% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-20px); }
+}
+
+.floating-hearts { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: hidden; }
+.floating-hearts span {
+    position: absolute; bottom: -50px; font-size: 1.2em;
+    animation: floatUp linear infinite; opacity: 0;
+}
+
+/* ===== HEADER ===== */
+.couple-header {
+    text-align: center; padding: 50px 20px 10px; position: relative; z-index: 1;
+    animation: fadeInUp 0.8s ease;
+}
+.couple-header h1 {
+    font-size: 2.8em;
+    background: linear-gradient(135deg, #ff6b9d, #ffc2d4, #e84393, #ff6b9d);
+    background-size: 300% 300%;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    animation: shimmer 4s linear infinite;
+    margin-bottom: 8px;
+}
+.couple-header .subtitle { color: var(--text-dim); font-size: 1.05em; }
+.couple-header .heart-beat { display: inline-block; animation: heartbeat 2s ease infinite; font-size: 1.2em; }
+
+/* ===== LOVE COUNTER & ANNIVERSARY ===== */
+.love-stats-bar {
+    display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;
+    padding: 20px; margin: 10px auto; max-width: 1000px; position: relative; z-index: 1;
+}
+.stat-card {
+    background: var(--bg-glass); border: 1px solid var(--border-pink);
+    border-radius: 20px; padding: 20px 30px; text-align: center;
+    min-width: 200px; transition: all 0.3s; animation: fadeInUp 0.6s ease backwards;
+}
+.stat-card:nth-child(1) { animation-delay: 0.1s; }
+.stat-card:nth-child(2) { animation-delay: 0.2s; }
+.stat-card:nth-child(3) { animation-delay: 0.3s; }
+.stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(255,107,157,0.15); border-color: rgba(255,107,157,0.4); }
+.stat-card .stat-icon { font-size: 2em; margin-bottom: 8px; }
+.stat-card .stat-number {
+    font-size: 2.4em; font-weight: 700;
+    background: linear-gradient(135deg, #ff6b9d, #e84393);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    animation: countUp 1s ease;
+}
+.stat-card .stat-label { color: var(--text-dim); font-size: 0.85em; margin-top: 4px; }
+.stat-card .stat-sub { color: var(--pink-light); font-size: 0.9em; margin-top: 6px; font-weight: 500; }
+
+/* ===== COUNTDOWN ===== */
+.countdown-grid { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+.cd-box {
+    background: rgba(255,107,157,0.12); border-radius: 10px; padding: 8px 12px; min-width: 50px;
+}
+.cd-box .cd-num { font-size: 1.5em; font-weight: 700; color: #ff6b9d; }
+.cd-box .cd-label { font-size: 0.65em; color: var(--text-dim); text-transform: uppercase; }
+
+/* ===== QUOTE ROTATION ===== */
+.quote-section {
+    text-align: center; padding: 25px 40px; margin: 10px auto; max-width: 800px;
+    position: relative; z-index: 1;
+}
+.quote-section .quote-text {
+    font-size: 1.15em; font-style: italic; color: var(--pink-light);
+    line-height: 1.7; min-height: 60px;
+    transition: opacity 0.5s ease;
+}
+.quote-section .quote-author { color: var(--text-dim); font-size: 0.85em; margin-top: 8px; }
+
+/* ===== TAB NAVIGATION ===== */
+.tab-nav {
+    display: flex; justify-content: center; gap: 8px; margin: 20px 0;
+    flex-wrap: wrap; padding: 0 20px; position: relative; z-index: 1;
+}
+.tab-btn {
+    padding: 11px 22px; border-radius: 25px;
+    border: 1px solid var(--border-pink);
+    background: rgba(255,107,157,0.08); color: #ff6b9d;
+    cursor: pointer; font-size: 0.9em; transition: all 0.3s;
+    font-family: inherit; font-weight: 500;
+}
+.tab-btn:hover, .tab-btn.active {
+    background: linear-gradient(135deg, #ff6b9d, #c44569);
+    color: #fff; border-color: transparent;
+    box-shadow: 0 4px 15px rgba(255,107,157,0.3);
+}
+
+/* ===== TAB CONTENT ===== */
+.tab-content {
+    display: none; padding: 20px 40px 60px; max-width: 1200px; margin: 0 auto;
+    position: relative; z-index: 1;
+}
+.tab-content.active { display: block; animation: fadeInUp 0.4s ease; }
+
+/* ===== SECTION TITLES ===== */
+.section-title {
+    color: #ff6b9d; font-size: 1.4em; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+}
+
+/* ===== UPLOAD FORMS ===== */
+.upload-form {
+    background: var(--bg-glass); border-radius: 16px; padding: 25px; margin-bottom: 30px;
+    border: 1px dashed var(--border-pink);
+}
+.upload-form h3 { color: #ff6b9d; margin-bottom: 15px; }
+.upload-form input[type="file"] { color: var(--text-mid); margin-right: 10px; }
+.upload-form input[type="text"], .upload-form input[type="date"], .upload-form input[type="number"],
+.upload-form select {
+    padding: 10px 16px; background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 10px;
+    color: #fff; width: 250px; outline: none; margin-right: 10px; margin-bottom: 8px;
+    font-family: inherit;
+}
+.upload-form input:focus, .upload-form select:focus { border-color: #ff6b9d; }
+.upload-form button, .btn-pink {
+    padding: 10px 24px; background: linear-gradient(135deg, #ff6b9d, #c44569);
+    border: none; border-radius: 10px; color: #fff; cursor: pointer;
+    font-weight: 600; font-family: inherit; transition: all 0.3s;
+}
+.upload-form button:hover, .btn-pink:hover { box-shadow: 0 4px 15px rgba(255,107,157,0.4); transform: translateY(-1px); }
+
+/* ===== PHOTO GRID & LIGHTBOX ===== */
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; }
+.photo-card {
+    background: var(--bg-glass); border-radius: 16px; overflow: hidden;
+    border: 1px solid var(--border-pink); transition: all 0.3s; cursor: pointer;
+}
+.photo-card:hover { transform: scale(1.03); box-shadow: 0 10px 30px rgba(255,107,157,0.2); }
+.photo-card img { width: 100%; height: 200px; object-fit: cover; display: block; }
+.photo-card .caption { padding: 12px 15px; color: var(--text-mid); font-size: 0.88em; }
+.photo-card .caption small { color: rgba(255,255,255,0.3); }
+.photo-card .delete-btn {
+    float: right; background: rgba(255,82,82,0.2); color: #ff5252;
+    border: none; padding: 3px 9px; border-radius: 8px; cursor: pointer;
+    font-size: 0.78em; text-decoration: none;
+}
+
+/* Lightbox */
+.lightbox-overlay {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center;
+    align-items: center; flex-direction: column;
+}
+.lightbox-overlay.active { display: flex; }
+.lightbox-overlay img { max-width: 90%; max-height: 80vh; border-radius: 12px; box-shadow: 0 0 40px rgba(255,107,157,0.3); }
+.lightbox-overlay .lightbox-caption { color: #fff; margin-top: 15px; font-size: 1.1em; }
+.lightbox-overlay .lightbox-close {
+    position: absolute; top: 20px; right: 30px; font-size: 2em;
+    color: #fff; cursor: pointer; background: none; border: none;
+}
+.lightbox-overlay .lightbox-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    font-size: 2.5em; color: #fff; cursor: pointer; background: rgba(255,107,157,0.3);
+    border: none; border-radius: 50%; width: 50px; height: 50px; display: flex;
+    align-items: center; justify-content: center; transition: all 0.3s;
+}
+.lightbox-overlay .lightbox-nav:hover { background: rgba(255,107,157,0.6); }
+.lightbox-overlay .lightbox-prev { left: 20px; }
+.lightbox-overlay .lightbox-next { right: 20px; }
+
+/* ===== VIDEO GALLERY ===== */
+.video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+.video-card {
+    background: var(--bg-glass); border-radius: 16px; overflow: hidden;
+    border: 1px solid var(--border-pink); transition: all 0.3s;
+}
+.video-card:hover { box-shadow: 0 8px 25px rgba(255,107,157,0.15); }
+.video-card video { width: 100%; display: block; }
+.video-card .v-caption { padding: 15px; color: var(--text-mid); }
+
+/* ===== STORY BLOG ===== */
+.story-list { max-width: 800px; margin: 0 auto; }
+.story-card {
+    background: var(--bg-glass); border-radius: 16px; padding: 25px;
+    margin-bottom: 20px; border-left: 4px solid #ff6b9d;
+    transition: all 0.3s; animation: fadeInUp 0.5s ease backwards;
+}
+.story-card:hover { background: var(--bg-glass-hover); border-left-width: 6px; }
+.story-card .mood { font-size: 1.5em; margin-bottom: 8px; }
+.story-card h3 { color: #ff6b9d; margin-bottom: 10px; font-size: 1.2em; }
+.story-card p { color: var(--text-mid); line-height: 1.8; }
+.story-card .date { color: rgba(255,255,255,0.3); font-size: 0.8em; margin-top: 10px; }
+.story-form {
+    background: var(--bg-glass); border-radius: 16px; padding: 30px;
+    max-width: 800px; margin: 0 auto 30px; border: 1px solid var(--border-pink);
+}
+.story-form input, .story-form textarea, .story-form select {
+    width: 100%; padding: 12px 16px; margin-bottom: 15px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px; color: #fff; font-size: 1em; outline: none; font-family: inherit;
+}
+.story-form input:focus, .story-form textarea:focus { border-color: #ff6b9d; }
+.story-form textarea { height: 150px; resize: vertical; }
+.story-form button {
+    padding: 12px 36px; background: linear-gradient(135deg, #ff6b9d, #c44569);
+    border: none; border-radius: 10px; color: #fff; cursor: pointer;
+    font-size: 1em; font-weight: 600; font-family: inherit; transition: all 0.3s;
+}
+.story-form button:hover { box-shadow: 0 4px 15px rgba(255,107,157,0.4); }
+
+/* ===== TIMELINE ===== */
+.timeline-outer { position: relative; max-width: 800px; margin: 0 auto; padding: 20px 0; }
+.timeline-outer::before {
+    content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 3px;
+    background: linear-gradient(to bottom, #ff6b9d, #c44569, #e84393);
+    transform: translateX(-50%); border-radius: 3px;
+}
+.tl-item { position: relative; width: 50%; padding: 15px 40px; box-sizing: border-box; }
+.tl-item:nth-child(odd) { left: 0; text-align: right; animation: slideInLeft 0.5s ease backwards; }
+.tl-item:nth-child(even) { left: 50%; animation: slideInRight 0.5s ease backwards; }
+.tl-item .tl-dot {
+    position: absolute; width: 16px; height: 16px; border-radius: 50%;
+    background: #ff6b9d; top: 24px; border: 3px solid rgba(255,107,157,0.3);
+    box-shadow: 0 0 10px rgba(255,107,157,0.4);
+}
+.tl-item:nth-child(odd) .tl-dot { right: -8px; }
+.tl-item:nth-child(even) .tl-dot { left: -8px; }
+.tl-card {
+    background: var(--bg-glass); border-radius: 14px; padding: 20px;
+    border: 1px solid var(--border-pink); transition: all 0.3s;
+}
+.tl-card:hover { border-color: rgba(255,107,157,0.4); background: var(--bg-glass-hover); transform: translateY(-2px); }
+.tl-card .tl-date { color: #ff6b9d; font-size: 0.9em; font-weight: 600; }
+.tl-card .tl-icon { font-size: 1.5em; margin: 5px 0; }
+.tl-card h3 { color: #fff; margin: 5px 0; font-size: 1.05em; }
+.tl-card p { color: var(--text-dim); font-size: 0.85em; line-height: 1.6; }
+
+/* ===== LOVE LETTER MAILBOX ===== */
+.letter-mailbox { max-width: 700px; margin: 0 auto; }
+.letter-compose {
+    background: var(--bg-glass); border-radius: 16px; padding: 30px;
+    border: 1px solid var(--border-pink); margin-bottom: 30px;
+}
+.letter-compose textarea {
+    width: 100%; padding: 14px 18px; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,107,157,0.2); border-radius: 12px;
+    color: #fff; font-size: 1em; font-family: inherit; outline: none;
+    height: 160px; resize: vertical; margin-bottom: 12px;
+}
+.letter-compose textarea:focus { border-color: #ff6b9d; }
+.letter-compose input[type="text"] {
+    width: 100%; padding: 12px 18px; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,107,157,0.2); border-radius: 12px;
+    color: #fff; font-size: 1em; font-family: inherit; outline: none; margin-bottom: 12px;
+}
+.letter-compose .letter-actions { display: flex; gap: 10px; align-items: center; }
+.letter-compose .sender-select {
+    padding: 10px 16px; background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 10px;
+    color: #fff; font-family: inherit; outline: none;
+}
+.letter-list { display: flex; flex-direction: column; gap: 15px; }
+.letter-card {
+    background: linear-gradient(135deg, rgba(255,107,157,0.08), rgba(232,67,147,0.05));
+    border-radius: 16px; padding: 22px; border: 1px solid var(--border-pink);
+    position: relative; transition: all 0.3s; animation: fadeInUp 0.4s ease backwards;
+}
+.letter-card::before {
+    content: '💌'; position: absolute; top: -10px; right: 20px;
+    font-size: 1.5em; background: #1a1a2e; padding: 0 8px;
+}
+.letter-card .letter-from { color: #ff6b9d; font-weight: 600; font-size: 0.9em; margin-bottom: 8px; }
+.letter-card .letter-body { color: var(--text-mid); line-height: 1.7; font-style: italic; }
+.letter-card .letter-date { color: rgba(255,255,255,0.25); font-size: 0.78em; margin-top: 10px; }
+
+/* ===== BUCKET LIST ===== */
+.bucket-list-container { max-width: 800px; margin: 0 auto; }
+.bucket-add {
+    background: var(--bg-glass); border-radius: 16px; padding: 25px;
+    border: 1px dashed var(--border-pink); margin-bottom: 25px;
+}
+.bucket-add input[type="text"] {
+    padding: 10px 16px; background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 10px;
+    color: #fff; width: 350px; outline: none; margin-right: 10px; font-family: inherit;
+}
+.bucket-add select {
+    padding: 10px 16px; background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 10px;
+    color: #fff; font-family: inherit; outline: none; margin-right: 10px;
+}
+.bucket-progress {
+    background: var(--bg-glass); border-radius: 16px; padding: 20px;
+    border: 1px solid var(--border-pink); margin-bottom: 25px;
+}
+.bucket-progress .progress-bar-bg {
+    background: rgba(255,255,255,0.08); border-radius: 10px; height: 12px; overflow: hidden; margin-top: 10px;
+}
+.bucket-progress .progress-bar-fill {
+    height: 100%; border-radius: 10px;
+    background: linear-gradient(90deg, #ff6b9d, #e84393);
+    transition: width 0.8s ease;
+}
+.bucket-progress .progress-text { color: var(--text-dim); font-size: 0.85em; margin-top: 6px; }
+.bucket-items { display: flex; flex-direction: column; gap: 10px; }
+.bucket-item {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--bg-glass); border-radius: 14px; padding: 16px 20px;
+    border: 1px solid var(--border-pink); transition: all 0.3s;
+    animation: fadeInUp 0.4s ease backwards;
+}
+.bucket-item:hover { background: var(--bg-glass-hover); }
+.bucket-item.done { opacity: 0.6; border-color: rgba(76,175,80,0.3); }
+.bucket-item.done .bucket-text { text-decoration: line-through; color: var(--text-dim); }
+.bucket-item input[type="checkbox"] {
+    width: 22px; height: 22px; accent-color: #ff6b9d; cursor: pointer; flex-shrink: 0;
+}
+.bucket-item .bucket-text { flex: 1; color: var(--text-mid); }
+.bucket-item .bucket-emoji { font-size: 1.3em; }
+.bucket-item .bucket-delete {
+    background: rgba(255,82,82,0.15); color: #ff5252; border: none;
+    padding: 4px 10px; border-radius: 8px; cursor: pointer; font-size: 0.78em;
+    font-family: inherit;
+}
+
+/* ===== COUPLE QUIZ / GAMES ===== */
+.quiz-container { max-width: 800px; margin: 0 auto; }
+.quiz-card {
+    background: var(--bg-glass); border-radius: 16px; padding: 30px;
+    border: 1px solid var(--border-pink); margin-bottom: 20px;
+    animation: fadeInUp 0.4s ease backwards;
+}
+.quiz-card h3 { color: #ff6b9d; margin-bottom: 15px; }
+.quiz-card .quiz-question { color: #fff; font-size: 1.1em; margin-bottom: 15px; }
+.quiz-card .quiz-options { display: flex; flex-direction: column; gap: 10px; }
+.quiz-card .quiz-option {
+    padding: 12px 18px; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,107,157,0.15); border-radius: 12px;
+    color: var(--text-mid); cursor: pointer; transition: all 0.3s;
+    font-family: inherit; font-size: 0.95em; text-align: left;
+}
+.quiz-card .quiz-option:hover { background: rgba(255,107,157,0.12); border-color: #ff6b9d; }
+.quiz-card .quiz-option.correct { background: rgba(76,175,80,0.15); border-color: #4caf50; color: #4caf50; }
+.quiz-card .quiz-option.wrong { background: rgba(255,82,82,0.15); border-color: #ff5252; color: #ff5252; }
+.quiz-score {
+    text-align: center; padding: 20px; background: var(--bg-glass);
+    border-radius: 16px; border: 1px solid var(--border-pink); margin-bottom: 20px;
+}
+.quiz-score .score-num { font-size: 2.5em; font-weight: 700; color: #ff6b9d; }
+.love-compatibility {
+    background: linear-gradient(135deg, rgba(255,107,157,0.1), rgba(232,67,147,0.05));
+    border-radius: 16px; padding: 30px; border: 1px solid var(--border-pink);
+    text-align: center; margin-bottom: 20px;
+}
+.love-compatibility .compat-percent {
+    font-size: 3.5em; font-weight: 800;
+    background: linear-gradient(135deg, #ff6b9d, #e84393);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    animation: pulse 2s ease infinite;
+}
+.love-compatibility input {
+    padding: 10px 16px; background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 10px;
+    color: #fff; width: 200px; outline: none; margin: 10px 5px; font-family: inherit;
+}
+
+/* ===== RELATIONSHIP STATS ===== */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+.rel-stat-card {
+    background: var(--bg-glass); border-radius: 16px; padding: 22px;
+    border: 1px solid var(--border-pink); text-align: center;
+    transition: all 0.3s; animation: fadeInUp 0.4s ease backwards;
+}
+.rel-stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(255,107,157,0.15); }
+.rel-stat-card .rs-icon { font-size: 2em; margin-bottom: 8px; }
+.rel-stat-card .rs-value { font-size: 1.8em; font-weight: 700; color: #ff6b9d; }
+.rel-stat-card .rs-label { color: var(--text-dim); font-size: 0.82em; margin-top: 4px; }
+.rel-stat-card .rs-bar-bg {
+    background: rgba(255,255,255,0.08); border-radius: 8px; height: 8px;
+    overflow: hidden; margin-top: 10px;
+}
+.rel-stat-card .rs-bar-fill {
+    height: 100%; border-radius: 8px;
+    background: linear-gradient(90deg, #ff6b9d, #e84393);
+    transition: width 1s ease;
+}
+
+/* ===== ENHANCED TIMELINE ANIMATIONS ===== */
+@keyframes dotPulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(255,107,157,0.4); transform: scale(1); }
+    50% { box-shadow: 0 0 25px rgba(255,107,157,0.8), 0 0 40px rgba(255,107,157,0.3); transform: scale(1.3); }
+}
+@keyframes dotGlow {
+    0% { box-shadow: 0 0 5px rgba(255,107,157,0.3); }
+    50% { box-shadow: 0 0 20px rgba(255,107,157,0.7), 0 0 35px rgba(232,67,147,0.3); }
+    100% { box-shadow: 0 0 5px rgba(255,107,157,0.3); }
+}
+@keyframes lineGrow {
+    from { height: 0; }
+    to { height: 100%; }
+}
+@keyframes bounceIn {
+    0% { opacity: 0; transform: scale(0.3) translateY(20px); }
+    50% { opacity: 1; transform: scale(1.05) translateY(-5px); }
+    70% { transform: scale(0.95) translateY(2px); }
+    100% { transform: scale(1) translateY(0); }
+}
+@keyframes slideInUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+@keyframes moodBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.25); }
+}
+@keyframes ripple {
+    0% { box-shadow: 0 0 0 0 rgba(255,107,157,0.4); }
+    100% { box-shadow: 0 0 0 15px rgba(255,107,157,0); }
+}
+@keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+@keyframes typewriter {
+    from { max-height: 0; opacity: 0; }
+    to { max-height: 200px; opacity: 1; }
+}
+@keyframes confetti {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(-100px) rotate(720deg); opacity: 0; }
+}
+
+/* Enhanced timeline dots */
+.tl-item .tl-dot {
+    animation: dotPulse 2s ease-in-out infinite;
+}
+.tl-item:nth-child(odd) .tl-dot {
+    animation-delay: 0.5s;
+}
+.tl-item:hover .tl-dot {
+    animation: dotGlow 1s ease-in-out infinite;
+}
+
+/* ===== ANNIVERSARY COUNTDOWN ENHANCED ===== */
+.anniversary-config {
+    background: var(--bg-glass);
+    border-radius: 16px;
+    padding: 20px 25px;
+    border: 1px solid var(--border-pink);
+    margin: 15px auto 5px;
+    max-width: 600px;
+    position: relative;
+    z-index: 1;
+    animation: fadeInUp 0.6s ease;
+}
+.anniversary-config h4 {
+    color: #ff6b9d;
+    margin-bottom: 12px;
+    font-size: 1em;
+}
+.anniversary-config .config-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.anniversary-config input[type="date"] {
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    color: #fff;
+    font-family: inherit;
+    outline: none;
+}
+.anniversary-config input[type="date"]:focus {
+    border-color: #ff6b9d;
+}
+.anniversary-config .config-btn {
+    padding: 8px 18px;
+    background: linear-gradient(135deg, #ff6b9d, #c44569);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 600;
+    font-family: inherit;
+    font-size: 0.85em;
+    transition: all 0.3s;
+}
+.anniversary-config .config-btn:hover {
+    box-shadow: 0 4px 15px rgba(255,107,157,0.4);
+    transform: translateY(-1px);
+}
+.anniversary-config .config-hint {
+    color: var(--text-dim);
+    font-size: 0.78em;
+    margin-top: 8px;
+}
+
+/* ===== DAILY LOVE QUOTE CARD ===== */
+.daily-quote-card {
+    background: linear-gradient(135deg, rgba(255,107,157,0.12), rgba(232,67,147,0.06));
+    border-radius: 20px;
+    padding: 30px 35px;
+    margin: 15px auto;
+    max-width: 750px;
+    position: relative;
+    z-index: 1;
+    border: 1px solid rgba(255,107,157,0.25);
+    animation: fadeInUp 0.6s ease;
+    overflow: hidden;
+}
+.daily-quote-card::before {
+    content: '💝';
+    position: absolute;
+    top: -5px;
+    right: 20px;
+    font-size: 1.8em;
+    opacity: 0.6;
+}
+.daily-quote-card .dq-label {
+    color: #ff6b9d;
+    font-size: 0.82em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+}
+.daily-quote-card .dq-text {
+    color: var(--pink-light);
+    font-size: 1.15em;
+    line-height: 1.8;
+    font-style: italic;
+    min-height: 55px;
+    transition: opacity 0.5s ease;
+}
+.daily-quote-card .dq-author {
+    color: var(--text-dim);
+    font-size: 0.85em;
+    margin-top: 10px;
+}
+.daily-quote-card .dq-date {
+    color: rgba(255,255,255,0.2);
+    font-size: 0.75em;
+    margin-top: 6px;
+}
+
+/* ===== PHOTO SLIDESHOW VIEWER ===== */
+.slideshow-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.95);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+.slideshow-overlay.active { display: flex; }
+.slideshow-overlay .ss-img-container {
+    position: relative;
+    max-width: 90%;
+    max-height: 75vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.slideshow-overlay .ss-img {
+    max-width: 100%;
+    max-height: 75vh;
+    border-radius: 12px;
+    box-shadow: 0 0 50px rgba(255,107,157,0.3);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.slideshow-overlay .ss-caption {
+    color: #fff;
+    margin-top: 18px;
+    font-size: 1.1em;
+    text-align: center;
+}
+.slideshow-overlay .ss-counter {
+    color: var(--text-dim);
+    font-size: 0.85em;
+    margin-top: 6px;
+}
+.slideshow-overlay .ss-close {
+    position: absolute;
+    top: 20px; right: 30px;
+    font-size: 2em;
+    color: #fff;
+    cursor: pointer;
+    background: none;
+    border: none;
+    z-index: 2001;
+    transition: color 0.3s;
+}
+.slideshow-overlay .ss-close:hover { color: #ff6b9d; }
+.slideshow-overlay .ss-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 2em;
+    color: #fff;
+    cursor: pointer;
+    background: rgba(255,107,157,0.25);
+    border: none;
+    border-radius: 50%;
+    width: 55px; height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    z-index: 2001;
+}
+.slideshow-overlay .ss-nav:hover { background: rgba(255,107,157,0.6); }
+.slideshow-overlay .ss-prev { left: 20px; }
+.slideshow-overlay .ss-next { right: 20px; }
+.slideshow-overlay .ss-thumbnails {
+    display: flex;
+    gap: 8px;
+    margin-top: 15px;
+    max-width: 80%;
+    overflow-x: auto;
+    padding: 5px;
+}
+.slideshow-overlay .ss-thumb {
+    width: 60px; height: 45px;
+    object-fit: cover;
+    border-radius: 6px;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+    flex-shrink: 0;
+}
+.slideshow-overlay .ss-thumb.active {
+    opacity: 1;
+    border-color: #ff6b9d;
+}
+.slideshow-overlay .ss-thumb:hover { opacity: 0.8; }
+.slideshow-overlay .ss-autoplay-btn {
+    position: absolute;
+    top: 20px;
+    left: 30px;
+    background: rgba(255,107,157,0.25);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-family: inherit;
+    transition: all 0.3s;
+    z-index: 2001;
+}
+.slideshow-overlay .ss-autoplay-btn:hover { background: rgba(255,107,157,0.5); }
+.slideshow-overlay .ss-autoplay-btn.playing { background: rgba(255,107,157,0.6); }
+
+/* ===== MOOD TRACKER ===== */
+.mood-tracker {
+    background: var(--bg-glass);
+    border-radius: 20px;
+    padding: 25px;
+    border: 1px solid var(--border-pink);
+    max-width: 800px;
+    margin: 0 auto 25px;
+    animation: fadeInUp 0.5s ease;
+}
+.mood-tracker h3 {
+    color: #ff6b9d;
+    margin-bottom: 5px;
+    font-size: 1.15em;
+}
+.mood-tracker .mood-subtitle {
+    color: var(--text-dim);
+    font-size: 0.82em;
+    margin-bottom: 18px;
+}
+.mood-tracker .mood-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+}
+.mood-tracker .mood-day {
+    text-align: center;
+    padding: 12px 6px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 14px;
+    transition: all 0.3s;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+.mood-tracker .mood-day:hover {
+    background: rgba(255,107,157,0.1);
+    border-color: rgba(255,107,157,0.2);
+    transform: translateY(-2px);
+}
+.mood-tracker .mood-day .mood-day-name {
+    color: var(--text-dim);
+    font-size: 0.72em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+.mood-tracker .mood-day .mood-emoji {
+    font-size: 1.8em;
+    display: block;
+    transition: transform 0.3s;
+}
+.mood-tracker .mood-day .mood-emoji:hover {
+    animation: moodBounce 0.5s ease;
+}
+.mood-tracker .mood-day .mood-label {
+    color: var(--text-dim);
+    font-size: 0.65em;
+    margin-top: 4px;
+}
+.mood-tracker .mood-picker {
+    display: none;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-top: 10px;
+    padding: 12px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 12px;
+    border: 1px solid rgba(255,107,157,0.2);
+}
+.mood-tracker .mood-picker.active { display: grid; }
+.mood-tracker .mood-picker .mood-opt {
+    font-size: 1.5em;
+    text-align: center;
+    padding: 6px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    border: none;
+}
+.mood-tracker .mood-picker .mood-opt:hover {
+    background: rgba(255,107,157,0.15);
+    transform: scale(1.2);
+}
+.mood-tracker .mood-summary {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255,107,157,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.mood-tracker .mood-summary .mood-avg {
+    color: var(--pink-light);
+    font-size: 0.88em;
+}
+.mood-tracker .mood-summary .mood-avg span {
+    color: #ff6b9d;
+    font-weight: 700;
+    font-size: 1.2em;
+}
+.mood-tracker .mood-reset {
+    background: rgba(255,82,82,0.15);
+    color: #ff5252;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.75em;
+    font-family: inherit;
+    transition: all 0.3s;
+}
+.mood-tracker .mood-reset:hover { background: rgba(255,82,82,0.25); }
+
+/* ===== MEMORY OF THE DAY ===== */
+.memory-day {
+    background: linear-gradient(135deg, rgba(255,107,157,0.08), rgba(162,155,254,0.06));
+    border-radius: 20px;
+    padding: 25px 30px;
+    border: 1px solid rgba(255,107,157,0.2);
+    max-width: 800px;
+    margin: 0 auto 25px;
+    animation: fadeInUp 0.5s ease;
+    position: relative;
+    overflow: hidden;
+}
+.memory-day::before {
+    content: '🌟';
+    position: absolute;
+    top: -5px;
+    right: 20px;
+    font-size: 1.6em;
+    opacity: 0.5;
+}
+.memory-day h3 {
+    color: #ff6b9d;
+    margin-bottom: 5px;
+    font-size: 1.15em;
+}
+.memory-day .md-subtitle {
+    color: var(--text-dim);
+    font-size: 0.82em;
+    margin-bottom: 15px;
+}
+.memory-day .md-content {
+    color: var(--text-mid);
+    line-height: 1.8;
+    font-style: italic;
+    min-height: 40px;
+    transition: opacity 0.5s ease;
+}
+.memory-day .md-meta {
+    color: rgba(255,255,255,0.25);
+    font-size: 0.78em;
+    margin-top: 10px;
+}
+.memory-day .md-refresh {
+    background: rgba(255,107,157,0.15);
+    color: #ff6b9d;
+    border: none;
+    padding: 5px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.78em;
+    font-family: inherit;
+    transition: all 0.3s;
+    margin-top: 10px;
+}
+.memory-day .md-refresh:hover {
+    background: rgba(255,107,157,0.3);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .couple-header h1 { font-size: 1.8em; }
+    .love-stats-bar { gap: 10px; }
+    .stat-card { min-width: 140px; padding: 15px 20px; }
+    .stat-card .stat-number { font-size: 1.8em; }
+    .tab-content { padding: 15px 15px 40px; }
+    .tab-btn { padding: 9px 15px; font-size: 0.82em; }
+    .timeline-outer::before { left: 20px; }
+    .tl-item { width: 100%; left: 0 !important; text-align: left !important; padding-left: 50px; padding-right: 15px; }
+    .tl-item .tl-dot { left: 12px !important; right: auto !important; }
+    .upload-form input[type="text"], .upload-form input[type="date"], .upload-form select { width: 100%; margin-bottom: 8px; }
+    .bucket-add input[type="text"] { width: 100%; }
+    .stats-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    .mood-tracker .mood-grid { grid-template-columns: repeat(4, 1fr); }
+    .slideshow-overlay .ss-nav { width: 40px; height: 40px; font-size: 1.4em; }
+    .slideshow-overlay .ss-prev { left: 8px; }
+    .slideshow-overlay .ss-next { right: 8px; }
+    .daily-quote-card { padding: 20px 22px; }
+    .anniversary-config .config-row { flex-direction: column; }
+}
+</style>
+
+<!-- FLOATING HEARTS -->
+<div class="floating-hearts" id="floatingHearts">
+    <span style="left:5%;animation-duration:8s;animation-delay:0s;">💕</span>
+    <span style="left:15%;animation-duration:10s;animation-delay:1s;">💗</span>
+    <span style="left:25%;animation-duration:7s;animation-delay:2s;">💖</span>
+    <span style="left:35%;animation-duration:11s;animation-delay:0.5s;">💝</span>
+    <span style="left:45%;animation-duration:9s;animation-delay:1.5s;">🌹</span>
+    <span style="left:55%;animation-duration:8s;animation-delay:3s;">💕</span>
+    <span style="left:65%;animation-duration:12s;animation-delay:0.8s;">💗</span>
+    <span style="left:75%;animation-duration:7s;animation-delay:2.5s;">💖</span>
+    <span style="left:85%;animation-duration:10s;animation-delay:1.2s;">🌹</span>
+    <span style="left:95%;animation-duration:9s;animation-delay:3.5s;">💝</span>
+</div>
+
+<!-- HEADER -->
+<div class="couple-header">
+    <h1><span class="heart-beat">💑</span> 我们的情侣空间 <span class="heart-beat">💑</span></h1>
+    <p class="subtitle">记录每一个甜蜜瞬间，让爱永恒 💕</p>
+</div>
+
+<!-- LOVE COUNTER & STATS BAR -->
+<div class="love-stats-bar">
+    <div class="stat-card">
+        <div class="stat-icon">💕</div>
+        <div class="stat-number" id="loveDays">0</div>
+        <div class="stat-label">相爱天数</div>
+        <div class="stat-sub" id="loveDetail">加载中...</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">🎂</div>
+        <div class="stat-label" style="margin-top:8px;">下个纪念日</div>
+        <div class="countdown-grid" id="anniversaryCountdown">
+            <div class="cd-box"><div class="cd-num" id="cdDays">--</div><div class="cd-label">天</div></div>
+            <div class="cd-box"><div class="cd-num" id="cdHours">--</div><div class="cd-label">时</div></div>
+            <div class="cd-box"><div class="cd-num" id="cdMins">--</div><div class="cd-label">分</div></div>
+            <div class="cd-box"><div class="cd-num" id="cdSecs">--</div><div class="cd-label">秒</div></div>
+        </div>
+        <div class="stat-sub" id="nextAnniversary">加载中...</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">💌</div>
+        <div class="stat-number" id="letterCount">0</div>
+        <div class="stat-label">情书往来</div>
+        <div class="stat-sub">爱意满满 💝</div>
+    </div>
+</div>
+
+<!-- ROTATING LOVE QUOTES -->
+<div class="quote-section">
+    <div class="quote-text" id="quoteText">加载中...</div>
+    <div class="quote-author" id="quoteAuthor"></div>
+</div>
+
+<!-- TAB NAVIGATION -->
+<div class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('photos',this)">📸 相册</button>
+    <button class="tab-btn" onclick="showTab('videos',this)">🎬 视频</button>
+    <button class="tab-btn" onclick="showTab('stories',this)">📖 故事</button>
+    <button class="tab-btn" onclick="showTab('timeline',this)">📅 时光轴</button>
+    <button class="tab-btn" onclick="showTab('letters',this)">💌 情书</button>
+    <button class="tab-btn" onclick="showTab('bucketlist',this)">🎯 愿望清单</button>
+    <button class="tab-btn" onclick="showTab('quiz',this)">🎮 情侣游戏</button>
+    <button class="tab-btn" onclick="showTab('stats',this)">📊 恋爱数据</button>
+    <button class="tab-btn" onclick="showTab('moods',this)">😊 心情日记</button>
+</div>
+
+<!-- ==================== PHOTOS TAB ==================== -->
+<div id="photos" class="tab-content active">
+    <div class="upload-form">
+        <h3>📷 上传甜蜜照片</h3>
+        <form action="/couple/upload/photo" method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" accept="image/*" required>
+            <input type="text" name="caption" placeholder="添加照片描述...">
+            <button type="submit">上传 📷</button>
+        </form>
+    </div>
+    <div class="photo-grid" id="photoGrid">
+        {% for photo in photos %}
+        <div class="photo-card" onclick="openSlideshow({{ loop.index0 }})">
+            <img src="/static/uploads/photos/{{ photo.filename }}" alt="{{ photo.caption }}" loading="lazy">
+            <div class="caption">
+                <a href="/couple/delete/photo/{{ photo.id }}" class="delete-btn" onclick="event.stopPropagation();return confirm('确定删除？')">删除</a>
+                {{ photo.caption or '美好瞬间' }}
+                <br><small>{{ photo.uploaded_at }}</small>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% if not photos %}<p style="text-align:center;color:rgba(255,255,255,0.3);padding:40px;">还没有照片，上传第一张吧 📸</p>{% endif %}
+</div>
+
+<!-- Lightbox Overlay -->
+<div class="lightbox-overlay" id="lightbox">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <button class="lightbox-nav lightbox-prev" onclick="lightboxNav(-1)">❮</button>
+    <img id="lightboxImg" src="" alt="">
+    <div class="lightbox-caption" id="lightboxCaption"></div>
+    <button class="lightbox-nav lightbox-next" onclick="lightboxNav(1)">❯</button>
+</div>
+
+<!-- SLIDESHOW OVERLAY -->
+<div class="slideshow-overlay" id="slideshow">
+    <button class="ss-close" onclick="closeSlideshow()">✕</button>
+    <button class="ss-autoplay-btn" id="ssAutoplay" onclick="toggleAutoplay()">▶ 自动播放</button>
+    <button class="ss-nav ss-prev" onclick="slideshowNav(-1)">❮</button>
+    <div class="ss-img-container">
+        <img class="ss-img" id="ssImg" src="" alt="">
+    </div>
+    <div class="ss-caption" id="ssCaption"></div>
+    <div class="ss-counter" id="ssCounter"></div>
+    <div class="ss-thumbnails" id="ssThumbnails"></div>
+    <button class="ss-nav ss-next" onclick="slideshowNav(1)">❯</button>
+</div>
+
+<!-- ==================== VIDEOS TAB ==================== -->
+<div id="videos" class="tab-content">
+    <div class="upload-form">
+        <h3>🎬 上传珍贵视频</h3>
+        <form action="/couple/upload/video" method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" accept="video/*" required>
+            <input type="text" name="caption" placeholder="添加视频描述...">
+            <button type="submit">上传 🎬</button>
+        </form>
+    </div>
+    <div class="video-grid">
+        {% for video in videos %}
+        <div class="video-card">
+            <video controls preload="metadata"><source src="/static/uploads/videos/{{ video.filename }}"></video>
+            <div class="v-caption">
+                <a href="/couple/delete/video/{{ video.id }}" class="delete-btn" onclick="return confirm('确定删除？')">删除</a>
+                {{ video.caption or '珍贵回忆' }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% if not videos %}<p style="text-align:center;color:rgba(255,255,255,0.3);padding:40px;">还没有视频，上传第一个吧 🎬</p>{% endif %}
+</div>
+
+<!-- ==================== STORIES TAB ==================== -->
+<div id="stories" class="tab-content">
+    <div class="story-form">
+        <h3>✍️ 写下我们的故事</h3>
+        <form action="/couple/story/add" method="POST">
+            <input type="text" name="title" placeholder="故事标题..." required>
+            <textarea name="content" placeholder="在这里写下你们的爱情故事..." required></textarea>
+            <select name="mood">
+                <option value="💕">💕 甜蜜</option>
+                <option value="🥰">🥰 幸福</option>
+                <option value="😂">😂 搞笑</option>
+                <option value="🥺">🥺 感动</option>
+                <option value="😘">😘 浪漫</option>
+                <option value="🎉">🎉 庆祝</option>
+                <option value="✨">✨ 特别</option>
+            </select>
+            <button type="submit">发布故事 💝</button>
+        </form>
+    </div>
+    <div class="story-list">
+        {% for story in stories %}
+        <div class="story-card" style="animation-delay: {{ loop.index0 * 0.1 }}s">
+            <div class="mood">{{ story.mood }}</div>
+            <h3>{{ story.title }}</h3>
+            <p>{{ story.content }}</p>
+            <div class="date">{{ story.created_at }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% if not stories %}<p style="text-align:center;color:rgba(255,255,255,0.3);padding:40px;">写下第一个爱情故事吧 ✍️</p>{% endif %}
+</div>
+
+<!-- ==================== TIMELINE TAB ==================== -->
+<div id="timeline" class="tab-content">
+    <div class="upload-form" style="max-width:800px;margin:0 auto 30px;">
+        <h3>➕ 添加纪念日</h3>
+        <form action="/couple/timeline/add" method="POST">
+            <input type="date" name="event_date" required>
+            <input type="text" name="title" placeholder="事件标题..." required>
+            <input type="text" name="description" placeholder="描述...">
+            <select name="icon">
+                <option value="💕">💕 爱情</option>
+                <option value="🎂">🎂 生日</option>
+                <option value="✈️">✈️ 旅行</option>
+                <option value="💍">💍 求婚</option>
+                <option value="🏠">🏠 搬家</option>
+                <option value="🎓">🎓 毕业</option>
+                <option value="💼">💼 工作</option>
+                <option value="🎉">🎉 庆祝</option>
+                <option value="💫">💫 特别</option>
+            </select>
+            <button type="submit">添加</button>
+        </form>
+    </div>
+    <div class="timeline-outer">
+        {% for event in timeline %}
+        <div class="tl-item" style="animation-delay: {{ loop.index0 * 0.1 }}s">
+            <div class="tl-dot"></div>
+            <div class="tl-card">
+                <div class="tl-date">{{ event.event_date }}</div>
+                <div class="tl-icon">{{ event.icon }}</div>
+                <h3>{{ event.title }}</h3>
+                {% if event.description %}<p>{{ event.description }}</p>{% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% if not timeline %}<p style="text-align:center;color:rgba(255,255,255,0.3);padding:40px;">添加你们的第一个纪念日吧 📅</p>{% endif %}
+</div>
+
+<!-- ==================== LOVE LETTERS TAB ==================== -->
+<div id="letters" class="tab-content">
+    <div class="letter-mailbox">
+        <div class="letter-compose">
+            <h3 style="color:#ff6b9d;margin-bottom:15px;">💌 写一封情书</h3>
+            <form action="/couple/letter/add" method="POST">
+                <input type="text" name="subject" placeholder="情书主题..." required>
+                <textarea name="body" placeholder="亲爱的，&#10;&#10;在这个特别的时刻，我想对你说...&#10;&#10;永远爱你的我 💕" required></textarea>
+                <div class="letter-actions">
+                    <select name="sender" class="sender-select">
+                        <option value="me">来自：我</option>
+                        <option value="partner">来自：TA</option>
+                    </select>
+                    <button type="submit" class="btn-pink">发送情书 💌</button>
+                </div>
+            </form>
+        </div>
+        <h3 class="section-title">💌 情书信箱</h3>
+        <div class="letter-list" id="letterList">
+            <!-- Letters rendered server-side or populated via JS -->
+            <p style="text-align:center;color:rgba(255,255,255,0.3);padding:30px;">写第一封情书吧 💌</p>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== BUCKET LIST TAB ==================== -->
+<div id="bucketlist" class="tab-content">
+    <div class="bucket-list-container">
+        <div class="bucket-add">
+            <h3 style="color:#ff6b9d;margin-bottom:15px;">🎯 添加愿望</h3>
+            <form action="/couple/bucket/add" method="POST">
+                <input type="text" name="item" placeholder="我们想一起..." required>
+                <select name="emoji">
+                    <option value="✈️">✈️ 旅行</option>
+                    <option value="🍳">🍳 美食</option>
+                    <option value="🎬">🎬 电影</option>
+                    <option value="🏔️">🏔️ 冒险</option>
+                    <option value="🎵">🎵 音乐</option>
+                    <option value="📚">📚 学习</option>
+                    <option value="🏠">🏠 生活</option>
+                    <option value="💫">💫 其他</option>
+                </select>
+                <button type="submit">添加 ✨</button>
+            </form>
+        </div>
+        <div class="bucket-progress">
+            <h3 style="color:#ff6b9d;margin-bottom:5px;">🎯 愿望完成度</h3>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="bucketProgressFill" style="width:0%"></div>
+            </div>
+            <div class="progress-text" id="bucketProgressText">0 / 0 已完成</div>
+        </div>
+        <div class="bucket-items" id="bucketItems">
+            <!-- Populated by JS or server-side -->
+            <p style="text-align:center;color:rgba(255,255,255,0.3);padding:30px;">添加你们的第一个共同愿望吧 🎯</p>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== QUIZ / GAMES TAB ==================== -->
+<div id="quiz" class="tab-content">
+    <div class="quiz-container">
+        <!-- Love Compatibility Calculator -->
+        <div class="love-compatibility">
+            <h3 style="color:#ff6b9d;margin-bottom:10px;">💕 爱情匹配度测试</h3>
+            <p style="color:var(--text-dim);margin-bottom:15px;">输入双方名字，看看你们的缘分指数！</p>
+            <input type="text" id="name1" placeholder="你的名字">
+            <input type="text" id="name2" placeholder="TA的名字">
+            <br>
+            <button class="btn-pink" onclick="calcCompatibility()">计算缘分 💕</button>
+            <div id="compatResult" style="margin-top:15px;"></div>
+        </div>
+
+        <!-- Couple Quiz -->
+        <div class="quiz-score" id="quizScoreCard" style="display:none;">
+            <div>本轮得分</div>
+            <div class="score-num" id="quizScore">0</div>
+            <div style="color:var(--text-dim);">/ 5</div>
+        </div>
+
+        <h3 class="section-title">🎮 情侣默契大考验</h3>
+        <p style="color:var(--text-dim);margin-bottom:20px;">测试你们对彼此的了解程度！</p>
+
+        <div class="quiz-card" data-q="0">
+            <h3>问题 1 💕</h3>
+            <div class="quiz-question">对方最喜欢的颜色是什么？</div>
+            <div class="quiz-options">
+                <button class="quiz-option" onclick="checkAnswer(this,'wrong')">A. 蓝色</button>
+                <button class="quiz-option" onclick="checkAnswer(this,'correct')">B. 粉色/红色系</button>
+                <button class="quiz-option" onclick="checkAnswer(this,'wrong')">C. 绿色</button>
+                <button class="quiz-option" onclick="checkAnswer(this,'wrong')">D. 黑色</button>
+            </div>
+        </div>
+
+        <div class="quiz-card" data-q="1" style="animation-delay:0.1s;">
+            <h3>问题 2 💕</h3>
+            <div class="quiz-question">你们第一次约会去了哪里？</div>
+            <div class="quiz-options">
+                <button class="quiz-option" onclick="checkAnswer(this,'wrong')">A. 电影院</button>
+                <button class="quiz-option" onclick="checkAnswer(this,'wrong')">B. 餐厅</button>
+                <button class="quiz-option" onclick="checkAnswer(this,'correct')">C. 相信你们的回忆</button>
+                <button class="quiz-option" onclick="checkAnswer(this,'wrong')">D. 公园</button>
+            </div>
+        </div>
+
+        <div class="quiz-card" data-q="2" style="animation-delay:0.2s;">
+            <h3>问题 3 💕</h3>
+            <div class="quiz-question">对方最害怕什么？</div>
+            <div class="quiz-options">
+                <button class="quiz-option" onclick="checkAnswer(this,'correct')">A. 让你伤心</button>
+                <button class="quiz-option" onclick="checkAnswer(this,'wrong')">B. 蜘蛛</button>
+                <button class="quiz-option" onclick="checkAnswer(this,'wrong')">C. 打雷</button>
+                <button class="quiz-option" onclick="checkAnswer(this,'wrong')">D. 高处</button>
+            </div>
+        </div>
+
+        <div class="quiz-card" data-q="3" style="animation-delay:0.3s;">
+            <h3>问题 4 💕</h3>
+            <div class="quiz-question">对方最喜欢的约会方式？</div>
+            <div class="quiz-options">
+                <button class="quiz-option" onclick="checkAnswer(this,'wrong')">A. 豪华餐厅</button>
+                <button class="quiz-option" onclick="checkAnswer(this,'correct')">B. 只要在一起，怎样都好</button>
+                <button class="quiz-option" onclick="checkAnswer(this,'wrong')">C. 刺激冒险</button>
+                <button class="quiz-option" onclick="checkAnswer(this,'wrong')">D. 逛街购物</button>
+            </div>
+        </div>
+
+        <div class="quiz-card" data-q="4" style="animation-delay:0.4s;">
+            <h3>问题 5 💕</h3>
+            <div class="quiz-question">你们在一起最重要的是什么？</div>
+            <div class="quiz-options">
+                <button class="quiz-option" onclick="checkAnswer(this,'wrong')">A. 浪漫</button>
+                <button class="quiz-option" onclick="checkAnswer(this,'wrong')">B. 激情</button>
+                <button class="quiz-option" onclick="checkAnswer(this,'correct')">C. 信任与陪伴</button>
+                <button class="quiz-option" onclick="checkAnswer(this,'wrong')">D. 惊喜</button>
+            </div>
+        </div>
+
+        <div style="text-align:center;margin-top:20px;">
+            <button class="btn-pink" onclick="resetQuiz()">重新开始 🔄</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== STATS TAB ==================== -->
+<div id="stats" class="tab-content">
+    <h3 class="section-title">📊 恋爱数据统计</h3>
+    <div class="stats-grid">
+        <div class="rel-stat-card" style="animation-delay:0s;">
+            <div class="rs-icon">📸</div>
+            <div class="rs-value" id="statPhotos">0</div>
+            <div class="rs-label">甜蜜照片</div>
+            <div class="rs-bar-bg"><div class="rs-bar-fill" style="width:0%" id="barPhotos"></div></div>
+        </div>
+        <div class="rel-stat-card" style="animation-delay:0.1s;">
+            <div class="rs-icon">🎬</div>
+            <div class="rs-value" id="statVideos">0</div>
+            <div class="rs-label">珍贵视频</div>
+            <div class="rs-bar-bg"><div class="rs-bar-fill" style="width:0%" id="barVideos"></div></div>
+        </div>
+        <div class="rel-stat-card" style="animation-delay:0.2s;">
+            <div class="rs-icon">📖</div>
+            <div class="rs-value" id="statStories">0</div>
+            <div class="rs-label">爱情故事</div>
+            <div class="rs-bar-bg"><div class="rs-bar-fill" style="width:0%" id="barStories"></div></div>
+        </div>
+        <div class="rel-stat-card" style="animation-delay:0.3s;">
+            <div class="rs-icon">📅</div>
+            <div class="rs-value" id="statTimeline">0</div>
+            <div class="rs-label">纪念日</div>
+            <div class="rs-bar-bg"><div class="rs-bar-fill" style="width:0%" id="barTimeline"></div></div>
+        </div>
+        <div class="rel-stat-card" style="animation-delay:0.4s;">
+            <div class="rs-icon">💌</div>
+            <div class="rs-value" id="statLetters">0</div>
+            <div class="rs-label">情书</div>
+            <div class="rs-bar-bg"><div class="rs-bar-fill" style="width:0%" id="barLetters"></div></div>
+        </div>
+        <div class="rel-stat-card" style="animation-delay:0.5s;">
+            <div class="rs-icon">🎯</div>
+            <div class="rs-value" id="statBucket">0</div>
+            <div class="rs-label">愿望清单</div>
+            <div class="rs-bar-bg"><div class="rs-bar-fill" style="width:0%" id="barBucket"></div></div>
+        </div>
+        <div class="rel-stat-card" style="animation-delay:0.6s;">
+            <div class="rs-icon">💕</div>
+            <div class="rs-value" id="statLove">100%</div>
+            <div class="rs-label">幸福指数</div>
+            <div class="rs-bar-bg"><div class="rs-bar-fill" style="width:100%"></div></div>
+        </div>
+        <div class="rel-stat-card" style="animation-delay:0.7s;">
+            <div class="rs-icon">🔥</div>
+            <div class="rs-value" id="statStreak">0</div>
+            <div class="rs-label">连续记录天数</div>
+            <div class="rs-bar-bg"><div class="rs-bar-fill" style="width:0%" id="barStreak"></div></div>
+        </div>
+    </div>
+
+    <!-- Love Language Section -->
+    <div style="margin-top:30px;">
+        <h3 class="section-title">💝 爱的语言测试</h3>
+        <div class="quiz-card">
+            <p style="color:var(--text-mid);margin-bottom:15px;">选择最能让你感受到爱的方式：</p>
+            <div class="quiz-options" id="loveLanguageOptions">
+                <button class="quiz-option" onclick="selectLoveLanguage(this,'肯定的言辞 💬')">A. 听到"我爱你"和赞美</button>
+                <button class="quiz-option" onclick="selectLoveLanguage(this,'精心的时刻 ⏰')">B. 和TA共度专注的时光</button>
+                <button class="quiz-option" onclick="selectLoveLanguage(this,'接受礼物 🎁')">C. 收到用心挑选的礼物</button>
+                <button class="quiz-option" onclick="selectLoveLanguage(this,'服务的行动 🤝')">D. 对方为你做贴心的事</button>
+                <button class="quiz-option" onclick="selectLoveLanguage(this,'身体的接触 🤗')">E. 拥抱、牵手等亲密接触</button>
+            </div>
+            <div id="loveLanguageResult" style="margin-top:15px;color:#ff6b9d;font-weight:600;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MOOD TRACKER TAB ==================== -->
+<div id="moods" class="tab-content">
+    <h3 class="section-title">😊 每周心情日记</h3>
+    <p style="color:var(--text-dim);margin-bottom:20px;">记录每天的心情，回顾一周的甜蜜时光 💕</p>
+
+    <!-- Memory of the Day -->
+    <div class="memory-day">
+        <h3>🌟 今日回忆</h3>
+        <div class="md-subtitle">从我们的故事中随机挑选的珍贵记忆</div>
+        <div class="md-content" id="memoryDayContent">加载中...</div>
+        <div class="md-meta" id="memoryDayMeta"></div>
+        <button class="md-refresh" onclick="refreshMemory()">换一个 🔄</button>
+    </div>
+
+    <!-- Mood Tracker -->
+    <div class="mood-tracker">
+        <h3>😊 本周心情</h3>
+        <div class="mood-subtitle">点击每一天选择你的心情</div>
+        <div class="mood-grid" id="moodGrid"></div>
+        <div class="mood-picker" id="moodPicker">
+            <button class="mood-opt" onclick="setMood('😍')">😍</button>
+            <button class="mood-opt" onclick="setMood('🥰')">🥰</button>
+            <button class="mood-opt" onclick="setMood('😊')">😊</button>
+            <button class="mood-opt" onclick="setMood('😌')">😌</button>
+            <button class="mood-opt" onclick="setMood('😢')">😢</button>
+            <button class="mood-opt" onclick="setMood('😤')">😤</button>
+            <button class="mood-opt" onclick="setMood('🥺')">🥺</button>
+        </div>
+        <div class="mood-summary">
+            <div class="mood-avg">本周平均心情: <span id="moodAvg">—</span></div>
+            <button class="mood-reset" onclick="resetMoods()">重置本周 🗑️</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== TAB NAVIGATION =====
+function showTab(tab, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+    if (btn) btn.classList.add('active');
+}
+
+// ===== LOVE COUNTER =====
+// Set your relationship start date here
+var startDate = new Date('2024-01-01'); // Default, server can override
+function updateLoveCounter() {
+    var now = new Date();
+    var diff = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
+    var el = document.getElementById('loveDays');
+    if (el) el.textContent = diff;
+    var years = Math.floor(diff / 365);
+    var months = Math.floor((diff % 365) / 30);
+    var days = diff % 30;
+    var detail = document.getElementById('loveDetail');
+    if (detail) detail.textContent = years + '年 ' + months + '月 ' + days + '天';
+}
+updateLoveCounter();
+
+// ===== ANNIVERSARY COUNTDOWN =====
+function getNextAnniversary() {
+    var now = new Date();
+    var year = now.getFullYear();
+    var anniv = new Date(year, startDate.getMonth(), startDate.getDate());
+    if (anniv <= now) anniv.setFullYear(year + 1);
+    return anniv;
+}
+
+function updateCountdown() {
+    var now = new Date();
+    var anniv = getNextAnniversary();
+    var diff = anniv - now;
+    if (diff < 0) diff = 0;
+    var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    var hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    var mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    var secs = Math.floor((diff % (1000 * 60)) / 1000);
+    var cdDays = document.getElementById('cdDays');
+    var cdHours = document.getElementById('cdHours');
+    var cdMins = document.getElementById('cdMins');
+    var cdSecs = document.getElementById('cdSecs');
+    if (cdDays) cdDays.textContent = days;
+    if (cdHours) cdHours.textContent = hours;
+    if (cdMins) cdMins.textContent = mins;
+    if (cdSecs) cdSecs.textContent = secs;
+    var years = anniv.getFullYear() - startDate.getFullYear();
+    var nextAnn = document.getElementById('nextAnniversary');
+    if (nextAnn) nextAnn.textContent = '第 ' + years + ' 周年纪念日';
+}
+updateCountdown();
+setInterval(updateCountdown, 1000);
+
+// ===== ROTATING LOVE QUOTES =====
+var quotes = [
+    { text: "我爱你，不光因为你的样子，还因为和你在一起时，我的样子。", author: "罗伊·克里夫特" },
+    { text: "最好的感觉是，当我看着你，你也在看着我。", author: "佚名" },
+    { text: "遇见你之前，我没想过结婚；遇见你之后，我没想过和别人结婚。", author: "钱钟书" },
+    { text: "世间万物皆可爱，唯有你是最爱。", author: "佚名" },
+    { text: "我想和你一起生活，在某个小镇，共享无尽的黄昏和绵绵不绝的钟声。", author: "茨维塔耶娃" },
+    { text: "你是我温暖的手套，冰冷的啤酒，带着阳光味道的衬衫，日复一日的梦想。", author: "廖一梅" },
+    { text: "春风十里，不如你。", author: "冯唐" },
+    { text: "山有木兮木有枝，心悦君兮君不知。", author: "《越人歌》" },
+    { text: "愿得一人心，白首不相离。", author: "卓文君" },
+    { text: "斯人若彩虹，遇上方知有。", author: "佚名" },
+    { text: "你是我患得患失的梦，我是你可有可无的人。", author: "佚名" },
+    { text: "我想要的很简单，时光还在，你还在。", author: "佚名" },
+    { text: "最长情的告白是陪伴，最浪漫的事是和你一起慢慢变老。", author: "佚名" },
+    { text: "你的名字，是我见过最短的情诗。", author: "李宫俊" },
+    { text: "海底月是天上月，眼前人是心上人。", author: "张爱玲" }
+];
+var quoteIdx = 0;
+function rotateQuote() {
+    var el = document.getElementById('quoteText');
+    var auth = document.getElementById('quoteAuthor');
+    if (!el) return;
+    el.style.opacity = 0;
+    setTimeout(function() {
+        el.textContent = '"' + quotes[quoteIdx].text + '"';
+        if (auth) auth.textContent = '—— ' + quotes[quoteIdx].author;
+        el.style.opacity = 1;
+        quoteIdx = (quoteIdx + 1) % quotes.length;
+    }, 500);
+}
+rotateQuote();
+setInterval(rotateQuote, 6000);
+
+// ===== PHOTO LIGHTBOX =====
+var photoData = [];
+{% for photo in photos %}
+photoData.push({
+    src: "/static/uploads/photos/{{ photo.filename }}",
+    caption: "{{ photo.caption or '美好瞬间' }}"
+});
+{% endfor %}
+var currentLightboxIdx = 0;
+
+function openLightbox(idx) {
+    if (!photoData.length) return;
+    currentLightboxIdx = idx;
+    var lb = document.getElementById('lightbox');
+    document.getElementById('lightboxImg').src = photoData[idx].src;
+    document.getElementById('lightboxCaption').textContent = photoData[idx].caption;
+    lb.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('active');
+    document.body.style.overflow = '';
+}
+function lightboxNav(dir) {
+    if (!photoData.length) return;
+    currentLightboxIdx = (currentLightboxIdx + dir + photoData.length) % photoData.length;
+    document.getElementById('lightboxImg').src = photoData[currentLightboxIdx].src;
+    document.getElementById('lightboxCaption').textContent = photoData[currentLightboxIdx].caption;
+}
+document.addEventListener('keydown', function(e) {
+    if (!document.getElementById('lightbox').classList.contains('active')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') lightboxNav(-1);
+    if (e.key === 'ArrowRight') lightboxNav(1);
+});
+
+// ===== BUCKET LIST =====
+var bucketItems = [];
+var bucketDone = [];
+var bucketIds = [];
+{% if bucket is defined %}
+{% for item in bucket %}
+bucketItems.push("{{ item.item }}");
+bucketDone.push({{ 'true' if item.is_done else 'false' }});
+bucketIds.push({{ item.id }});
+{% endfor %}
+{% endif %}
+
+function renderBucketList() {
+    var container = document.getElementById('bucketItems');
+    if (!container) return;
+    if (!bucketItems.length) {
+        container.innerHTML = '<p style="text-align:center;color:rgba(255,255,255,0.3);padding:30px;">添加你们的第一个共同愿望吧 🎯</p>';
+        updateBucketProgress();
+        return;
+    }
+    var emojis = {'✈️':'✈️','🍳':'🍳','🎬':'🎬','🏔️':'🏔️','🎵':'🎵','📚':'📚','🏠':'🏠','💫':'💫'};
+    var html = '';
+    for (var i = 0; i < bucketItems.length; i++) {
+        var doneClass = bucketDone[i] ? ' done' : '';
+        html += '<div class="bucket-item' + doneClass + '" style="animation-delay:' + (i * 0.05) + 's">' +
+            '<input type="checkbox" ' + (bucketDone[i] ? 'checked' : '') + ' onchange="toggleBucket(' + i + ')">' +
+            '<span class="bucket-emoji">' + (emojis['💫']) + '</span>' +
+            '<span class="bucket-text">' + bucketItems[i] + '</span>' +
+            '<button class="bucket-delete" onclick="deleteBucket(' + i + ')">删除</button>' +
+            '</div>';
+    }
+    container.innerHTML = html;
+    updateBucketProgress();
+}
+
+function toggleBucket(idx) {
+    if (idx < 0 || idx >= bucketIds.length) return;
+    bucketDone[idx] = !bucketDone[idx];
+    renderBucketList();
+    // Sync to server
+    var itemId = bucketIds[idx];
+    if (itemId) {
+        fetch('/couple/bucket/toggle/' + itemId, {
+            method: 'POST',
+            credentials: 'include'
+        }).catch(function(e) { console.log('Toggle sync failed:', e); });
+    }
+}
+
+function deleteBucket(idx) {
+    if (!confirm('确定删除这个愿望？')) return;
+    var itemId = bucketIds[idx];
+    if (itemId) {
+        fetch('/couple/delete/bucket/' + itemId, {
+            method: 'GET',
+            credentials: 'include'
+        }).catch(function(e) { console.log('Delete sync failed:', e); });
+    }
+    bucketItems.splice(idx, 1);
+    bucketDone.splice(idx, 1);
+    bucketIds.splice(idx, 1);
+    renderBucketList();
+}
+
+function updateBucketProgress() {
+    var total = bucketItems.length;
+    var done = bucketDone.filter(function(d){return d;}).length;
+    var pct = total > 0 ? Math.round(done / total * 100) : 0;
+    var fill = document.getElementById('bucketProgressFill');
+    var text = document.getElementById('bucketProgressText');
+    if (fill) fill.style.width = pct + '%';
+    if (text) text.textContent = done + ' / ' + total + ' 已完成 (' + pct + '%)';
+}
+renderBucketList();
+
+// ===== COUPLE QUIZ =====
+var quizScore = 0;
+var quizAnswered = {};
+
+function checkAnswer(btn, type) {
+    var card = btn.closest('.quiz-card');
+    var qIdx = card.getAttribute('data-q');
+    if (quizAnswered[qIdx]) return;
+    quizAnswered[qIdx] = true;
+    var options = card.querySelectorAll('.quiz-option');
+    options.forEach(function(opt) { opt.style.pointerEvents = 'none'; });
+    if (type === 'correct') {
+        btn.classList.add('correct');
+        quizScore++;
+    } else {
+        btn.classList.add('wrong');
+        // Highlight correct answer
+        options.forEach(function(opt) {
+            if (opt.getAttribute('onclick') && opt.getAttribute('onclick').indexOf('correct') !== -1) {
+                opt.classList.add('correct');
+            }
+        });
+    }
+    var scoreCard = document.getElementById('quizScoreCard');
+    var scoreNum = document.getElementById('quizScore');
+    if (scoreCard) scoreCard.style.display = 'block';
+    if (scoreNum) scoreNum.textContent = quizScore;
+}
+
+function resetQuiz() {
+    quizScore = 0;
+    quizAnswered = {};
+    document.querySelectorAll('.quiz-option').forEach(function(opt) {
+        opt.classList.remove('correct', 'wrong');
+        opt.style.pointerEvents = '';
+    });
+    document.getElementById('quizScoreCard').style.display = 'none';
+}
+
+// ===== COMPATIBILITY CALCULATOR =====
+function calcCompatibility() {
+    var n1 = document.getElementById('name1').value.trim();
+    var n2 = document.getElementById('name2').value.trim();
+    if (!n1 || !n2) {
+        alert('请输入双方的名字！');
+        return;
+    }
+    // Fun algorithm: combine name lengths and char codes for a "random" but consistent result
+    var combined = (n1 + n2).toLowerCase();
+    var hash = 0;
+    for (var i = 0; i < combined.length; i++) {
+        hash = ((hash << 5) - hash) + combined.charCodeAt(i);
+        hash |= 0;
+    }
+    var score = Math.abs(hash % 30) + 70; // 70-99%
+    var messages = [
+        [95, "天作之合！你们是命中注定的缘分！💕"],
+        [90, "超级般配！你们的爱情令人羡慕！🥰"],
+        [85, "非常合适！继续珍惜彼此！💖"],
+        [80, "很好的一对！爱情需要经营，你们做得不错！💗"],
+        [70, "不错的缘分！多沟通多了解，会越来越好！💝"]
+    ];
+    var msg = messages[messages.length - 1][1];
+    for (var j = 0; j < messages.length; j++) {
+        if (score >= messages[j][0]) { msg = messages[j][1]; break; }
+    }
+    document.getElementById('compatResult').innerHTML =
+        '<div class="compat-percent">' + score + '%</div>' +
+        '<div style="color:var(--text-mid);margin-top:8px;">' + n1 + ' 💕 ' + n2 + '</div>' +
+        '<div style="color:var(--text-dim);margin-top:5px;font-size:0.9em;">' + msg + '</div>';
+}
+
+// ===== LOVE LANGUAGE =====
+function selectLoveLanguage(btn, lang) {
+    var options = document.querySelectorAll('#loveLanguageOptions .quiz-option');
+    options.forEach(function(opt) {
+        opt.classList.remove('correct');
+        opt.style.pointerEvents = 'none';
+    });
+    btn.classList.add('correct');
+    var result = document.getElementById('loveLanguageResult');
+    if (result) result.textContent = '你的爱的语言是：' + lang + ' 💝';
+}
+
+// ===== RELATIONSHOP STATS =====
+function updateStats() {
+    var photoCount = document.querySelectorAll('#photoGrid .photo-card').length;
+    var videoCount = document.querySelectorAll('#videoGrid .video-card').length;
+    var storyCount = document.querySelectorAll('#stories .story-card').length;
+    var timelineCount = document.querySelectorAll('.tl-item').length;
+    var letterCount = document.querySelectorAll('#letterList .letter-card').length;
+    var bucketCount = bucketItems.length;
+
+    var maxVal = Math.max(photoCount, videoCount, storyCount, timelineCount, letterCount, bucketCount, 1);
+
+    function setId(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
+    function setBar(id, val) { var el = document.getElementById(id); if (el) el.style.width = (val / maxVal * 100) + '%'; }
+
+    setId('statPhotos', photoCount); setBar('barPhotos', photoCount);
+    setId('statVideos', videoCount); setBar('barVideos', videoCount);
+    setId('statStories', storyCount); setBar('barStories', storyCount);
+    setId('statTimeline', timelineCount); setBar('barTimeline', timelineCount);
+    setId('statLetters', letterCount); setBar('barLetters', letterCount);
+    setId('statBucket', bucketCount); setBar('barBucket', bucketCount);
+
+    // Letter count in header
+    var lc = document.getElementById('letterCount');
+    if (lc) lc.textContent = letterCount;
+
+    // Streak (simulated based on total content)
+    var total = photoCount + videoCount + storyCount + timelineCount;
+    var streak = Math.min(total * 2, 365);
+    setId('statStreak', streak); setBar('barStreak', streak);
+}
+updateStats();
+
+// ===== SPARKLE EFFECT ON CLICK =====
+document.addEventListener('click', function(e) {
+    var spark = document.createElement('div');
+    spark.textContent = '✨';
+    spark.style.cssText = 'position:fixed;left:' + e.clientX + 'px;top:' + e.clientY + 'px;pointer-events:none;z-index:9999;font-size:1.2em;animation:sparkle 0.8s ease forwards;';
+    document.body.appendChild(spark);
+    setTimeout(function() { spark.remove(); }, 800);
+});
+
+// ===== ANNIVERSARY DATE LOCALSTORAGE =====
+function loadStartDate() {
+    var stored = localStorage.getItem('coupleStartDate');
+    if (stored) {
+        startDate = new Date(stored);
+    }
+    var input = document.getElementById('startDateInput');
+    if (input && startDate && !isNaN(startDate.getTime())) {
+        var y = startDate.getFullYear();
+        var m = String(startDate.getMonth() + 1).padStart(2, '0');
+        var d = String(startDate.getDate()).padStart(2, '0');
+        input.value = y + '-' + m + '-' + d;
+    }
+    updateLoveCounter();
+    updateCountdown();
+}
+function saveStartDate() {
+    var input = document.getElementById('startDateInput');
+    if (!input || !input.value) {
+        alert('请选择日期！');
+        return;
+    }
+    startDate = new Date(input.value + 'T00:00:00');
+    localStorage.setItem('coupleStartDate', input.value);
+    updateLoveCounter();
+    updateCountdown();
+    alert('日期已保存！💕');
+}
+
+// ===== DAILY LOVE QUOTE =====
+var dailyQuotes = [
+    { text: "我爱你，不光因为你的样子，还因为和你在一起时，我的样子。", author: "罗伊·克里夫特" },
+    { text: "最好的感觉是，当我看着你，你也在看着我。", author: "佚名" },
+    { text: "遇见你之前，我没想过结婚；遇见你之后，我没想过和别人结婚。", author: "钱钟书" },
+    { text: "世间万物皆可爱，唯有你是最爱。", author: "佚名" },
+    { text: "我想和你一起生活，在某个小镇，共享无尽的黄昏和绵绵不绝的钟声。", author: "茨维塔耶娃" },
+    { text: "你是我温暖的手套，冰冷的啤酒，带着阳光味道的衬衫，日复一日的梦想。", author: "廖一梅" },
+    { text: "春风十里，不如你。", author: "冯唐" },
+    { text: "山有木兮木有枝，心悦君兮君不知。", author: "《越人歌》" },
+    { text: "愿得一人心，白首不相离。", author: "卓文君" },
+    { text: "斯人若彩虹，遇上方知有。", author: "佚名" },
+    { text: "我想要的很简单，时光还在，你还在。", author: "佚名" },
+    { text: "最长情的告白是陪伴，最浪漫的事是和你一起慢慢变老。", author: "佚名" },
+    { text: "你的名字，是我见过最短的情诗。", author: "李宫俊" },
+    { text: "海底月是天上月，眼前人是心上人。", author: "张爱玲" },
+    { text: "世间安得双全法，不负如来不负卿。", author: "仓央嘉措" },
+    { text: "从前车马很慢，书信很远，一生只够爱一个人。", author: "木心" },
+    { text: "在世界上，我徒劳地想找出一些东西来填补我的内心，而你做到了。", author: "佚名" },
+    { text: "你是我所有的不期而遇，也是我最美的久别重逢。", author: "佚名" },
+    { text: "喜欢一个人，藏不住的，即使不说，也会从眼睛里跑出来。", author: "佚名" },
+    { text: "我能想到最浪漫的事，就是和你一起慢慢变老。", author: "赵咏华" },
+    { text: "你笑起来真好看，像春天的花一样。", author: "李昕融" },
+    { text: "你是我的今天和所有的明天。", author: "佚名" },
+    { text: "和喜欢的人在一起，连空气都是甜的。", author: "佚名" },
+    { text: "你的眼睛真好看，里面有星星、有月亮、还有我。", author: "佚名" },
+    { text: "喜欢你，是我做过最认真的事。", author: "佚名" },
+    { text: "我想和你虚度时光，比如低头看鱼，比如把茶杯留在桌子上，离开。", author: "李元胜" },
+    { text: "你是我漫漫余生里，斩钉截铁的梦想。", author: "佚名" },
+    { text: "与你共度时光，是我最大的幸运。", author: "佚名" },
+    { text: "如果没有遇见你，我将会是在哪里？", author: "佚名" },
+    { text: "人心换人心，我若有百分真心，你便有十分爱意。", author: "佚名" },
+    { text: "我们的爱，像一首永远唱不完的歌。", author: "佚名" },
+    { text: "与你一见如故，是我今生最美丽的邂逅。", author: "佚名" },
+    { text: "牵挂是一颗心对另一颗心的深情惦记。", author: "佚名" },
+    { text: "时光静好，与君语；细水流年，与君同。", author: "佚名" },
+    { text: "你是我的小呀小苹果，怎么爱你都不嫌多。", author: "筷子兄弟" },
+    { text: "人生若只如初见，何事秋风悲画扇。", author: "纳兰性德" },
+    { text: "执子之手，与子偕老。", author: "《诗经》" }
+];
+function getDailyQuote() {
+    var today = new Date();
+    var dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+    var idx = dayOfYear % dailyQuotes.length;
+    var q = dailyQuotes[idx];
+    var dqText = document.getElementById('dailyQuoteText');
+    var dqAuthor = document.getElementById('dailyQuoteAuthor');
+    var dqDate = document.getElementById('dailyQuoteDate');
+    if (dqText) dqText.textContent = '"' + q.text + '"';
+    if (dqAuthor) dqAuthor.textContent = '—— ' + q.author;
+    if (dqDate) {
+        var month = today.getMonth() + 1;
+        var day = today.getDate();
+        dqDate.textContent = today.getFullYear() + '年' + month + '月' + day + '日';
+    }
+}
+getDailyQuote();
+
+// ===== PHOTO SLIDESHOW =====
+var ssAutoplayInterval = null;
+var ssIsPlaying = false;
+
+function openSlideshow(idx) {
+    if (!photoData.length) return;
+    currentLightboxIdx = idx;
+    renderSlideshow();
+    var ss = document.getElementById('slideshow');
+    ss.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    renderThumbnails();
+}
+function closeSlideshow() {
+    var ss = document.getElementById('slideshow');
+    ss.classList.remove('active');
+    document.body.style.overflow = '';
+    stopAutoplay();
+}
+function slideshowNav(dir) {
+    if (!photoData.length) return;
+    currentLightboxIdx = (currentLightboxIdx + dir + photoData.length) % photoData.length;
+    renderSlideshow();
+    renderThumbnails();
+}
+function renderSlideshow() {
+    var img = document.getElementById('ssImg');
+    var caption = document.getElementById('ssCaption');
+    var counter = document.getElementById('ssCounter');
+    img.style.opacity = 0;
+    setTimeout(function() {
+        img.src = photoData[currentLightboxIdx].src;
+        img.style.opacity = 1;
+    }, 150);
+    if (caption) caption.textContent = photoData[currentLightboxIdx].caption;
+    if (counter) counter.textContent = (currentLightboxIdx + 1) + ' / ' + photoData.length;
+}
+function renderThumbnails() {
+    var container = document.getElementById('ssThumbnails');
+    if (!container) return;
+    var html = '';
+    for (var i = 0; i < photoData.length; i++) {
+        var active = i === currentLightboxIdx ? ' active' : '';
+        html += '<img class="ss-thumb' + active + '" src="' + photoData[i].src + '" onclick="goToSlide(' + i + ')">';
+    }
+    container.innerHTML = html;
+}
+function goToSlide(idx) {
+    currentLightboxIdx = idx;
+    renderSlideshow();
+    renderThumbnails();
+}
+function toggleAutoplay() {
+    if (ssIsPlaying) {
+        stopAutoplay();
+    } else {
+        startAutoplay();
+    }
+}
+function startAutoplay() {
+    if (ssAutoplayInterval) clearInterval(ssAutoplayInterval);
+    ssIsPlaying = true;
+    var btn = document.getElementById('ssAutoplay');
+    if (btn) {
+        btn.textContent = '⏸ 暂停';
+        btn.classList.add('playing');
+    }
+    ssAutoplayInterval = setInterval(function() {
+        if (!photoData.length) return;
+        currentLightboxIdx = (currentLightboxIdx + 1) % photoData.length;
+        renderSlideshow();
+        renderThumbnails();
+    }, 3000);
+}
+function stopAutoplay() {
+    ssIsPlaying = false;
+    if (ssAutoplayInterval) {
+        clearInterval(ssAutoplayInterval);
+        ssAutoplayInterval = null;
+    }
+    var btn = document.getElementById('ssAutoplay');
+    if (btn) {
+        btn.textContent = '▶ 自动播放';
+        btn.classList.remove('playing');
+    }
+}
+// Arrow key nav for slideshow
+document.addEventListener('keydown', function(e) {
+    var ss = document.getElementById('slideshow');
+    if (ss && ss.classList.contains('active')) {
+        if (e.key === 'Escape') closeSlideshow();
+        if (e.key === 'ArrowLeft') slideshowNav(-1);
+        if (e.key === 'ArrowRight') slideshowNav(1);
+        if (e.key === ' ') { e.preventDefault(); toggleAutoplay(); }
+    }
+});
+
+// ===== MOOD TRACKER =====
+var moodLabels = {
+    '😍': '超爱', '🥰': '甜蜜', '😊': '开心', '😌': '平静',
+    '😢': '难过', '😤': '生气', '🥺': '撒娇'
+};
+var moodValues = { '😍': 5, '🥰': 5, '😊': 4, '😌': 3, '🥺': 3, '😢': 2, '😤': 1 };
+var moodDayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+var selectedMoodDay = -1;
+var weeklyMoods = [null, null, null, null, null, null, null];
+
+function loadMoods() {
+    var stored = localStorage.getItem('weeklyMoods');
+    if (stored) {
+        try { weeklyMoods = JSON.parse(stored); } catch(e) { weeklyMoods = [null,null,null,null,null,null,null]; }
+    }
+    renderMoodGrid();
+}
+function saveMoods() {
+    localStorage.setItem('weeklyMoods', JSON.stringify(weeklyMoods));
+}
+function renderMoodGrid() {
+    var grid = document.getElementById('moodGrid');
+    if (!grid) return;
+    var html = '';
+    for (var i = 0; i < 7; i++) {
+        var mood = weeklyMoods[i];
+        var emoji = mood || '❓';
+        var label = mood ? moodLabels[mood] || '' : '点击设置';
+        html += '<div class="mood-day" onclick="openMoodPicker(' + i + ')">' +
+            '<div class="mood-day-name">' + moodDayNames[i] + '</div>' +
+            '<span class="mood-emoji">' + emoji + '</span>' +
+            '<div class="mood-label">' + label + '</div>' +
+            '</div>';
+    }
+    grid.innerHTML = html;
+    updateMoodAvg();
+}
+function openMoodPicker(dayIdx) {
+    selectedMoodDay = dayIdx;
+    var picker = document.getElementById('moodPicker');
+    picker.classList.add('active');
+    // Highlight current selection
+    var opts = picker.querySelectorAll('.mood-opt');
+    opts.forEach(function(opt) {
+        opt.style.background = '';
+        if (weeklyMoods[dayIdx] && opt.textContent.trim() === weeklyMoods[dayIdx]) {
+            opt.style.background = 'rgba(255,107,157,0.25)';
+        }
+    });
+}
+function setMood(emoji) {
+    if (selectedMoodDay < 0) return;
+    weeklyMoods[selectedMoodDay] = emoji;
+    saveMoods();
+    renderMoodGrid();
+    document.getElementById('moodPicker').classList.remove('active');
+    selectedMoodDay = -1;
+}
+function updateMoodAvg() {
+    var avgEl = document.getElementById('moodAvg');
+    if (!avgEl) return;
+    var vals = weeklyMoods.filter(function(m) { return m !== null; });
+    if (!vals.length) { avgEl.textContent = '—'; return; }
+    var sum = 0;
+    for (var i = 0; i < vals.length; i++) {
+        sum += moodValues[vals[i]] || 3;
+    }
+    var avg = sum / vals.length;
+    var avgEmoji = avg >= 4.5 ? '😍' : avg >= 3.5 ? '🥰' : avg >= 2.5 ? '😊' : avg >= 1.5 ? '🥺' : '😢';
+    avgEl.textContent = avgEmoji + ' ' + avg.toFixed(1) + '/5';
+}
+function resetMoods() {
+    if (!confirm('确定重置本周心情记录？')) return;
+    weeklyMoods = [null, null, null, null, null, null, null];
+    saveMoods();
+    renderMoodGrid();
+}
+
+// ===== MEMORY OF THE DAY =====
+var storyData = [];
+{% for story in stories %}
+storyData.push({
+    title: "{{ story.title }}",
+    content: "{{ story.content }}",
+    mood: "{{ story.mood }}",
+    date: "{{ story.created_at }}"
+});
+{% endfor %}
+
+var quoteData = [
+    { text: "真正的爱情，是在能爱的时候，懂得珍惜。", author: "佚名" },
+    { text: "爱情不是寻找一个完美的人，而是学会用完美的眼光，欣赏一个不完美的人。", author: "佚名" },
+    { text: "最好的爱情，是兩個人彼此做个伴。", author: "张爱玲" },
+    { text: "爱一个人，是什么感觉？是你在想他的时候嘴角会不自觉上扬。", author: "佚名" },
+    { text: "爱情就像乘法，一方为零，结果永远为零。", author: "佚名" },
+    { text: "真正的爱情不是占有，而是给予。", author: "佚名" },
+    { text: "陪伴是最长情的告白。", author: "佚名" },
+    { text: "好的爱情，是让你成为更好的自己。", author: "佚名" },
+    { text: "爱情里最美好的事，就是和你一起变老。", author: "佚名" },
+    { text: "相爱容易相处难，但与你相处，一切都是那么简单。", author: "佚名" }
+];
+
+function refreshMemory() {
+    var content = document.getElementById('memoryDayContent');
+    var meta = document.getElementById('memoryDayMeta');
+    if (!content) return;
+    content.style.opacity = 0;
+    setTimeout(function() {
+        var pool = [];
+        for (var i = 0; i < storyData.length; i++) {
+            pool.push({ type: 'story', title: storyData[i].title, text: storyData[i].content, date: storyData[i].date, mood: storyData[i].mood });
+        }
+        for (var j = 0; j < quoteData.length; j++) {
+            pool.push({ type: 'quote', text: quoteData[j].text, author: quoteData[j].author });
+        }
+        if (pool.length === 0) {
+            content.textContent = "写下第一个故事，让回忆开始积累吧 ✍️";
+            if (meta) meta.textContent = '';
+            content.style.opacity = 1;
+            return;
+        }
+        var item = pool[Math.floor(Math.random() * pool.length)];
+        if (item.type === 'story') {
+            var shortText = item.text.length > 120 ? item.text.substring(0, 120) + '...' : item.text;
+            content.textContent = '"' + shortText + '"';
+            if (meta) meta.textContent = item.mood + ' ' + item.title + ' · ' + item.date;
+        } else {
+            content.textContent = '"' + item.text + '"';
+            if (meta) meta.textContent = '—— ' + item.author;
+        }
+        content.style.opacity = 1;
+    }, 400);
+}
+refreshMemory();
+
+// Auto-switch moods weekly
+var lastMoodWeek = localStorage.getItem('lastMoodWeek');
+var now = new Date();
+var currentWeek = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24 * 7));
+if (lastMoodWeek && parseInt(lastMoodWeek) < currentWeek) {
+    weeklyMoods = [null, null, null, null, null, null, null];
+    saveMoods();
+}
+localStorage.setItem('lastMoodWeek', currentWeek);
+loadMoods();
+
+// Override startDate on page load
+loadStartDate();
+
+</script>
+{% endblock %}

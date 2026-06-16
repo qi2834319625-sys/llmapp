@@ -1,0 +1,1229 @@
+{% extends "base.html" %}
+{% block title %}控制台 - 多系统门户{% endblock %}
+{% block content %}
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff; overflow-x: hidden;
+        }
+        .music-control {
+            position: fixed; top: 20px; right: 20px; z-index: 1000;
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(0,0,0,0.3); padding: 8px 16px;
+            border-radius: 25px; backdrop-filter: blur(10px);
+        }
+        .music-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            color: #fff; font-size: 1.1em; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s;
+        }
+        .music-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
+        .music-btn.playing { animation: pulse 1.5s ease-in-out infinite; }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(102,126,234,0.4); }
+            50% { box-shadow: 0 0 0 12px rgba(102,126,234,0); }
+        }
+        .volume-slider { width: 70px; accent-color: #667eea; }
+        .now-playing { color: rgba(255,255,255,0.5); font-size: 0.75em; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .header {
+            text-align: center; padding: 50px 20px 30px;
+            position: relative;
+        }
+        .header h1 {
+            font-size: 2.8em; margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+        @keyframes shimmer {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.3); }
+        }
+        .header p { color: rgba(255,255,255,0.5); font-size: 1.1em; }
+        .user-info {
+            position: absolute; top: 20px; right: 180px;
+            color: rgba(255,255,255,0.6); font-size: 0.9em;
+        }
+        .logout-btn {
+            position: absolute; top: 15px; right: 20px;
+            padding: 8px 20px; background: rgba(255,82,82,0.2);
+            border: 1px solid rgba(255,82,82,0.3); color: #ff5252;
+            border-radius: 20px; text-decoration: none; font-size: 0.85em;
+            transition: all 0.3s;
+        }
+        .logout-btn:hover { background: rgba(255,82,82,0.3); }
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px; padding: 20px 40px 60px;
+            max-width: 1400px; margin: 0 auto;
+        }
+        .module-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px; padding: 35px 30px;
+            cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative; overflow: hidden;
+            text-decoration: none; color: #fff; display: block;
+        }
+        .module-card::before {
+            content: ''; position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, var(--c1), var(--c2));
+            opacity: 0; transition: opacity 0.4s;
+        }
+        .module-card:hover::before { opacity: 0.15; }
+        .module-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border-color: rgba(255,255,255,0.2);
+        }
+        .card-icon {
+            font-size: 3em; margin-bottom: 15px; position: relative; z-index: 1;
+            display: inline-block; transition: transform 0.4s;
+        }
+        .module-card:hover .card-icon { transform: scale(1.2) rotate(5deg); }
+        .card-title {
+            font-size: 1.4em; font-weight: 700; margin-bottom: 8px;
+            position: relative; z-index: 1;
+        }
+        .card-desc {
+            color: rgba(255,255,255,0.5); font-size: 0.9em; line-height: 1.6;
+            position: relative; z-index: 1;
+        }
+        .card-badge {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(255,255,255,0.1); padding: 4px 12px;
+            border-radius: 12px; font-size: 0.75em; color: rgba(255,255,255,0.6);
+        }
+        .card-stats {
+            display: flex; gap: 15px; margin-top: 12px;
+            position: relative; z-index: 1;
+        }
+        .card-stats span {
+            font-size: 0.75em; color: rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.05); padding: 3px 10px;
+            border-radius: 8px;
+        }
+        .card-couple { --c1: #ff6b9d; --c2: #c44569; }
+        .card-recruit { --c1: #667eea; --c2: #764ba2; }
+        .card-crypto { --c1: #11998e; --c2: #38ef7d; }
+        .card-gnn { --c1: #f093fb; --c2: #f5576c; }
+        .card-invest { --c1: #f7971e; --c2: #ffd200; }
+        .card-makeup { --c1: #ee9ca7; --c2: #ffdde1; }
+        .card-fashion { --c1: #a18cd1; --c2: #fbc2eb; }
+        .card-cooking { --c1: #ff9a9e; --c2: #fecfef; }
+        .card-study { --c1: #89f7fe; --c2: #66a6ff; }
+        .card-civil { --c1: #fdbb2d; --c2: #22c1c3; }
+        .floating-hearts {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0; overflow: hidden;
+        }
+        .fheart {
+            position: absolute; bottom: -50px; font-size: 1.2em;
+            animation: rise 8s ease-in infinite; opacity: 0;
+        }
+        @keyframes rise {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.3; }
+            100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* ===== MOTIVATIONAL BANNER ===== */
+        .motivational-banner {
+            margin: 0 auto 10px;
+            max-width: 900px;
+            padding: 14px 30px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(118,75,162,0.15));
+            border: 1px solid rgba(255,255,255,0.08);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .motivational-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.03), transparent);
+            animation: bannerShine 4s ease-in-out infinite;
+        }
+        @keyframes bannerShine {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+        .motivational-banner .banner-text {
+            font-size: 1.05em;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            z-index: 1;
+            transition: opacity 0.5s;
+        }
+
+        /* ===== LIVE CLOCK & DATE ===== */
+        .clock-widget {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            text-align: center;
+            z-index: 10;
+        }
+        .clock-time {
+            font-size: 1.6em;
+            font-weight: 700;
+            color: rgba(255,255,255,0.9);
+            letter-spacing: 2px;
+            font-variant-numeric: tabular-nums;
+            text-shadow: 0 0 20px rgba(102,126,234,0.5);
+        }
+        .clock-date {
+            font-size: 0.82em;
+            color: rgba(255,255,255,0.45);
+            margin-top: 2px;
+        }
+
+        /* ===== DASHBOARD WIDGETS CONTAINER ===== */
+        .dashboard-widgets {
+            max-width: 1400px;
+            margin: 0 auto 20px;
+            padding: 0 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        /* ===== WEATHER WIDGET ===== */
+        .weather-widget {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .weather-widget:hover {
+            border-color: rgba(102,126,234,0.3);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        .weather-widget::before {
+            content: '';
+            position: absolute;
+            top: -30px;
+            right: -30px;
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(247,151,30,0.1), transparent);
+            border-radius: 50%;
+        }
+        .weather-top {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 10px;
+        }
+        .weather-icon {
+            font-size: 2.8em;
+            line-height: 1;
+        }
+        .weather-temp {
+            font-size: 2em;
+            font-weight: 700;
+            color: rgba(255,255,255,0.9);
+        }
+        .weather-desc {
+            font-size: 0.9em;
+            color: rgba(255,255,255,0.55);
+        }
+        .weather-details {
+            display: flex;
+            gap: 16px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .weather-detail {
+            font-size: 0.78em;
+            color: rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.05);
+            padding: 4px 10px;
+            border-radius: 8px;
+        }
+        .weather-detail span {
+            color: rgba(255,255,255,0.7);
+            font-weight: 600;
+        }
+        .weather-loading {
+            color: rgba(255,255,255,0.3);
+            font-size: 0.9em;
+            padding: 10px 0;
+        }
+
+        /* ===== QUOTE WIDGET ===== */
+        .quote-widget {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .quote-widget:hover {
+            border-color: rgba(240,147,251,0.3);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        .quote-widget::before {
+            content: '"';
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            font-size: 4em;
+            color: rgba(240,147,251,0.1);
+            font-family: Georgia, serif;
+            line-height: 1;
+        }
+        .widget-title {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .quote-text {
+            font-size: 1em;
+            line-height: 1.7;
+            color: rgba(255,255,255,0.8);
+            font-style: italic;
+            margin-bottom: 8px;
+            transition: opacity 0.4s;
+        }
+        .quote-author {
+            font-size: 0.82em;
+            color: rgba(255,255,255,0.4);
+            text-align: right;
+        }
+        .quote-refresh {
+            background: rgba(240,147,251,0.15);
+            border: 1px solid rgba(240,147,251,0.25);
+            color: #f093fb;
+            border-radius: 8px;
+            padding: 4px 14px;
+            font-size: 0.78em;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        .quote-refresh:hover {
+            background: rgba(240,147,251,0.25);
+            transform: scale(1.05);
+        }
+        .quote-refresh.loading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* ===== QUICK STATS BAR ===== */
+        .stats-bar {
+            max-width: 1400px;
+            margin: 0 auto 20px;
+            padding: 0 40px;
+        }
+        .stats-inner {
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .stat-icon {
+            font-size: 1.3em;
+        }
+        .stat-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .stat-value {
+            font-size: 1.15em;
+            font-weight: 700;
+            color: rgba(255,255,255,0.9);
+            line-height: 1.2;
+        }
+        .stat-label {
+            font-size: 0.7em;
+            color: rgba(255,255,255,0.4);
+        }
+        .stat-divider {
+            width: 1px;
+            height: 32px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* ===== BOTTOM WIDGETS ROW ===== */
+        .dashboard-bottom {
+            max-width: 1400px;
+            margin: 0 auto 30px;
+            padding: 0 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        /* ===== SHORTCUT BUTTONS ===== */
+        .shortcuts-widget {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        .shortcuts-widget:hover {
+            border-color: rgba(56,239,125,0.2);
+        }
+        .shortcuts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .shortcut-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            color: rgba(255,255,255,0.75);
+            font-size: 0.82em;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        .shortcut-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+            color: #fff;
+            text-decoration: none;
+        }
+        .shortcut-emoji {
+            font-size: 1.2em;
+        }
+
+        /* ===== ACTIVITY FEED ===== */
+        .activity-widget {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        .activity-widget:hover {
+            border-color: rgba(102,126,234,0.2);
+        }
+        .activity-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 10px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .activity-item:hover {
+            background: rgba(255,255,255,0.06);
+        }
+        .activity-item.ac-blue { border-left-color: #667eea; }
+        .activity-item.ac-green { border-left-color: #38ef7d; }
+        .activity-item.ac-pink { border-left-color: #f093fb; }
+        .activity-item.ac-orange { border-left-color: #f7971e; }
+        .activity-item.ac-cyan { border-left-color: #22c1c3; }
+        .activity-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+        .activity-dot.dot-blue { background: #667eea; }
+        .activity-dot.dot-green { background: #38ef7d; }
+        .activity-dot.dot-pink { background: #f093fb; }
+        .activity-dot.dot-orange { background: #f7971e; }
+        .activity-dot.dot-cyan { background: #22c1c3; }
+        .activity-text {
+            font-size: 0.82em;
+            color: rgba(255,255,255,0.65);
+            line-height: 1.4;
+        }
+        .activity-time {
+            font-size: 0.68em;
+            color: rgba(255,255,255,0.3);
+            margin-top: 2px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 900px) {
+            .dashboard-widgets { grid-template-columns: 1fr; padding: 0 20px; }
+            .dashboard-bottom { grid-template-columns: 1fr; padding: 0 20px; }
+            .stats-bar { padding: 0 20px; }
+            .clock-widget { position: static; text-align: center; margin-bottom: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-hearts" id="hearts"></div>
+
+    <div class="music-control">
+        <button class="music-btn" id="musicBtn" title="背景音乐">🎵</button>
+        <span class="now-playing" id="nowPlaying">轻音乐</span>
+        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="30">
+        <button class="music-btn" id="musicSearchBtn" title="搜索音乐" style="font-size:0.9em;">🔍</button>
+    </div>
+    
+    <!-- Music Search Modal -->
+    <div id="musicModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:2000;align-items:center;justify-content:center;">
+        <div style="background:rgba(30,30,50,0.95);border-radius:20px;padding:30px;width:500px;max-width:90%;max-height:80vh;overflow-y:auto;border:1px solid rgba(255,255,255,0.1);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <h3 style="color:#667eea;">🎵 QQ音乐搜索</h3>
+                <button onclick="document.getElementById('musicModal').style.display='none'" style="background:none;border:none;color:rgba(255,255,255,0.5);font-size:1.5em;cursor:pointer;">×</button>
+            </div>
+            <div style="display:flex;gap:10px;margin-bottom:20px;">
+                <input type="text" id="musicKeyword" placeholder="搜索歌曲、歌手..." style="flex:1;padding:12px 16px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;outline:none;">
+                <button onclick="searchMusic()" style="padding:12px 24px;background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:10px;color:#fff;cursor:pointer;">搜索</button>
+            </div>
+            <div id="musicResults" style="color:rgba(255,255,255,0.6);"></div>
+        </div>
+    </div>
+
+    <!-- Clock Widget -->
+    <div class="clock-widget">
+        <div class="clock-time" id="clockTime">00:00:00</div>
+        <div class="clock-date" id="clockDate">----年--月--日</div>
+    </div>
+
+    <div class="header">
+        <a href="/logout" class="logout-btn">退出登录</a>
+        <div class="user-info">👤 {{ user }}</div>
+        <h1>✨ 多系统智能门户 ✨</h1>
+        <p>选择一个模块开始探索</p>
+    </div>
+
+    <!-- Motivational Banner -->
+    <div class="motivational-banner" id="motivBanner">
+        <div class="banner-text" id="bannerText">加载中...</div>
+    </div>
+
+    <!-- Quick Stats Bar -->
+    <div class="stats-bar">
+        <div class="stats-inner">
+            <div class="stat-item">
+                <span class="stat-icon">📖</span>
+                <div class="stat-info">
+                    <span class="stat-value">{{ stats.lc }}</span>
+                    <span class="stat-label">LeetCode题库</span>
+                </div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-icon">🐙</span>
+                <div class="stat-info">
+                    <span class="stat-value">{{ stats.gh }}</span>
+                    <span class="stat-label">GitHub仓库</span>
+                </div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-icon">📺</span>
+                <div class="stat-info">
+                    <span class="stat-value">{{ stats.yt }}</span>
+                    <span class="stat-label">YouTube视频</span>
+                </div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-icon">📜</span>
+                <div class="stat-info">
+                    <span class="stat-value">{{ stats.crypto }}+</span>
+                    <span class="stat-label">密码学论文</span>
+                </div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-icon">🍳</span>
+                <div class="stat-info">
+                    <span class="stat-value">10+</span>
+                    <span class="stat-label">美食食谱</span>
+                </div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-icon">🍽️</span>
+                <div class="stat-info">
+                    <span class="stat-value">5</span>
+                    <span class="stat-label">国菜系</span>
+                </div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-icon">❓</span>
+                <div class="stat-info">
+                    <span class="stat-value">20</span>
+                    <span class="stat-label">常见问题</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Widgets Row 1: Weather + Quote -->
+    <div class="dashboard-widgets">
+        <div class="weather-widget">
+            <div class="widget-title">🌤️ 今日天气</div>
+            <div id="weatherContent">
+                <div class="weather-loading">🌡️ 获取天气中...</div>
+            </div>
+        </div>
+        <div class="quote-widget">
+            <div class="widget-title">💡 每日一言</div>
+            <div class="quote-text" id="quoteText">加载中...</div>
+            <div class="quote-author" id="quoteAuthor"></div>
+            <button class="quote-refresh" id="quoteRefresh" onclick="refreshQuote()">🔄 换一句</button>
+        </div>
+    </div>
+
+    <!-- Bottom Row: Shortcuts + Activity -->
+    <div class="dashboard-bottom">
+        <div class="shortcuts-widget">
+            <div class="widget-title">⚡ 快捷操作</div>
+            <div class="shortcuts-grid">
+                <a href="/couple" class="shortcut-btn"><span class="shortcut-emoji">💕</span> 写故事</a>
+                <a href="/cooking" class="shortcut-btn"><span class="shortcut-emoji">🍳</span> 加食谱</a>
+                <a href="/cet-exam" class="shortcut-btn"><span class="shortcut-emoji">📝</span> 模拟考试</a>
+                <a href="/investment" class="shortcut-btn"><span class="shortcut-emoji">📊</span> 查看资产</a>
+                <a href="/strategy-lab" class="shortcut-btn"><span class="shortcut-emoji">🧪</span> 策略实验室</a>
+                <a href="/recruitment" class="shortcut-btn"><span class="shortcut-emoji">💼</span> 刷算法</a>
+                <a href="/study-abroad" class="shortcut-btn"><span class="shortcut-emoji">✈️</span> 留学规划</a>
+            </div>
+        </div>
+        <div class="activity-widget">
+            <div class="widget-title">🕐 最近动态</div>
+            <ul class="activity-list" id="activityList">
+                <!-- Populated by JS -->
+            </ul>
+        </div>
+        <div class="activity-widget">
+            <div class="widget-title">📌 快速导航</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                <a href="/manga" class="shortcut-btn"><span class="shortcut-emoji">🎭</span> 漫剧创作</a>
+                <a href="/gnn" class="shortcut-btn"><span class="shortcut-emoji">🧠</span> GNN匹配</a>
+                <a href="/makeup" class="shortcut-btn"><span class="shortcut-emoji">💄</span> 美妆课堂</a>
+                <a href="/fashion" class="shortcut-btn"><span class="shortcut-emoji">👗</span> 穿搭推荐</a>
+                <a href="/civil-exam" class="shortcut-btn"><span class="shortcut-emoji">🏛️</span> 公务员备考</a>
+                <a href="/crypto" class="shortcut-btn"><span class="shortcut-emoji">🔐</span> 论文研读</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="modules-grid">
+        <a href="/couple" class="module-card card-couple">
+            <span class="card-badge">💕 浪漫</span>
+            <div class="card-icon">💑</div>
+            <div class="card-title">情侣空间</div>
+            <div class="card-desc">记录美好瞬间，管理照片、视频、故事和时光轴，属于你们的浪漫天地</div>
+            <div class="card-stats"><span>📸 相册</span><span>📖 故事</span><span>📅 时光轴</span></div>
+        </a>
+
+        <a href="/recruitment" class="module-card card-recruit">
+            <span class="card-badge">🔥 热门</span>
+            <div class="card-icon">💼</div>
+            <div class="card-title">大模型秋招系统</div>
+            <div class="card-desc">LeetCode Hot 100题库、GitHub技术仓库、YouTube学习资源，助你拿下心仪offer</div>
+            <div class="card-stats"><span>📝 {{ stats.lc }}题</span><span>🐙 {{ stats.gh }}仓库</span><span>📺 {{ stats.yt }}视频</span></div>
+        </a>
+
+        <a href="/crypto" class="module-card card-crypto">
+            <span class="card-badge">🔐 学术</span>
+            <div class="card-icon">📜</div>
+            <div class="card-title">密码学论文系统</div>
+            <div class="card-desc">浙江理工大学通信学硕方向，{{ stats.crypto }}+密码学论文，大模型智能总结，研究进展时间线</div>
+            <div class="card-stats"><span>📄 {{ stats.crypto }}+论文</span><span>📅 70年跨度</span><span>🔬 12方向</span></div>
+        </a>
+
+        <a href="/gnn" class="module-card card-gnn">
+            <span class="card-badge">🧠 AI</span>
+            <div class="card-icon">🔗</div>
+            <div class="card-title">GNN结构化匹配</div>
+            <div class="card-desc">图神经网络实体连接与结构化匹配系统，智能关系发现与图谱分析</div>
+            <div class="card-stats"><span>🕸️ 知识图谱</span><span>🎯 智能匹配</span></div>
+        </a>
+
+        <a href="/manga" class="module-card" style="--c1: #ff6b6b; --c2: #feca57;">
+            <span class="card-badge">🎬 AI创作</span>
+            <div class="card-icon">🎭</div>
+            <div class="card-title">漫剧生成系统</div>
+            <div class="card-desc">小说→角色设计→分镜→AI生图→视频合成，一站式漫剧创作</div>
+            <div class="card-stats"><span>📖 智能分镜</span><span>🖼️ AI生图</span><span>🎬 完整视频</span></div>
+        </a>
+
+        <a href="/cet-exam" class="module-card" style="--c1: #6a11cb; --c2: #2575fc;">
+            <span class="card-badge">📚 英语</span>
+            <div class="card-icon">🎓</div>
+            <div class="card-title">四六级考试系统</div>
+            <div class="card-desc">CET-4/CET-6词汇、阅读、写作、听力全方位备考，含范文和听力原文</div>
+            <div class="card-stats"><span>✍️ 词汇</span><span>📖 阅读</span><span>🎧 听力</span></div>
+        </a>
+
+        <a href="/investment" class="module-card card-invest">
+            <span class="card-badge">📈 理财</span>
+            <div class="card-icon">💰</div>
+            <div class="card-title">投资管理系统</div>
+            <div class="card-desc">多元化投资组合管理，股票、基金、加密货币，追踪收益与风险分析</div>
+            <div class="card-stats"><span>📊 组合分析</span><span>⚠️ 风险评估</span></div>
+        </a>
+
+        <a href="/makeup" class="module-card card-makeup">
+            <span class="card-badge">💄 美妆</span>
+            <div class="card-icon">💋</div>
+            <div class="card-title">美妆指南</div>
+            <div class="card-desc">从底妆到眼妆，从日常到派对，详细化妆教程和技巧分享</div>
+            <div class="card-stats"><span>10+教程</span><span>3级难度</span></div>
+        </a>
+
+        <a href="/fashion" class="module-card card-fashion">
+            <span class="card-badge">👗 时尚</span>
+            <div class="card-icon">👠</div>
+            <div class="card-title">服装搭配</div>
+            <div class="card-desc">四季穿搭指南，风格搭配推荐，打造属于你的时尚品味</div>
+            <div class="card-stats"><span>4季穿搭</span><span>5种风格</span></div>
+        </a>
+
+        <a href="/cooking" class="module-card card-cooking">
+            <span class="card-badge">🍳 美食</span>
+            <div class="card-icon">🍜</div>
+            <div class="card-title">美食烹饪</div>
+            <div class="card-desc">中西日韩泰各国美食食谱，详细步骤教学，厨房新手也能变大厨</div>
+            <div class="card-stats"><span>5国菜系</span><span>10+食谱</span></div>
+        </a>
+
+        <a href="/study-abroad" class="module-card card-study">
+            <span class="card-badge">🎓 留学</span>
+            <div class="card-icon">✈️</div>
+            <div class="card-title">出国留学</div>
+            <div class="card-desc">全球名校申请指南，专业选择、申请要求、截止日期一站式查询</div>
+            <div class="card-stats"><span>8个国家</span><span>12个项目</span></div>
+        </a>
+
+        <a href="/civil-exam" class="module-card card-civil">
+                    <span class="card-badge">🏛️ 公考</span>
+                    <div class="card-icon">📝</div>
+                    <div class="card-title">公务员考试</div>
+                    <div class="card-desc">行测申论全覆盖，面试技巧指导，助你成功上岸</div>
+                    <div class="card-stats"><span>📖 42考点</span><span>📝 全真模拟</span></div>
+                </a>
+        
+                <a href="/ai-music" class="module-card" style="--c1: #ff00e5; --c2: #b026ff;">
+                    <span class="card-badge">🎵 AI</span>
+                    <div class="card-icon">🎹</div>
+                    <div class="card-title">AI 音乐生成</div>
+                    <div class="card-desc">多引擎AI作曲，调节旋律情绪，一键生成专属音乐</div>
+                    <div class="card-stats"><span>🎹 4种引擎</span><span>🎼 自定义旋律</span></div>
+                </a>
+                
+                <a href="/papers" class="module-card" style="--c1: #00f5ff; --c2: #39ff14;">
+                                    <span class="card-badge">🔐 论文</span>
+                                    <div class="card-icon">📚</div>
+                                    <div class="card-title">密钥协商论文库</div>
+                                    <div class="card-desc">全面梳理密钥协商研究方向，15个分类，LLM智能总结</div>
+                                    <div class="card-stats"><span>🔬 15方向</span><span>🤖 AI总结</span></div>
+                                </a>
+                
+                                <a href="/crawler" class="module-card" style="--c1: #ff6b00; --c2: #ffe600;">
+                                    <span class="card-badge">🕷️ 搜集</span>
+                                    <div class="card-icon">🌐</div>
+                                    <div class="card-title">数据搜集中心</div>
+                                    <div class="card-desc">全网论文自动搜集，定时下载，智能分类入库</div>
+                                    <div class="card-stats"><span>📡 5数据源</span><span>⏰ 定时</span><span>🏷️ 自分类</span></div>
+                                </a>
+                                
+                                <a href="/knowledge" class="module-card" style="--c1: #667eea; --c2: #764ba2;">
+                                    <span class="card-badge">🧠 AI</span>
+                                    <div class="card-icon">📚</div>
+                                    <div class="card-title">大模型知识库</div>
+                                    <div class="card-desc">AI驱动的知识管理，每日自动更新，智能问答</div>
+                                    <div class="card-stats"><span>8分类</span><span>🤖 AI问答</span><span>📰 每日更新</span></div>
+                                </a>
+                            </div>
+
+    <!-- ===== SYSTEM HEALTH PANEL ===== -->
+    <div id="systemHealthPanel" style="max-width:1400px;margin:20px auto;padding:0 40px;display:none;">
+        <div style="background:rgba(255,255,255,0.04);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h3 style="color:#00f5ff;font-size:1em;">🔍 系统健康监控</h3>
+                <div style="display:flex;gap:8px;">
+                    <span id="healthStatus" style="padding:4px 12px;background:rgba(57,255,20,0.15);border-radius:12px;color:#39ff14;font-size:0.8em;">● 健康</span>
+                    <button onclick="document.getElementById('systemHealthPanel').style.display='none'" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:1.2em;">×</button>
+                </div>
+            </div>
+            <div id="healthModules" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;"></div>
+            <div style="margin-top:12px;display:flex;gap:16px;color:rgba(255,255,255,0.4);font-size:0.78em;">
+                <span>📁 DB: <span id="healthDbSize">--</span> MB</span>
+                <span>⏱️ 更新: <span id="healthUpdateTime">--</span></span>
+            </div>
+        </div>
+    </div>
+
+    <audio id="bgMusic" loop crossorigin="anonymous">
+        <source src="/static/audio/bgm_relax.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Background Music Playlist -->
+    <div id="bgmPlaylist" style="display:none;position:fixed;bottom:60px;right:20px;background:rgba(20,20,40,0.95);border-radius:16px;padding:20px;width:280px;border:1px solid rgba(255,255,255,0.1);z-index:1500;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <h4 style="color:#667eea;font-size:0.9em;">🎵 背景音乐</h4>
+            <span style="color:rgba(255,255,255,0.5);font-size:0.8em;cursor:pointer;" onclick="document.getElementById('bgmPlaylist').style.display='none'">✕</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+            {% for track in ["/static/audio/bgm_relax.mp3","/static/audio/bgm_focus.mp3","/static/audio/bgm_gentle.mp3"] %}
+            {% set track_name = track.split('/')[-1].replace('.mp3','').replace('bgm_','').replace('_',' ').title() %}
+            <div class="bgm-track" data-src="{{ track }}" style="padding:10px 14px;background:rgba(255,255,255,0.05);border-radius:10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:all 0.2s;" onmouseover="this.style.background='rgba(102,126,234,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'" onclick="playBgmTrack(this)">
+                <div>
+                    <div style="color:#fff;font-size:0.88em;">{{ track_name }}</div>
+                    <div style="color:rgba(255,255,255,0.35);font-size:0.75em;">本地音乐 · 60秒循环</div>
+                </div>
+                <span style="color:#667eea;font-size:1em;">▶</span>
+            </div>
+            {% endfor %}
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+            <button onclick="prevBgmTrack()" style="flex:1;padding:6px;background:rgba(255,255,255,0.08);border:none;border-radius:8px;color:rgba(255,255,255,0.6);cursor:pointer;font-size:0.85em;">⏮ 上一首</button>
+            <button onclick="nextBgmTrack()" style="flex:1;padding:6px;background:rgba(255,255,255,0.08);border:none;border-radius:8px;color:rgba(255,255,255,0.6);cursor:pointer;font-size:0.85em;">⏭ 下一首</button>
+        </div>
+    </div>
+
+    <script>
+        const hearts = ['💕','💖','💗','💝','❤️','💜','💙','🩷'];
+        const container = document.getElementById('hearts');
+        setInterval(() => {
+            const h = document.createElement('div');
+            h.className = 'fheart';
+            h.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+            h.style.left = Math.random() * 100 + '%';
+            h.style.animationDuration = (6 + Math.random() * 6) + 's';
+            container.appendChild(h);
+            setTimeout(() => h.remove(), 12000);
+        }, 800);
+
+        const musicBtn = document.getElementById('musicBtn');
+        const bgMusic = document.getElementById('bgMusic');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const nowPlaying = document.getElementById('nowPlaying');
+        const playlist = document.querySelectorAll('.bgm-track');
+        let isPlaying = false;
+        let currentTrackIndex = 0;
+        bgMusic.volume = 0.3;
+
+        function playBgmTrack(el) {
+            const src = el.dataset.src;
+            bgMusic.src = src;
+            bgMusic.play().catch(() => {});
+            isPlaying = true;
+            musicBtn.textContent = '🔊';
+            musicBtn.classList.add('playing');
+            const name = el.querySelector('div > div:first-child').textContent;
+            nowPlaying.textContent = '🎵 ' + name;
+            playlist.forEach(t => t.style.borderColor = 'transparent');
+            el.style.borderColor = 'rgba(102,126,234,0.5)';
+            currentTrackIndex = Array.from(playlist).indexOf(el);
+        }
+
+        function nextBgmTrack() {
+            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+            playBgmTrack(playlist[currentTrackIndex]);
+        }
+        function prevBgmTrack() {
+            currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+            playBgmTrack(playlist[currentTrackIndex]);
+        }
+
+        // Auto-advance to next track when current ends
+        bgMusic.addEventListener('ended', () => { if(isPlaying) nextBgmTrack(); });
+
+        musicBtn.addEventListener('click', () => {
+            const pl = document.getElementById('bgmPlaylist');
+            if (pl.style.display === 'block') {
+                pl.style.display = 'none';
+            } else {
+                pl.style.display = 'block';
+            }
+        });
+        // Double-click to play/pause
+        musicBtn.addEventListener('dblclick', () => {
+            if (isPlaying) {
+                bgMusic.pause();
+                musicBtn.textContent = '🎵';
+                musicBtn.classList.remove('playing');
+                nowPlaying.textContent = '轻音乐';
+                isPlaying = false;
+            } else {
+                bgMusic.play().catch(() => {});
+                musicBtn.textContent = '🔊';
+                musicBtn.classList.add('playing');
+                const pl = document.getElementById('bgmPlaylist');
+                if (pl.style.display === 'block') return;
+                nowPlaying.textContent = '🎵 ' + (playlist[currentTrackIndex] ? playlist[currentTrackIndex].querySelector('div > div:first-child').textContent : 'Relax');
+                isPlaying = true;
+            }
+        });
+
+        volumeSlider.addEventListener('input', (e) => {
+            bgMusic.volume = e.target.value / 100;
+        });
+        // Music search modal
+        document.getElementById('musicSearchBtn').addEventListener('click', () => {
+            const m = document.getElementById('musicModal');
+            m.style.display = 'flex';
+            document.getElementById('musicKeyword').focus();
+        });
+        document.getElementById('musicModal').addEventListener('click', (e) => {
+            if (e.target.id === 'musicModal') e.target.style.display = 'none';
+        });
+        document.getElementById('musicKeyword').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') searchMusic();
+        });
+
+        // Search and play functions
+        function searchMusic() {
+            const kw = document.getElementById('musicKeyword').value.trim();
+            if (!kw) return;
+            const el = document.getElementById('musicResults');
+            el.innerHTML = '<p style="text-align:center;padding:20px;">🔍 搜索中...</p>';
+            fetch('/api/music/search?keyword=' + encodeURIComponent(kw) + '&num=15', {credentials: 'include'})
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.songs || !data.songs.length) { el.innerHTML = '<p style="text-align:center;padding:20px;color:rgba(255,255,255,0.3);">未找到歌曲</p>'; return; }
+                    let h = '';
+                    data.songs.forEach(s => {
+                        const d = s.interval ? Math.floor(s.interval/60)+':'+String(s.interval%60).padStart(2,'0') : '';
+                        h += '<div class="music-result-item" data-mid="'+s.mid+'" data-title="'+s.title.replace(/"/g,'&quot;')+'" data-singer="'+s.singer.replace(/"/g,'&quot;')+'" data-preview="'+s.preview_url.replace(/"/g,'&quot;')+'" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(255,255,255,0.05);border-radius:10px;cursor:pointer;margin-bottom:8px;"><div><div style="color:#fff;font-size:0.95em;">'+s.title+'</div><div style="color:rgba(255,255,255,0.4);font-size:0.8em;">'+s.singer+' &middot; '+s.album+'</div></div><div style="display:flex;align-items:center;gap:10px;"><span style="color:rgba(255,255,255,0.3);font-size:0.8em;">'+d+'</span><span style="color:#667eea;font-size:1.2em;">▶</span></div></div>';
+                    });
+                    el.innerHTML = h;
+                }).catch(() => { el.innerHTML = '<p style="text-align:center;padding:20px;color:#ff5252;">搜索失败</p>'; });
+        }
+        // 事件委托：点击搜索结果播放
+        document.getElementById('musicResults').addEventListener('click', function(e) {
+            const item = e.target.closest('.music-result-item');
+            if (!item) return;
+            const mid = item.getAttribute('data-mid');
+            const title = item.getAttribute('data-title');
+            const singer = item.getAttribute('data-singer');
+            const previewUrl = item.getAttribute('data-preview');
+            if (!previewUrl) { alert('无法获取播放链接'); return; }
+            
+            // 用 fetch + blob 绕过 CORS
+            fetch('/api/music/proxy?url=' + encodeURIComponent(previewUrl), {credentials: 'include'})
+                .then(r => {
+                    if (!r.ok) throw new Error('Network error ' + r.status);
+                    return r.blob();
+                })
+                .then(blob => {
+                    const typedBlob = new Blob([blob], {type: 'audio/mpeg'});
+                    const url = URL.createObjectURL(typedBlob);
+                    bgMusic.src = url;
+                    bgMusic.play().then(() => {
+                        musicBtn.textContent = '🔊';
+                        musicBtn.classList.add('playing');
+                        nowPlaying.textContent = title + ' - ' + singer;
+                        isPlaying = true;
+                    }).catch(e => alert('播放失败: ' + e.message));
+                })
+                .catch(e => alert('无法加载音频: ' + e.message));
+        });
+
+        /* ===== LIVE CLOCK ===== */
+        function updateClock() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('clockTime').textContent = h + ':' + m + ':' + s;
+            
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const day = now.getDate();
+            const weekdays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+            const weekday = weekdays[now.getDay()];
+            document.getElementById('clockDate').textContent = year + '年' + month + '月' + day + '日 ' + weekday;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        /* ===== MOTIVATIONAL QUOTES ===== */
+        const quotes = [
+            { text: "千里之行，始于足下。", author: "老子《道德经》" },
+            { text: "不要等待机会，而要创造机会。", author: "萧伯纳" },
+            { text: "成功不是将来才有的，而是从决定去做的那一刻起，持续累积而成。", author: "稻盛和夫" },
+            { text: "你的负担将变成礼物，你受的苦将照亮你的路。", author: "泰戈尔" },
+            { text: "最可怕的敌人，就是没有坚强的信念。", author: "罗曼·罗兰" },
+            { text: "不经一番寒彻骨，怎得梅花扑鼻香。", author: "黄檗禅师" },
+            { text: "生活不是等待暴风雨过去，而是学会在雨中翩翩起舞。", author: "维维安·格林" },
+            { text: "每一个不曾起舞的日子，都是对生命的辜负。", author: "尼采" },
+            { text: "志之所趋，无远弗届，穷山距海，不能限也。", author: "《格言联璧》" },
+            { text: "天行健，君子以自强不息。", author: "《周易》" },
+            { text: "宝剑锋从磨砺出，梅花香自苦寒来。", author: "《警世贤文》" },
+            { text: "纸上得来终觉浅，绝知此事要躬行。", author: "陆游" },
+            { text: "博学之，审问之，慎思之，明辨之，笃行之。", author: "《中庸》" },
+            { text: "既然选择了远方，便只顾风雨兼程。", author: "汪国真" },
+            { text: "世界上没有绝望的处境，只有对处境绝望的人。", author: "费洛伊德" },
+            { text: "当你在谷底时，每一步都是向上。", author: "佚名" },
+            { text: "今天很残酷，明天更残酷，后天很美好。", author: "马云" },
+            { text: "少壮不努力，老大徒伤悲。", author: "《长歌行》" },
+            { text: "问渠那得清如许，为有源头活水来。", author: "朱熹" },
+            { text: "长风破浪会有时，直挂云帆济沧海。", author: "李白" },
+            { text: "路漫漫其修远兮，吾将上下而求索。", author: "屈原" },
+            { text: "业精于勤，荒于嬉；行成于思，毁于随。", author: "韩愈" },
+            { text: "只有登上山顶，才能看到那边的风光。", author: "徐志摩" },
+            { text: "一个人知道自己为什么而活，就可以忍受任何一种生活。", author: "尼采" }
+        ];
+
+        let currentQuoteIndex = -1;
+        function refreshQuote() {
+            const btn = document.getElementById('quoteRefresh');
+            const textEl = document.getElementById('quoteText');
+            const authorEl = document.getElementById('quoteAuthor');
+            
+            // Fade out
+            textEl.style.opacity = '0';
+            authorEl.style.opacity = '0';
+            
+            setTimeout(() => {
+                let newIndex;
+                do {
+                    newIndex = Math.floor(Math.random() * quotes.length);
+                } while (newIndex === currentQuoteIndex && quotes.length > 1);
+                currentQuoteIndex = newIndex;
+                
+                textEl.textContent = quotes[currentQuoteIndex].text;
+                authorEl.textContent = '—— ' + quotes[currentQuoteIndex].author;
+                
+                // Fade in
+                textEl.style.opacity = '1';
+                authorEl.style.opacity = '1';
+            }, 400);
+        }
+        // Initialize quote
+        refreshQuote();
+        // Auto-rotate quote every 60 seconds
+        setInterval(refreshQuote, 60000);
+
+        /* ===== MOTIVATIONAL BANNER ===== */
+        const motivationalTexts = [
+            "🌟 今天的努力，是明天的基石 ✨",
+            "💪 你比你想象的更强大 🚀",
+            "🌅 每一个黎明都是新的开始 🎯",
+            "🔥 保持热爱，奔赴山海 🌈",
+            "⭐ 星光不问赶路人，时光不负有心人 💫",
+            "🎯 專注於過程，結果自會到來 ✨",
+            "🌺 慢慢來，誰還沒有一個努力的过程 🌸",
+            "💫 你追光而來，配得上這世間所有美好 🌟"
+        ];
+        let bannerIndex = 0;
+        function rotateBanner() {
+            const el = document.getElementById('bannerText');
+            el.style.opacity = '0';
+            setTimeout(() => {
+                bannerIndex = (bannerIndex + 1) % motivationalTexts.length;
+                el.textContent = motivationalTexts[bannerIndex];
+                el.style.opacity = '1';
+            }, 500);
+        }
+        document.getElementById('bannerText').textContent = motivationalTexts[0];
+        setInterval(rotateBanner, 5000);
+
+        /* ===== WEATHER (wttr.in) ===== */
+        function loadWeather() {
+            fetch('https://wttr.in/?format=j1&lang=zh')
+                .then(r => r.json())
+                .then(data => {
+                    const cur = data.current_condition[0];
+                    const weather = data.weather[0];
+                    const tempC = cur.temp_C;
+                    const feelsLike = cur.FeelsLikeC;
+                    const humidity = cur.humidity;
+                    const descZh = cur.lang_zh && cur.lang_zh[0] ? cur.lang_zh[0].value : cur.weatherDesc[0].value;
+                    const windSpeed = cur.windspeedKmph;
+                    const visibility = cur.visibility;
+                    
+                    // Weather icon mapping
+                    const iconMap = {
+                        'Sunny': '☀️', 'Clear': '🌙', 'Partly cloudy': '⛅',
+                        'Cloudy': '☁️', 'Overcast': '🌥️', 'Mist': '🌫️',
+                        'Fog': '🌫️', 'Light rain': '🌦️', 'Rain': '🌧️',
+                        'Heavy rain': '⛈️', 'Thunderstorm': '⛈️', 'Snow': '❄️',
+                        'Light snow': '🌨️', 'Heavy snow': '🌨️', 'Sleet': '🌨️',
+                        'Blizzard': '❄️', 'Drizzle': '🌦️', 'Light drizzle': '🌦️'
+                    };
+                    let weatherIcon = '🌡️';
+                    for (const [key, icon] of Object.entries(iconMap)) {
+                        if (descZh.includes(key.toLowerCase()) || cur.weatherDesc[0].value.includes(key)) {
+                            weatherIcon = icon;
+                            break;
+                        }
+                    }
+                    // Chinese keyword fallback
+                    if (descZh.includes('晴')) weatherIcon = '☀️';
+                    else if (descZh.includes('云')) weatherIcon = '⛅';
+                    else if (descZh.includes('阴')) weatherIcon = '☁️';
+                    else if (descZh.includes('雨')) weatherIcon = '🌧️';
+                    else if (descZh.includes('雪')) weatherIcon = '❄️';
+                    else if (descZh.includes('雾') || descZh.includes('霾')) weatherIcon = '🌫️';
+
+                    const html = `
+                        <div class="weather-top">
+                            <span class="weather-icon">${weatherIcon}</span>
+                            <div>
+                                <div class="weather-temp">${tempC}°C</div>
+                                <div class="weather-desc">${descZh}</div>
+                            </div>
+                        </div>
+                        <div class="weather-details">
+                            <span class="weather-detail">体感 <span>${feelsLike}°C</span></span>
+                            <span class="weather-detail">湿度 <span>${humidity}%</span></span>
+                            <span class="weather-detail">风速 <span>${windSpeed}km/h</span></span>
+                            <span class="weather-detail">能见度 <span>${visibility}km</span></span>
+                        </div>
+                    `;
+                    document.getElementById('weatherContent').innerHTML = html;
+                })
+                .catch(() => {
+                    document.getElementById('weatherContent').innerHTML = `
+                        <div class="weather-top">
+                            <span class="weather-icon">🌡️</span>
+                            <div>
+                                <div class="weather-temp">--°C</div>
+                                <div class="weather-desc">天气数据暂不可用</div>
+                            </div>
+                        </div>
+                    `;
+                });
+        }
+        loadWeather();
+        // Refresh weather every 10 minutes
+        setInterval(loadWeather, 600000);
+
+        /* ===== ACTIVITY FEED ===== */
+        const activities = [
+            { text: "更新了情侣空间的新相册 💕", time: "5分钟前", dot: "dot-blue" },
+            { text: "完成了 LeetCode 第203题 ✅", time: "12分钟前", dot: "dot-green" },
+            { text: "收藏了新的川菜食谱 🍜", time: "25分钟前", dot: "dot-orange" },
+            { text: "查看了密码学论文更新 📜", time: "1小时前", dot: "dot-pink" },
+            { text: "模拟考试得分：425分 📝", time: "2小时前", dot: "dot-cyan" },
+            { text: "添加了投资组合新记录 📊", time: "3小时前", dot: "dot-blue" },
+            { text: "上传了漫剧分镜草稿 🎭", time: "5小时前", dot: "dot-pink" },
+            { text: "查看了穿搭推荐 👗", time: "昨天", dot: "dot-cyan" }
+        ];
+
+        function renderActivities() {
+            const list = document.getElementById('activityList');
+            const colors = ['ac-blue', 'ac-green', 'ac-pink', 'ac-orange', 'ac-cyan'];
+            const dotColors = ['dot-blue', 'dot-green', 'dot-pink', 'dot-orange', 'dot-cyan'];
+            
+            // Shuffle and pick 6
+            const shuffled = [...activities].sort(() => Math.random() - 0.5).slice(0, 6);
+            
+            list.innerHTML = shuffled.map((a, i) => `
+                <li class="activity-item ${colors[i % colors.length]}">
+                    <span class="activity-dot ${dotColors[i % dotColors.length]}"></span>
+                    <div>
+                        <div class="activity-text">${a.text}</div>
+                        <div class="activity-time">${a.time}</div>
+                    </div>
+                </li>
+            `).join('');
+        }
+        renderActivities();
+        // Refresh activity feed every 2 minutes
+        setInterval(renderActivities, 120000);
+
+        /* ===== SYSTEM HEALTH MONITOR ===== */
+        function loadSystemHealth() {
+            fetch('/api/system/health', {credentials: 'include'})
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                document.getElementById('systemHealthPanel').style.display = 'block';
+                document.getElementById('healthDbSize').textContent = d.database.size_mb;
+                document.getElementById('healthUpdateTime').textContent = new Date().toLocaleTimeString();
+                
+                var modules = d.modules;
+                var html = '';
+                var icons = {
+                    'dashboard':'📊','investment':'💰','crypto':'🔐','recruitment':'💼',
+                    'papers':'📚','ai_music':'🎵','strategy_lab':'🧪','crawler':'🕷️'
+                };
+                var statuses = {
+                    'ok':'<span style="color:#39ff14">●</span>',
+                    'error':'<span style="color:#f44336">●</span>'
+                };
+                for(var key in modules) {
+                    var m = modules[key];
+                    var icon = icons[key] || '📦';
+                    var status = statuses[m.status] || statuses['ok'];
+                    var desc = m.description || '';
+                    var extra = '';
+                    if(m.records !== undefined) extra += ' <span style="color:rgba(255,255,255,0.3)">记录:' + m.records + '</span>';
+                    if(m.papers !== undefined) extra += ' <span style="color:rgba(255,255,255,0.3)">论文:' + m.papers + '</span>';
+                    if(m.downloaded !== undefined) extra += ' <span style="color:rgba(255,255,255,0.3)">已下载:' + m.downloaded + '</span>';
+                    if(m.questions !== undefined) extra += ' <span style="color:rgba(255,255,255,0.3)">题目:' + m.questions + '</span>';
+                    if(m.tracks !== undefined) extra += ' <span style="color:rgba(255,255,255,0.3)">音乐:' + m.tracks + '</span>';
+                    if(m.strategies !== undefined) extra += ' <span style="color:rgba(255,255,255,0.3)">策略:' + m.strategies + '</span>';
+                    if(m.sources !== undefined) extra += ' <span style="color:rgba(255,255,255,0.3)">源:' + m.sources + '</span>';
+                    if(m.queue !== undefined) extra += ' <span style="color:rgba(255,255,255,0.3)">队列:' + m.queue + '</span>';
+                    html += '<div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:10px;">' +
+                        '<div style="font-size:0.85em;">' + icon + ' ' + (desc||key) + ' ' + status + '</div>' +
+                        '<div style="font-size:0.72em;margin-top:2px;">' + extra + '</div>' +
+                        '</div>';
+                }
+                document.getElementById('healthModules').innerHTML = html;
+            })
+            .catch(function() {
+                document.getElementById('healthStatus').textContent = '● 离线';
+                document.getElementById('healthStatus').style.color = '#f44336';
+            });
+        }
+        loadSystemHealth();
+        // Refresh every 30 seconds
+        setInterval(loadSystemHealth, 30000);
+    </script>
+{% endblock %}

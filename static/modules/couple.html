@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💕 情侣空间</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@keyframes bgMove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes heartbeat{0%,100%{transform:scale(1)}25%{transform:scale(1.1)}50%{transform:scale(1)}75%{transform:scale(1.05)}}
+@keyframes sparkle{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.2)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+
+body{
+  min-height:100vh;
+  background:linear-gradient(135deg,#1a0a1e 0%,#2d1533 20%,#4a1942 40%,#2d1533 60%,#1a0a1e 100%);
+  background-size:400% 400%;animation:bgMove 20s ease infinite;
+  font-family:'Segoe UI','Microsoft YaHei',sans-serif;color:#fff;overflow-x:hidden;
+}
+
+/* Floating hearts */
+.hearts-bg{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden}
+.heart-particle{
+  position:absolute;bottom:-50px;
+  animation:floatUp linear infinite;
+  opacity:.15;font-size:20px;
+}
+@keyframes floatUp{
+  0%{transform:translateY(0) rotate(0deg);opacity:0}
+  10%{opacity:.15}
+  90%{opacity:.15}
+  100%{transform:translateY(-110vh) rotate(360deg);opacity:0}
+}
+
+#app{position:relative;z-index:1}
+
+/* Header */
+.nav{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:16px 40px;background:rgba(0,0,0,.3);backdrop-filter:blur(10px);
+  position:fixed;top:0;left:0;right:0;z-index:100;
+}
+.nav .logo{font-size:22px;cursor:pointer;background:linear-gradient(135deg,#ff6b9d,#ff8fab);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700}
+.nav .logo:hover{opacity:.8}
+.back-btn{padding:8px 20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;color:#fff;font-size:14px;cursor:pointer;transition:all .3s}
+.back-btn:hover{background:rgba(255,107,157,.3)}
+
+/* Main */
+.main{padding:90px 40px 40px;max-width:1200px;margin:0 auto}
+
+/* Section Tabs */
+.tabs{display:flex;gap:12px;margin-bottom:28px;flex-wrap:wrap}
+.tab{
+  padding:10px 24px;border-radius:25px;cursor:pointer;font-size:15px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);
+  transition:all .3s;
+}
+.tab:hover{background:rgba(255,107,157,.2)}
+.tab.active{background:linear-gradient(135deg,#ff6b9d,#e84393);border-color:transparent;font-weight:600}
+
+/* Section */
+.section{background:rgba(255,255,255,.05);backdrop-filter:blur(15px);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:32px;margin-bottom:24px;animation:fadeInUp .5s ease}
+.section-title{font-size:24px;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.section-title .icon{font-size:28px;animation:heartbeat 2s ease infinite}
+
+/* Upload Area */
+.upload-area{
+  border:2px dashed rgba(255,107,157,.4);border-radius:16px;
+  padding:40px;text-align:center;cursor:pointer;transition:all .3s;
+  background:rgba(255,107,157,.03);
+}
+.upload-area:hover{border-color:rgba(255,107,157,.7);background:rgba(255,107,157,.08)}
+.upload-area .icon{font-size:48px;margin-bottom:12px}
+.upload-area p{color:rgba(255,255,255,.6)}
+.upload-area input{display:none}
+
+/* Media Grid */
+.media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+.media-card{
+  border-radius:16px;overflow:hidden;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  transition:all .3s;animation:fadeInUp .4s ease backwards;
+}
+.media-card:hover{transform:translateY(-5px);box-shadow:0 15px 30px rgba(0,0,0,.3)}
+.media-card img,.media-card video{width:100%;height:220px;object-fit:cover;display:block}
+.media-card .info{padding:14px}
+.media-card .desc{font-size:14px;color:rgba(255,255,255,.7);margin-bottom:8px}
+.media-card .meta{font-size:12px;color:rgba(255,255,255,.4);display:flex;justify-content:space-between;align-items:center}
+.media-card .delete-btn{
+  padding:4px 12px;background:rgba(255,100,100,.2);border:1px solid rgba(255,100,100,.3);
+  border-radius:12px;color:#ff8080;font-size:12px;cursor:pointer;transition:all .3s;
+}
+.media-card .delete-btn:hover{background:rgba(255,100,100,.4)}
+
+/* Filter */
+.filter-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.filter-btn{
+  padding:6px 18px;border-radius:20px;font-size:13px;cursor:pointer;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);
+  color:rgba(255,255,255,.7);transition:all .3s;
+}
+.filter-btn:hover,.filter-btn.active{background:rgba(255,107,157,.3);border-color:#ff6b9d;color:#fff}
+
+/* Stories */
+.story-card{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:16px;padding:24px;margin-bottom:16px;
+  animation:slideIn .4s ease backwards;position:relative;
+}
+.story-card::before{
+  content:'';position:absolute;top:0;left:0;width:4px;height:100%;
+  background:linear-gradient(to bottom,#ff6b9d,#e84393);border-radius:4px 0 0 4px;
+}
+.story-card .title{font-size:18px;font-weight:600;margin-bottom:8px;color:#ff8fab}
+.story-card .content{color:rgba(255,255,255,.7);line-height:1.8;white-space:pre-wrap}
+.story-card .mood{display:inline-block;padding:3px 12px;border-radius:15px;font-size:12px;margin-top:10px;background:rgba(255,107,157,.2)}
+.story-card .date{font-size:12px;color:rgba(255,255,255,.3);position:absolute;top:16px;right:16px}
+.story-card .del-btn{
+  position:absolute;bottom:16px;right:16px;
+  padding:4px 12px;background:rgba(255,100,100,.15);border:1px solid rgba(255,100,100,.3);
+  border-radius:12px;color:#ff8080;font-size:12px;cursor:pointer;
+}
+
+/* Story Form */
+.story-form{display:flex;flex-direction:column;gap:14px}
+.form-row input,.form-row textarea{
+  width:100%;padding:12px 16px;background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.15);border-radius:12px;
+  color:#fff;font-size:15px;outline:none;transition:all .3s;font-family:inherit;
+}
+.form-row textarea{min-height:120px;resize:vertical}
+.form-row input:focus,.form-row textarea:focus{border-color:#ff6b9d;box-shadow:0 0 15px rgba(255,107,157,.2)}
+.form-row select{
+  padding:12px 16px;background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.15);border-radius:12px;
+  color:#fff;font-size:15px;outline:none;
+}
+.form-row select option{background:#2d1533;color:#fff}
+.submit-btn{
+  padding:12px 32px;background:linear-gradient(135deg,#ff6b9d,#e84393);
+  border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:600;
+  cursor:pointer;transition:all .3s;align-self:flex-start;
+}
+.submit-btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(255,107,157,.4)}
+
+/* Timeline */
+.timeline{position:relative;padding-left:30px}
+.timeline::before{
+  content:'';position:absolute;left:10px;top:0;bottom:0;
+  width:2px;background:linear-gradient(to bottom,#ff6b9d,rgba(255,107,157,.2));
+}
+.timeline-item{position:relative;margin-bottom:24px;animation:slideIn .4s ease backwards}
+.timeline-item::before{
+  content:'💕';position:absolute;left:-30px;top:4px;font-size:16px;
+}
+.timeline-date{font-size:13px;color:#ff6b9d;margin-bottom:4px;font-weight:600}
+.timeline-text{color:rgba(255,255,255,.7);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="hearts-bg" id="hearts"></div>
+<div id="app">
+  <div class="nav">
+    <div class="logo" @click="goHome">💕 情侣空间</div>
+    <button class="back-btn" @click="goHome">← 返回主页</button>
+  </div>
+
+  <div class="main">
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab" :class="{active:tab==='gallery'}" @click="tab='gallery'">🖼️ 相册</div>
+      <div class="tab" :class="{active:tab==='videos'}" @click="tab='videos'">🎬 视频</div>
+      <div class="tab" :class="{active:tab==='upload'}" @click="tab='upload'">📤 上传</div>
+      <div class="tab" :class="{active:tab==='stories'}" @click="tab='stories'">📝 故事</div>
+    </div>
+
+    <!-- Gallery -->
+    <div class="section" v-if="tab==='gallery'">
+      <div class="section-title"><span class="icon">🖼️</span> 我们的相册</div>
+      <div class="filter-bar">
+        <div class="filter-btn" :class="{active:filter==='all'}" @click="filter='all'">全部</div>
+        <div class="filter-btn" :class="{active:filter==='photo'}" @click="filter='photo'">照片</div>
+        <div class="filter-btn" :class="{active:filter==='video'}" @click="filter='video'">视频</div>
+      </div>
+      <div class="media-grid" v-if="filteredMedia.length">
+        <div class="media-card" v-for="(m,i) in filteredMedia" :key="m.id" :style="'animation-delay:'+(i*0.06)+'s'">
+          <img v-if="m.file_type==='photo'" :src="'/'+m.file_path" :alt="m.original_name" loading="lazy">
+          <video v-else :src="'/'+m.file_path" controls></video>
+          <div class="info">
+            <div class="desc">{{ m.description || m.original_name }}</div>
+            <div class="meta">
+              <span>{{ formatDate(m.uploaded_at) }}</span>
+              <button class="delete-btn" @click="deleteMedia(m.id)">删除</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else style="text-align:center;padding:60px;color:rgba(255,255,255,.3)">
+        <div style="font-size:64px;margin-bottom:16px">📷</div>
+        <p>还没有照片哦，去上传一些美好回忆吧~</p>
+      </div>
+    </div>
+
+    <!-- Videos -->
+    <div class="section" v-if="tab==='videos'">
+      <div class="section-title"><span class="icon">🎬</span> 我们的视频</div>
+      <div class="media-grid" v-if="videos.length">
+        <div class="media-card" v-for="(m,i) in videos" :key="m.id" :style="'animation-delay:'+(i*0.06)+'s'">
+          <video :src="'/'+m.file_path" controls></video>
+          <div class="info">
+            <div class="desc">{{ m.description || m.original_name }}</div>
+            <div class="meta">
+              <span>{{ formatDate(m.uploaded_at) }}</span>
+              <button class="delete-btn" @click="deleteMedia(m.id)">删除</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else style="text-align:center;padding:60px;color:rgba(255,255,255,.3)">
+        <div style="font-size:64px;margin-bottom:16px">🎥</div>
+        <p>还没有视频记录，上传你们的精彩瞬间吧~</p>
+      </div>
+    </div>
+
+    <!-- Upload -->
+    <div class="section" v-if="tab==='upload'">
+      <div class="section-title"><span class="icon">📤</span> 上传回忆</div>
+      <div class="upload-area" @click="triggerUpload" @dragover.prevent="dragOver" @dragleave="dragLeave" @drop.prevent="handleDrop" :class="{dragover:isDragOver}">
+        <div class="icon">{{ uploadProgress!==null ? '⏳' : '📁' }}</div>
+        <p v-if="uploadProgress===null">拖拽文件到这里，或点击选择文件</p>
+        <p v-else>上传中... {{ uploadProgress }}%</p>
+        <p style="font-size:13px;margin-top:8px;color:rgba(255,255,255,.4)">支持 JPG、PNG、GIF、MP4、MOV 格式</p>
+        <input type="file" ref="fileInput" @change="handleFile" accept="image/*,video/*" multiple>
+      </div>
+      <div style="margin-top:16px" v-if="descVisible">
+        <div class="form-row">
+          <input v-model="uploadDesc" placeholder="给这个美好瞬间加个描述吧~" @keyup.enter="confirmUpload">
+        </div>
+      </div>
+    </div>
+
+    <!-- Stories -->
+    <div class="section" v-if="tab==='stories'">
+      <div class="section-title"><span class="icon">📝</span> 浪漫故事</div>
+
+      <!-- New story form -->
+      <div class="story-form" style="margin-bottom:28px">
+        <div class="form-row">
+          <input v-model="newStory.title" placeholder="故事标题 💕">
+        </div>
+        <div class="form-row">
+          <textarea v-model="newStory.content" placeholder="写下属于你们的故事..."></textarea>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="form-row" style="flex:0">
+            <select v-model="newStory.mood">
+              <option value="romantic">💕 浪漫</option>
+              <option value="sweet">🍬 甜蜜</option>
+              <option value="funny">😂 搞笑</option>
+              <option value="memorable">✨ 难忘</option>
+              <option value="warm">☀️ 温暖</option>
+              <option value="exciting">🎉 兴奋</option>
+            </select>
+          </div>
+          <button class="submit-btn" @click="createStory" :disabled="!newStory.title||!newStory.content">发布故事</button>
+        </div>
+      </div>
+
+      <!-- Stories timeline -->
+      <div class="timeline" v-if="stories.length">
+        <div class="story-card" v-for="(s,i) in stories" :key="s.id" :style="'animation-delay:'+(i*0.08)+'s'">
+          <div class="title">{{ s.title }}</div>
+          <div class="content">{{ s.content }}</div>
+          <span class="mood">{{ moodEmoji(s.mood) }} {{ moodText(s.mood) }}</span>
+          <span class="date">{{ formatDate(s.created_at) }}</span>
+          <button class="del-btn" @click="deleteStory(s.id)">删除</button>
+        </div>
+      </div>
+      <div v-if="!stories.length" style="text-align:center;padding:60px;color:rgba(255,255,255,.3)">
+        <div style="font-size:64px;margin-bottom:16px">📖</div>
+        <p>还没有故事，写下你们的第一个美好回忆吧~</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const {createApp}=Vue;
+createApp({
+  data(){
+    return{
+      tab:'gallery',
+      filter:'all',
+      media:[],
+      stories:[],
+      newStory:{title:'',content:'',mood:'romantic'},
+      isDragOver:false,
+      selectedFiles:[],
+      uploadDesc:'',
+      descVisible:false,
+      uploadProgress:null,
+    }
+  },
+  computed:{
+    filteredMedia(){
+      if(this.filter==='all') return this.media;
+      return this.media.filter(m=>m.file_type===this.filter);
+    },
+    videos(){
+      return this.media.filter(m=>m.file_type==='video');
+    }
+  },
+  methods:{
+    goHome(){window.location.href='/main'},
+    async loadMedia(){
+      try{
+        const r=await fetch('/api/couple/media',{headers:{'Authorization':'Bearer '+token}});
+        if(r.ok) this.media=await r.json();
+      }catch(e){}
+    },
+    async loadStories(){
+      try{
+        const r=await fetch('/api/couple/stories',{headers:{'Authorization':'Bearer '+token}});
+        if(r.ok) this.stories=await r.json();
+      }catch(e){}
+    },
+    async deleteMedia(id){
+      if(!confirm('确定删除这个回忆吗？')) return;
+      await fetch('/api/couple/media/'+id,{method:'DELETE',headers:{'Authorization':'Bearer '+token}});
+      this.loadMedia();
+    },
+    async createStory(){
+      if(!this.newStory.title||!this.newStory.content) return;
+      await fetch('/api/couple/story',{
+        method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+        body:JSON.stringify(this.newStory)
+      });
+      this.newStory={title:'',content:'',mood:'romantic'};
+      this.loadStories();
+    },
+    async deleteStory(id){
+      if(!confirm('确定删除这个故事吗？')) return;
+      await fetch('/api/couple/story/'+id,{method:'DELETE',headers:{'Authorization':'Bearer '+token}});
+      this.loadStories();
+    },
+    triggerUpload(){this.$refs.fileInput.click()},
+    dragOver(){this.isDragOver=true},
+    dragLeave(){this.isDragOver=false},
+    handleDrop(e){
+      this.isDragOver=false;
+      const files=e.dataTransfer.files;
+      if(files.length) this.uploadFiles(files);
+    },
+    handleFile(e){
+      const files=e.target.files;
+      if(files.length) this.uploadFiles(files);
+      e.target.value='';
+    },
+    async uploadFiles(files){
+      for(const file of files){
+        const fd=new FormData();
+        fd.append('file',file);
+        fd.append('description',this.uploadDesc);
+        this.uploadProgress=0;
+        // Simulate progress
+        const prog=setInterval(()=>{
+          if(this.uploadProgress<90) this.uploadProgress+=Math.random()*15;
+        },200);
+        try{
+          await fetch('/api/couple/upload',{method:'POST',headers:{'Authorization':'Bearer '+token},body:fd});
+        }catch(e){}
+        clearInterval(prog);
+        this.uploadProgress=100;
+        setTimeout(()=>{this.uploadProgress=null;this.uploadDesc='';},500);
+      }
+      this.loadMedia();
+    },
+    formatDate(d){
+      if(!d) return '';
+      const dt=new Date(d);
+      return dt.toLocaleDateString('zh-CN')+' '+dt.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+    },
+    moodEmoji(m){return{romantic:'💕',sweet:'🍬',funny:'😂',memorable:'✨',warm:'☀️',exciting:'🎉'}[m]||'💕'},
+    moodText(m){return{romantic:'浪漫',sweet:'甜蜜',funny:'搞笑',memorable:'难忘',warm:'温暖',exciting:'兴奋'}[m]||'浪漫'},
+  },
+  mounted(){
+    this.loadMedia();
+    this.loadStories();
+  }
+}).mount('#app');
+
+// Floating hearts
+const hb=document.getElementById('hearts');
+const heartChars=['💕','💖','💗','💘','💝','❤️','🌹'];
+for(let i=0;i<25;i++){
+  const h=document.createElement('div');
+  h.className='heart-particle';
+  h.textContent=heartChars[Math.floor(Math.random()*heartChars.length)];
+  h.style.left=Math.random()*100+'%';
+  h.style.animationDuration=(Math.random()*15+10)+'s';
+  h.style.animationDelay=Math.random()*15+'s';
+  h.style.fontSize=(Math.random()*16+12)+'px';
+  hb.appendChild(h);
+}
+
+const token=localStorage.getItem('token')||'';
+if(!token) window.location.href='/';
+</script>
+</body>
+</html>
