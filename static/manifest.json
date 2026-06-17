@@ -1,0 +1,22 @@
+{
+    "name": "多系统智能门户",
+    "short_name": "Portal",
+    "description": "多系统智能门户 - 13个功能模块",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1a1a3e",
+    "theme_color": "#1a1a3e",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/static/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/static/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
