@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar" android:layout_width="match_parent" android:layout_height="56dp" />
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:layout_width="match_parent" android:layout_height="match_parent" android:layout_marginTop="56dp">
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_crypto" android:layout_width="match_parent" android:layout_height="match_parent" />
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_home"
+        android:icon="@drawable/ic_home"
+        android:title="首页"
+        android:contentDescription="导航首页"/>
+    <item
+        android:id="@+id/nav_couple"
+        android:icon="@drawable/ic_favorite"
+        android:title="情侣"
+        android:contentDescription="底部导航情侣"/>
+    <item
+        android:id="@+id/nav_study"
+        android:icon="@drawable/ic_school"
+        android:title="学习"
+        android:contentDescription="底部导航学习"/>
+    <item
+        android:id="@+id/nav_more"
+        android:icon="@drawable/ic_more"
+        android:title="更多"
+        android:contentDescription="底部导航更多"/>
+</menu>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
+    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="角色名称" style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_name" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="描述" android:layout_marginTop="12dp" style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_description" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="外貌" android:layout_marginTop="12dp" style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_appearance" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="性格" android:layout_marginTop="12dp" style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_personality" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    </com.google.android.material.textfield.TextInputLayout>
+</LinearLayout>

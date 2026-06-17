@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_margin="8dp"
+    app:cardElevation="2dp" app:cardCornerRadius="12dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+        <TextView android:id="@+id/tv_name" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:textSize="16sp" android:textStyle="bold" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="horizontal">
+            <com.google.android.material.chip.Chip android:id="@+id/chip_cuisine" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="12sp" />
+            <com.google.android.material.chip.Chip android:id="@+id/chip_difficulty" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginStart="8dp" android:textSize="12sp" />
+            <TextView android:id="@+id/tv_cook_time" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginStart="8dp" android:textSize="12sp" android:textColor="@color/grey_medium" />
+        </LinearLayout>
+        <TextView android:id="@+id/tv_ingredients" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:maxLines="3" android:textSize="14sp" />
+        <TextView android:id="@+id/tv_steps" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:visibility="gone" android:textSize="14sp" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="年份范围" android:textSize="16sp" android:textStyle="bold" />
+    <com.google.android.material.slider.RangeSlider android:id="@+id/range_slider_year" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:valueFrom="1940" android:valueTo="2026" android:stepSize="1" />
+    <TextView android:id="@+id/tv_year_range" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="1940 - 2026" android:layout_marginTop="4dp" />
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="类别" android:textSize="16sp" android:textStyle="bold" android:layout_marginTop="16dp" />
+    <com.google.android.material.chip.ChipGroup android:id="@+id/chip_group_category" android:layout_width="match_parent" android:layout_height="wrap_content" />
+</LinearLayout>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
+    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="日期 (YYYY-MM-DD)" style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_date" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="标题" android:layout_marginTop="12dp" style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_title" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="描述" android:layout_marginTop="12dp" style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_description" android:layout_width="match_parent" android:layout_height="wrap_content" android:minLines="2" android:gravity="top" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="图标 (emoji)" android:layout_marginTop="12dp" style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_icon" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="\u2764\uFE0F" />
+    </com.google.android.material.textfield.TextInputLayout>
+</LinearLayout>

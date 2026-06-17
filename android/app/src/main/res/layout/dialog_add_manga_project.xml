@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
+    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="项目标题" style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_title" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="描述" android:layout_marginTop="12dp" style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_description" android:layout_width="match_parent" android:layout_height="wrap_content" android:minLines="2" android:gravity="top" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="小说文本" android:layout_marginTop="12dp" style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_novel_text" android:layout_width="match_parent" android:layout_height="wrap_content" android:minLines="6" android:gravity="top" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="风格 (anime/manga/realistic)" android:layout_marginTop="12dp" style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_style" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="anime" />
+    </com.google.android.material.textfield.TextInputLayout>
+</LinearLayout>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
+    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="源实体ID" style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_source_id" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="number" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="目标实体ID" android:layout_marginTop="12dp" style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_target_id" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="number" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="关系类型" android:layout_marginTop="12dp" style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_relation_type" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="权重" android:layout_marginTop="12dp" style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_weight" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="numberDecimal" android:text="1.0" />
+    </com.google.android.material.textfield.TextInputLayout>
+</LinearLayout>
