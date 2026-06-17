@@ -1,5 +1,18 @@
 # 多系统智能门户 v5.0
 
+## 📱 Android 客户端
+
+下载 APK: [portal-android-v1.0.0.apk](https://github.com/qi2834319625-sys/llmapp/raw/android-app/android/releases/portal-android-v1.0.0.apk)
+
+安装方式:
+1. 下载 APK 文件
+2. 在手机设置中允许"未知来源"安装
+3. 打开 APK 安装
+4. 首次启动输入服务器地址: `http://192.168.31.156:8080`
+5. 账号: `qmlaizyh` / `qwe123123`
+
+源码: [android-app 分支](https://github.com/qi2834319625-sys/llmapp/tree/android-app/android)
+
 ## 快速部署
 
 ```bash
